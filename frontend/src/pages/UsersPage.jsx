@@ -2,12 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
-import UserDrawer from '../components/UserDrawer';
 import Toast from '../components/Toast';
 import ErrorBanner from '../components/ErrorBanner';
-import { Plus, UserCheck, Shield } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
-const ROLES = ['student', 'staff', 'maintenance', 'admin', 'super_admin'];
+const ROLES = [
+  { value: 'student', label: 'Student' },
+  { value: 'staff', label: 'Staff member' },
+  { value: 'maintenance', label: 'Maintenance staff' },
+  { value: 'admin', label: 'Admin' },
+  { value: 'super_admin', label: 'Super admin' },
+];
 
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
@@ -15,7 +20,16 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Create account card form state
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    role: 'maintenance',
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -23,7 +37,7 @@ export default function UsersPage() {
       const data = await api.getUsers();
       setUsers(data);
     } catch (err) {
-      setError(err.message || 'Failed to load users.');
+      setError(err.message || "Couldn't reach the server.");
     } finally {
       setLoading(false);
     }
@@ -39,108 +53,192 @@ export default function UsersPage() {
       setUsers((prev) =>
         prev.map((u) => (u.id === targetUserId ? { ...u, role: res.user.role } : u))
       );
-      setToast({ type: 'success', message: `User role updated to ${newRole}.` });
+      setToast({ type: 'success', message: 'User role updated.' });
     } catch (err) {
       setToast({ type: 'error', message: err.message || 'Could not update user role.' });
     }
   };
 
-  const handleCreateUser = async (userData) => {
-    const res = await api.createUser(userData);
-    setUsers((prev) => [res.user, ...prev]);
-    setToast({ type: 'success', message: `Account created for ${res.user.email}.` });
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!formData.name.trim()) errs.name = 'Full name is required';
+    if (!formData.email.trim()) errs.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errs.email = 'Enter a valid email address';
+    }
+    if (!formData.password || formData.password.length < 8) {
+      errs.password = 'At least 8 characters';
+    }
+    setFormErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setIsSubmitting(true);
+    try {
+      const res = await api.createUser(formData);
+      setUsers((prev) => [res.user, ...prev]);
+      setFormData({ name: '', email: '', password: '', role: 'maintenance' });
+      setToast({ type: 'success', message: 'Account created successfully.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Could not create account.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-page-enter">
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-ink">User Management</h1>
-          <p className="text-xs text-gray-500 mt-1">
-            Super admin controls: view accounts, provision roles, and manage permissions.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsDrawerOpen(true)}
-          className="inline-flex items-center justify-center px-4 py-2 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
-        >
-          <Plus size={16} className="mr-1.5" />
-          Create user
-        </button>
+      {/* Page Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-ink">Users</h1>
+        <p className="text-xs text-gray-500 mt-1">
+          Create accounts and change roles. Only the super admin sees this page.
+        </p>
       </div>
 
       {error && <ErrorBanner message={error} onRetry={loadUsers} />}
 
-      <div className="bg-white border border-line rounded-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-line text-left text-sm">
-            <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              <tr>
-                <th className="px-5 py-3.5">Name</th>
-                <th className="px-5 py-3.5">Email</th>
-                <th className="px-5 py-3.5">Joined</th>
-                <th className="px-5 py-3.5">Role</th>
-                <th className="px-5 py-3.5 text-right">Change Role</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-line bg-white">
-              {users.map((u) => {
-                const isSelf = u.id === currentUser.id;
-                return (
-                  <tr key={u.id} className="table-row-hover">
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-ink text-sm flex items-center">
-                        {u.name}
-                        {isSelf && (
-                          <span className="ml-2 text-[10px] bg-teal-light text-teal font-bold px-1.5 py-0.5 rounded">
-                            You
-                          </span>
+      {/* Main 2-column layout matching Image 07 */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left: User list table */}
+        <div className="lg:col-span-8 bg-white border border-line rounded-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-line text-left text-sm">
+              <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
+                <tr>
+                  <th className="px-5 py-3.5">Name</th>
+                  <th className="px-5 py-3.5">Email</th>
+                  <th className="px-5 py-3.5">Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line bg-white">
+                {users.map((u) => {
+                  const isSelf = u.id === currentUser.id;
+                  return (
+                    <tr key={u.id} className="table-row-hover">
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        <span className="font-semibold text-ink text-sm">
+                          {u.name} {isSelf && '(you)'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-xs text-gray-600">
+                        {u.email}
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap">
+                        {isSelf ? (
+                          <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-500 font-medium rounded border border-gray-200 inline-block w-44">
+                            Super admin (locked)
+                          </div>
+                        ) : (
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                            className="w-44 px-3 py-1.5 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
+                          >
+                            {ROLES.map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
                         )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {u.email}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-xs text-gray-500">
-                      {new Date(u.created_at).toLocaleDateString()}
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 capitalize">
-                        {u.role.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 whitespace-nowrap text-right">
-                      {isSelf ? (
-                        <span className="text-xs text-gray-400 italic">Self role fixed</span>
-                      ) : (
-                        <select
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                          className="px-2 py-1 text-xs border border-line rounded focus:outline-none focus:border-teal bg-white"
-                        >
-                          {ROLES.map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Right: Create account card */}
+        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6">
+          <h2 className="text-base font-bold text-ink">Create account</h2>
+          <p className="text-xs text-gray-500 mt-0.5 mb-5">
+            Students and staff register themselves.
+          </p>
+
+          <form onSubmit={handleCreateUser} className="space-y-4" noValidate>
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1">Full name</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Full name"
+                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
+              />
+              {formErrors.name && (
+                <p className="mt-1 text-xs text-statusOpen">{formErrors.name}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1">Email</label>
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="name@example.com"
+                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
+              />
+              {formErrors.email && (
+                <p className="mt-1 text-xs text-statusOpen">{formErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1">Temporary password</label>
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                placeholder="At least 8 characters"
+                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
+              />
+              {formErrors.password && (
+                <p className="mt-1 text-xs text-statusOpen">{formErrors.password}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-ink mb-1">Role</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full px-3 py-2 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
+              >
+                {ROLES.filter((r) => r.value !== 'student' && r.value !== 'staff').map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
+              >
+                {isSubmitting && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
+                Create account
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
-      <UserDrawer
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        onSubmit={handleCreateUser}
-      />
+      {/* Role Behavior Caption Bar matching image 07 */}
+      <div className="mt-8 bg-white border border-line rounded-card p-4 flex items-center shadow-none">
+        <div className="w-1 self-stretch bg-safetyYellow rounded-full mr-3.5" />
+        <p className="text-xs text-gray-700 font-normal">
+          Super admin creates maintenance and admin accounts and changes any role. The first super admin comes from server environment variables.
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,88 @@
+/* frontend/src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F1F4F3;
+    color: #14283A;
+    font-family: 'Carlito', system-ui, -apple-system, sans-serif;
+  }
+}
+
+/* Animations, transitions, and keyframes per specification */
+@keyframes fieldShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pageFadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes highlightFade {
+  0% { background-color: #FEF9C3; }
+  100% { background-color: transparent; }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Accessible motion wrapper: only animate if user hasn't requested reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-field-shake {
+    animation: fieldShake 250ms ease-in-out;
+  }
+
+  .animate-page-enter {
+    animation: pageFadeSlide 200ms ease-out forwards;
+  }
+
+  .animate-highlight-new {
+    animation: highlightFade 1.5s ease-out forwards;
+  }
+
+  .animate-toast-in {
+    animation: toastSlideIn 250ms ease-out forwards;
+  }
+
+  /* Micro-interactions */
+  .btn-interactive {
+    transition: background-color 150ms ease-out, transform 150ms ease-out, border-color 150ms ease-out;
+  }
+  .btn-interactive:active {
+    transform: scale(0.98);
+  }
+
+  .table-row-hover {
+    transition: background-color 150ms ease-out;
+  }
+  .table-row-hover:hover {
+    background-color: #F6F8F7;
+  }
+
+  .card-interactive {
+    transition: transform 150ms ease-out, border-color 150ms ease-out;
+  }
+  .card-interactive:hover {
+    transform: translateY(-1px);
+    border-color: #BDC7C3;
+  }
+}

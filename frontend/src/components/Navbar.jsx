@@ -9,9 +9,13 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Per Image 01 mockup, the navbar is hidden on login and register pages
+  if (!user || location.pathname === '/login' || location.pathname === '/register') {
+    return null;
+  }
+
   const isActive = (path) => location.pathname === path;
 
-  // Format role label matching design pill
   const getRoleBadge = (role) => {
     switch (role) {
       case 'student':
@@ -23,7 +27,7 @@ export default function Navbar() {
       case 'admin':
         return 'Admin';
       case 'super_admin':
-        return 'Super Admin';
+        return 'Super admin';
       default:
         return role;
     }
@@ -36,7 +40,6 @@ export default function Navbar() {
           {/* Logo & Main Nav */}
           <div className="flex items-center space-x-8">
             <Link to="/issues" className="flex items-center space-x-2 focus:outline-none">
-              {/* Logo Mark: Yellow box with "C" */}
               <div className="w-8 h-8 rounded bg-safetyYellow flex items-center justify-center font-bold text-ink text-base shadow-none">
                 C
               </div>
@@ -44,70 +47,60 @@ export default function Navbar() {
             </Link>
 
             {/* Desktop Navigation */}
-            {user && (
-              <div className="hidden md:flex space-x-6">
-                <Link
-                  to="/issues"
-                  className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                    isActive('/issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                  }`}
-                >
-                  Issues
-                  {isActive('/issues') && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                  )}
-                </Link>
-
-                <Link
-                  to="/report"
-                  className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                    isActive('/report') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                  }`}
-                >
-                  Report an issue
-                  {isActive('/report') && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                  )}
-                </Link>
-
-                {user.role === 'super_admin' && (
-                  <Link
-                    to="/users"
-                    className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                      isActive('/users') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                    }`}
-                  >
-                    Users
-                    {isActive('/users') && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                    )}
-                  </Link>
+            <div className="hidden md:flex space-x-6">
+              <Link
+                to="/issues"
+                className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                  isActive('/issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                }`}
+              >
+                Issues
+                {isActive('/issues') && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
                 )}
-              </div>
-            )}
+              </Link>
+
+              <Link
+                to="/report"
+                className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                  isActive('/report') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                }`}
+              >
+                Report an issue
+                {isActive('/report') && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                )}
+              </Link>
+
+              {user.role === 'super_admin' && (
+                <Link
+                  to="/users"
+                  className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                    isActive('/users') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                  }`}
+                >
+                  Users
+                  {isActive('/users') && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                  )}
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Desktop Right Side: User Name, Role Pill, Log out */}
-          {user ? (
-            <div className="hidden md:flex items-center space-x-4">
-              <span className="text-sm text-ink font-normal">{user.name}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-                {getRoleBadge(user.role)}
-              </span>
-              <button
-                onClick={logout}
-                className="text-sm text-gray-500 hover:text-ink transition-colors duration-150"
-              >
-                Log out
-              </button>
-            </div>
-          ) : (
-            <div className="hidden md:flex items-center space-x-4">
-              <Link to="/login" className="text-sm font-medium text-ink hover:text-teal">
-                Log in
-              </Link>
-            </div>
-          )}
+          <div className="hidden md:flex items-center space-x-4">
+            <span className="text-sm text-ink font-normal">{user.name}</span>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
+              {getRoleBadge(user.role)}
+            </span>
+            <button
+              onClick={logout}
+              className="text-sm text-gray-500 hover:text-ink transition-colors duration-150"
+            >
+              Log out
+            </button>
+          </div>
 
           {/* Mobile hamburger button */}
           <div className="flex md:hidden items-center">
@@ -125,67 +118,55 @@ export default function Navbar() {
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-line bg-white px-4 pt-2 pb-4 space-y-2 animate-page-enter">
-          {user ? (
-            <>
-              <div className="py-2 border-b border-line flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium text-ink">{user.name}</div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-                  {getRoleBadge(user.role)}
-                </span>
-              </div>
-              <Link
-                to="/issues"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2 text-sm font-medium ${
-                  isActive('/issues') ? 'text-teal font-bold' : 'text-ink'
-                }`}
-              >
-                Issues
-              </Link>
-              <Link
-                to="/report"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2 text-sm font-medium ${
-                  isActive('/report') ? 'text-teal font-bold' : 'text-ink'
-                }`}
-              >
-                Report an issue
-              </Link>
-              {user.role === 'super_admin' && (
-                <Link
-                  to="/users"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block py-2 text-sm font-medium ${
-                    isActive('/users') ? 'text-teal font-bold' : 'text-ink'
-                  }`}
-                >
-                  Users
-                </Link>
-              )}
-              <div className="pt-2 border-t border-line">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-left py-2 text-sm text-statusOpen font-medium"
-                >
-                  Log out
-                </button>
-              </div>
-            </>
-          ) : (
+          <div className="py-2 border-b border-line flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-ink">{user.name}</div>
+              <div className="text-xs text-gray-500">{user.email}</div>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
+              {getRoleBadge(user.role)}
+            </span>
+          </div>
+          <Link
+            to="/issues"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block py-2 text-sm font-medium ${
+              isActive('/issues') ? 'text-teal font-bold' : 'text-ink'
+            }`}
+          >
+            Issues
+          </Link>
+          <Link
+            to="/report"
+            onClick={() => setMobileMenuOpen(false)}
+            className={`block py-2 text-sm font-medium ${
+              isActive('/report') ? 'text-teal font-bold' : 'text-ink'
+            }`}
+          >
+            Report an issue
+          </Link>
+          {user.role === 'super_admin' && (
             <Link
-              to="/login"
+              to="/users"
               onClick={() => setMobileMenuOpen(false)}
-              className="block py-2 text-sm font-medium text-teal"
+              className={`block py-2 text-sm font-medium ${
+                isActive('/users') ? 'text-teal font-bold' : 'text-ink'
+              }`}
             >
-              Log in
+              Users
             </Link>
           )}
+          <div className="pt-2 border-t border-line">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                logout();
+              }}
+              className="w-full text-left py-2 text-sm text-statusOpen font-medium"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       )}
     </nav>

@@ -64,3 +64,4 @@ export default function ConfirmDeleteModal({ isOpen, title, onConfirm, onCancel,
     </div>
   );
 }
+

@@ -36,3 +36,4 @@ export default function StatCard({ label, value, colorClass = 'text-ink' }) {
     </div>
   );
 }
+

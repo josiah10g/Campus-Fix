@@ -22,3 +22,4 @@ export default function EmptyState({ message = 'No issues yet. Report the first 
     </div>
   );
 }
+

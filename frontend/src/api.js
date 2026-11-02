@@ -121,3 +121,4 @@ export const api = {
   createUser: (userData) => request('/api/users', { method: 'POST', body: JSON.stringify(userData) }),
   updateUserRole: (id, role) => request(`/api/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
 };
+

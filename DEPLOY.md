@@ -58,9 +58,23 @@ git push -u origin main
 
 ---
 
-## Step 4: Deploy Frontend (Static Site)
+## Step 4: Deploy Frontend (Static Site on Vercel or Render)
 
-### Option A: Render Static Site
+### Option A: Vercel (Recommended & Supported)
+Yes, you can deploy the frontend on **Vercel** with one click:
+1. Log in to [Vercel](https://vercel.com) and click **Add New...** > **Project**.
+2. Import your GitHub repository.
+3. Configure the Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend` (Click "Edit" next to Root Directory and select the `frontend` folder).
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+4. Add Environment Variables under **Environment Variables**:
+   - `VITE_API_URL`: `https://campusfix-api.onrender.com` *(Your Render backend URL from Step 3)*
+5. Click **Deploy**.
+*(The repository already includes `frontend/vercel.json` with rewrite rules `{ "source": "/(.*)", "destination": "/index.html" }`, ensuring browser refreshes on deep routes like `/issues`, `/report`, or `/users` never 404).*
+
+### Option B: Render Static Site
 1. In Render dashboard, click **New +** > **Static Site**.
 2. Connect your repository.
 3. Configure settings:
@@ -71,11 +85,7 @@ git push -u origin main
 4. Add Environment Variables:
    - `VITE_API_URL`: `https://campusfix-api.onrender.com` *(Your Render backend URL from Step 3)*
 5. Click **Create Static Site**.
-*(The repository already includes `frontend/public/_redirects` so browser refreshes on routes like `/issues` or `/users` will not 404).*
-
-### Option B: Vercel / Netlify
-- For Vercel, set root directory to `frontend`, add `VITE_API_URL`, and deploy (the included `vercel.json` rewrite handles SPA routes).
-- For Netlify, set base directory `frontend`, publish directory `dist`, add `VITE_API_URL`.
+*(The repository includes `frontend/public/_redirects` which handles client-side routing on Render).*
 
 ---
 
@@ -118,3 +128,4 @@ git push -u origin main
    - Ensure `VITE_API_URL` is set in the frontend build settings before running `npm run build`. Vite bakes environment variables in at build time.
 6. **Refreshing a page returns 404**:
    - Ensure `public/_redirects` (with `/* /index.html 200`) is placed in the publish directory for Render/Netlify, or `vercel.json` is used for Vercel.
+

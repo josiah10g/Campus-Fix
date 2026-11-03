@@ -12,6 +12,7 @@
 
 ## 3. Features or Code Generated with AI
 - Initial PostgreSQL database schema with `users` and `issues` tables (`db/schema.sql`).
+- Safe SQL migration from legacy `issues.reporter_name` records to linked users (`db/migrations/001_reporter_name_to_users.sql`).
 - Seed script (`backend/seed.js`) populating fictional accounts for all 5 roles and 8 realistic campus issues.
 - REST API implementation in Node/Express (`backend/index.js`, `routes/auth.js`, `routes/issues.js`, `routes/users.js`, `middleware/auth.js`).
 - Parameterised SQL queries with connection pooling and production SSL configuration (`backend/db.js`).
@@ -24,6 +25,7 @@
   - Modal confirmation (`ConfirmDeleteModal`) and sliding account drawer (`UserDrawer`).
   - Feedback alerts (`Toast`, `ErrorBanner`, `EmptyState`, `SkeletonLoader`).
 - Automated test suite using Node built-in test runner (`backend/tests/api.test.js`).
+- Public home page with rate-limited, privacy-limited issue summaries and a welcome banner after registration.
 - Documentation files: `README.md`, `DEPLOY.md`, `TESTING.md`, `DEFENSE_NOTES.md`.
 
 ## 4. Changes I Made to AI-Generated Code

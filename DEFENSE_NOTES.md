@@ -32,6 +32,7 @@ These notes explain the architectural decisions, request lifecycle, security mec
 3. **Database (PostgreSQL)**:
    - Relational tables `users` and `issues` with foreign key relationships (`reporter_id REFERENCES users(id)`).
    - Uses parameterized queries exclusively to prevent SQL injection.
+   - Existing databases can be upgraded with `db/migrations/001_reporter_name_to_users.sql`, which preserves old reports and maps legacy reporter names to reset-required accounts.
 
 ---
 

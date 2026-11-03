@@ -41,11 +41,11 @@ export default function HowItWorksPage() {
           <div className="flex flex-wrap items-center gap-3">
             <div className="text-center"><StatusPill status="Open" /><p className="mt-2 text-xs text-gray-500">Reported</p></div>
             <span aria-hidden="true" className="text-2xl text-gray-400">→</span>
-            <div className="text-center"><StatusPill status="In Progress" /><p className="mt-2 text-xs text-gray-500">Work has started</p></div>
+            <div className="text-center"><StatusPill status="In Progress" label="In progress" /><p className="mt-2 text-xs text-gray-500">Work has started</p></div>
             <span aria-hidden="true" className="text-2xl text-gray-400">→</span>
             <div className="text-center"><StatusPill status="Resolved" /><p className="mt-2 text-xs text-gray-500">Fixed</p></div>
           </div>
-          <p className="max-w-lg text-sm text-gray-600">Only maintenance, admin and super admin can change an issue status.</p>
+          <p className="max-w-lg text-sm text-gray-600">Only maintenance staff, admins and the super admin can change an issue status.</p>
         </div>
       </section>
 

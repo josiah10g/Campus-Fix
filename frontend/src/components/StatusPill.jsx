@@ -1,7 +1,7 @@
 // frontend/src/components/StatusPill.jsx
 import React from 'react';
 
-export default function StatusPill({ status }) {
+export default function StatusPill({ status, label = status }) {
   let styleClasses = 'bg-gray-100 text-gray-700';
 
   if (status === 'Open') {
@@ -16,7 +16,7 @@ export default function StatusPill({ status }) {
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${styleClasses} transition-colors duration-200`}
     >
-      {status}
+      {label}
     </span>
   );
 }

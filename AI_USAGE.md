@@ -2,6 +2,7 @@
 
 ## 1. AI Tools Used
 - Google Antigravity (Powered by Gemini 3.8 Flash model)
+- OpenAI Codex for the subsequent code audit, implementation, and verification work in this session.
 
 ## 2. Important Prompts
 - "You are building the project for the CLBG Software Development Bootcamp End-of-Bootcamp Assessment. It is an INDIVIDUAL, 48-hour assessment. Simple, readable and correct beats clever. Do not over-engineer."
@@ -29,17 +30,17 @@
 - TODO (my own words): [Describe any code modifications, adjustments to styles, parameter names, or custom tweaks you made during your review and live defense preparation]
 
 ## 5. Errors and How I Resolved Them
-- **Execution policy block on PowerShell for npm scripts**: When running `npm -v` in PowerShell, the system blocked execution due to script policies. Resolved by using `npm.cmd` explicitly.
-- **npm install pathing issue with --prefix on Windows**: When running `npm install --prefix backend` from the root directory, npm attempted to read a non-existent `package.json` in the root workspace. Resolved by switching the directory context using `Push-Location backend` and running `npm.cmd install` within each application directory.
-- **PowerShell syntax error with '&&' separator**: PowerShell threw a syntax error when using bash-style `&&` chaining in command lines. Resolved by using standard PowerShell `;` separators.
+- **PowerShell blocked the `npm` script shim**: Used `npm.cmd` for commands instead.
+- **Sandbox blocked Node child processes (`spawn EPERM`)**: Reran the requested tests and build with the required execution permission.
+- **An earlier local database URL was unreachable**: Once the Supabase connection was configured, the API tests completed successfully against PostgreSQL.
 
 ## 6. How I Tested and Verified AI-Generated Code
 - Verified database schema structure and parameterised query implementations against SQL standards.
-- Executed automated backend unit and integration test scripts (`node --test tests/api.test.js`) verifying:
+- Executed the backend API test suite (`npm test --prefix backend`) against the configured PostgreSQL database. The latest run reported 18 passing tests, including:
   - Server health endpoint status (200).
   - Unauthenticated access rejection (401).
   - Input validation for email format, password length, and required issue fields (400).
-  - Role-based authorization: students forbidden from modifying status (403), maintenance permitted to update status inline.
+  - Role-based authorization: students forbidden from modifying status or deleting another user's issue (403); maintenance can update status but cannot delete; admins can delete.
   - Safe deletion rights and 404 responses for non-existent records.
 - Built the React frontend production bundle using Vite (`npm run build`) ensuring zero compiler errors, clean asset bundling, and CSS purge verification.
 - Verified single-page app rewrite files (`_redirects` and `vercel.json`) to prevent 404 errors on browser page reloads.

@@ -80,10 +80,12 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('GET /api/public/issues privacy guarantee: never includes reporter details or description', async () => {
-    const res = await request(app).get('/api/public/issues');
+    const res = await request(app).get('/api/public/issues?limit=20');
     assert.strictEqual(res.status, 200);
-    assert.ok(Array.isArray(res.body));
-    for (const issue of res.body) {
+    assert.ok(Array.isArray(res.body.issues));
+    const fields = ['id', 'title', 'location', 'category', 'status', 'created_at'];
+    for (const issue of res.body.issues) {
+      assert.deepStrictEqual(Object.keys(issue).sort(), [...fields].sort());
       assert.strictEqual(issue.description, undefined, 'description must not be exposed');
       assert.strictEqual(issue.reporter_id, undefined, 'reporter_id must not be exposed');
       assert.strictEqual(issue.reporter_name, undefined, 'reporter_name must not be exposed');
@@ -100,7 +102,37 @@ test('CampusFix API End-to-End Tests', async (t) => {
   await t.test('GET /api/public/issues caps limit at 20', async () => {
     const res = await request(app).get('/api/public/issues?limit=50');
     assert.strictEqual(res.status, 200);
-    assert.ok(res.body.length <= 20);
+    assert.ok(res.body.issues.length <= 20);
+    assert.strictEqual(res.body.issues.length, Math.min(res.body.total, 20));
+  });
+
+  await t.test('Public issues search by title or location, and filter by status and category', async () => {
+    const all = await request(app).get('/api/public/issues?limit=20');
+    assert.ok(all.body.issues.length > 0, 'seeded issues are required for filter checks');
+    const sample = all.body.issues[0];
+    const byTitle = await request(app).get(`/api/public/issues?search=${encodeURIComponent(sample.title)}&limit=20`);
+    assert.ok(byTitle.body.issues.some((issue) => issue.id === sample.id));
+    const byLocation = await request(app).get(`/api/public/issues?search=${encodeURIComponent(sample.location)}&limit=20`);
+    assert.ok(byLocation.body.issues.some((issue) => issue.id === sample.id));
+    const byStatus = await request(app).get(`/api/public/issues?status=${encodeURIComponent(sample.status)}&limit=20`);
+    assert.ok(byStatus.body.issues.length > 0);
+    assert.ok(byStatus.body.issues.every((issue) => issue.status === sample.status));
+    const byCategory = await request(app).get(`/api/public/issues?category=${encodeURIComponent(sample.category)}&limit=20`);
+    assert.ok(byCategory.body.issues.length > 0);
+    assert.ok(byCategory.body.issues.every((issue) => issue.category === sample.category));
+  });
+
+  await t.test('Public issues paginate in SQL and reject invalid query parameters', async () => {
+    const first = await request(app).get('/api/public/issues?page=1&limit=1');
+    const second = await request(app).get('/api/public/issues?page=2&limit=1');
+    assert.strictEqual(first.body.page, 1);
+    assert.strictEqual(first.body.totalPages, first.body.total);
+    assert.notStrictEqual(first.body.issues[0].id, second.body.issues[0].id);
+    for (const query of ['status=Unknown', 'category=Unknown', 'page=0', 'page=1abc', 'limit=0', 'limit=1.5']) {
+      const invalid = await request(app).get(`/api/public/issues?${query}`);
+      assert.strictEqual(invalid.status, 400, `${query} should be rejected`);
+      assert.ok(invalid.body.error);
+    }
   });
 
   await t.test('Protected /api/issues still returns 401 without a token', async () => {

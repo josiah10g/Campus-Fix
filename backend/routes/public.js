@@ -55,13 +55,52 @@ router.get('/stats', async (req, res, next) => {
  */
 router.get('/issues', async (req, res, next) => {
   try {
-    let limit = parseInt(req.query.limit, 10);
-    if (isNaN(limit) || limit < 1) {
-      limit = 8;
-    } else if (limit > 20) {
-      limit = 20;
+    const { search = '', status, category } = req.query;
+    const allowedQueryKeys = ['search', 'status', 'category', 'page', 'limit'];
+    const unknownKey = Object.keys(req.query).find((key) => !allowedQueryKeys.includes(key));
+    if (unknownKey) return res.status(400).json({ error: `Unknown query parameter: ${unknownKey}.` });
+    if (typeof search !== 'string') {
+      return res.status(400).json({ error: 'Search must be a single text value.' });
+    }
+    const parsePositiveInt = (value, fallback, name, maximum) => {
+      if (value === undefined) return fallback;
+      if (!/^\d+$/.test(String(value)) || !Number.isSafeInteger(Number(value)) || Number(value) < 1 || (maximum && Number(value) > maximum)) {
+        throw Object.assign(new Error(`${name} must be a positive integer${maximum ? ` no greater than ${maximum}` : ''}.`), { status: 400 });
+      }
+      return Number(value);
+    };
+    const page = parsePositiveInt(req.query.page, 1, 'Page');
+    const requestedLimit = parsePositiveInt(req.query.limit, 8, 'Limit');
+    const limit = Math.min(requestedLimit, 20);
+    const allowedStatuses = ['Open', 'In Progress', 'Resolved'];
+    const allowedCategories = ['Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
+    if (status !== undefined && !allowedStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Status must be Open, In Progress, or Resolved.' });
+    }
+    if (category !== undefined && !allowedCategories.includes(category)) {
+      return res.status(400).json({ error: 'Category must be Electrical, Plumbing, Furniture, Network, or Other.' });
     }
 
+    const conditions = [];
+    const values = [];
+    if (status) {
+      values.push(status);
+      conditions.push(`status = $${values.length}`);
+    }
+    if (category) {
+      values.push(category);
+      conditions.push(`category = $${values.length}`);
+    }
+    if (search.trim()) {
+      values.push(`%${search.trim()}%`);
+      conditions.push(`(title ILIKE $${values.length} OR location ILIKE $${values.length})`);
+    }
+    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const countResult = await query(`SELECT COUNT(*)::int AS total FROM issues ${where}`, values);
+    const total = countResult.rows[0].total;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const offset = (page - 1) * limit;
+    const pageValues = [...values, limit, offset];
     const sql = `
       SELECT
         id,
@@ -71,12 +110,13 @@ router.get('/issues', async (req, res, next) => {
         status,
         created_at
       FROM issues
+      ${where}
       ORDER BY created_at DESC
-      LIMIT $1
+      LIMIT $${pageValues.length - 1} OFFSET $${pageValues.length}
     `;
 
-    const result = await query(sql, [limit]);
-    res.json(result.rows);
+    const result = await query(sql, pageValues);
+    res.json({ issues: result.rows, total, page, totalPages });
   } catch (error) {
     next(error);
   }

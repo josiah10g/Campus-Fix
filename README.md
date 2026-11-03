@@ -25,6 +25,7 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 - **Update**: Edit issue details (title, category, location, description). Maintenance and admin accounts can update status inline directly from the dashboard.
 - **Delete**: Safely delete issues with confirmation dialogs. Students can delete their own open reports; administrators can remove any issue.
 - **Public view**: Visitors can see aggregate counts and a privacy-limited list of recent issues before creating an account.
+- **Public guides**: `/how-it-works` explains the reporting steps and role permissions; `/latest-issues` provides a searchable, filterable, paginated read-only view.
 
 ### Role Permissions:
 | Role | View All | Report Issue | Edit Details | Change Status | Delete Issue | User Admin |
@@ -34,6 +35,13 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 | **Maintenance** | Yes | Yes | Any issue | Yes (Inline & Edit) | No | No |
 | **Admin** | Yes | Yes | Any issue | Yes | Any issue | No |
 | **Super Admin** | Yes | Yes | Any issue | Yes | Any issue | Yes (/users) |
+
+### Public page routes
+| Route | Description |
+| :--- | :--- |
+| `/` | Public homepage with short previews linking to the full public pages. |
+| `/how-it-works` | Static guide to reporting, statuses, and role permissions. |
+| `/latest-issues` | Public read-only issue list with search, status/category filters, and pagination. URL query parameters preserve the current filters and page. |
 
 ---
 
@@ -128,13 +136,13 @@ npm run dev
 
 All protected routes require an `Authorization: Bearer <token>` header.
 
-Public endpoints are available without a token: `GET /api/public/stats` and `GET /api/public/issues?limit=4`. The issue list intentionally excludes reporter names, email addresses, and descriptions.
+Public endpoints are available without a token: `GET /api/public/stats` and `GET /api/public/issues`. The issue list intentionally excludes reporter names, email addresses, and descriptions.
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/health` | Public | Health check `{ ok: true }` |
 | `GET` | `/api/public/stats` | Public | Live counts: total, open, inProgress, resolved (rate limited) |
-| `GET` | `/api/public/issues` | Public | Latest issues (max 20; safe public fields only) |
+| `GET` | `/api/public/issues` | Public | Safe issue page; supports search (title/location), status, category, page, and limit (default 8, max 20). Returns `{ issues, total, page, totalPages }`. |
 | `POST` | `/api/auth/register` | Public | Register student or staff account |
 | `POST` | `/api/auth/login` | Public | Login with email and password |
 | `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile |

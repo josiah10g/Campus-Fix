@@ -40,10 +40,13 @@ These notes explain the architectural decisions, request lifecycle, security mec
 
 ### Why do public endpoints return fewer fields than private ones?
 - **Public View (`GET /api/public/issues`)**:
-  - Serves unauthenticated visitors on the public homepage (`/`).
+  - Serves unauthenticated visitors on the public homepage (`/`) and the `/latest-issues` route.
   - Returns ONLY safe, non-sensitive columns: `id`, `title`, `location`, `category`, `status`, and `created_at`.
   - **Privacy Guarantee**: `description`, `reporter_id`, `reporter_name`, and `reporter_email` are strictly omitted from the SQL `SELECT` projection.
   - **Reason**: Protects student and staff privacy, prevents social engineering, harassment, or accidental disclosure of personal names and sensitive incident descriptions on a public URL.
+- **Public guide routes**: `/how-it-works` is static and makes no API request. `/latest-issues` combines the public stats endpoint with a paginated, privacy-limited issue endpoint. Both routes remain accessible when logged in.
+- **Why filters live in the URL**: Search, status, category, and page are query parameters. A refresh or shared URL therefore restores the same results without storing page state elsewhere.
+- **Why pagination happens in SQL**: PostgreSQL applies `LIMIT` and `OFFSET` before sending results to Express. This keeps the response to one small page (8 by default, capped at 20) instead of loading the entire issue table into the server or browser.
 - **Protected View (`GET /api/issues` & `/api/issues/:id`)**:
   - Requires authenticated session (`Authorization: Bearer <token>`).
   - Joins the `users` table to return reporter names and full descriptions for verified campus members, ensuring accountability while safeguarding campus community members.
@@ -113,3 +116,9 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
 - `409 Conflict`: Duplicate unique key (email already registered).
 - `429 Too Many Requests`: Rate limit exceeded on public endpoints.
 - `500 Internal Server Error`: Unhandled server exception (logged securely without leaking stack traces).
+
+---
+
+## 7. Motion and Reduced Motion
+
+The public pages use a brief fade and upward movement when a route opens, and the latest issue rows appear with a short stagger. The four count cards animate once when their values first load. Loading placeholders pulse while data is being fetched. These small cues show where new content appeared without delaying clicks or requests. CSS applies non-essential animation only when the browser reports `prefers-reduced-motion: no-preference`; reduced-motion users see immediate state changes.

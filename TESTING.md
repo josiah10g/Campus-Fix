@@ -12,25 +12,36 @@ npm test
 ### Automated Checks Covered:
 1. `GET /api/health` returns status `200` and `{ ok: true }`.
 2. Public Stats: `GET /api/public/stats` returns total, open, inProgress, and resolved counts without authentication.
-3. Privacy Guarantee: `GET /api/public/issues` never returns `description`, `reporter_id`, `reporter_name`, or `reporter_email`.
-4. Rate limiting & limit cap: `GET /api/public/issues` caps query limit at 20 items.
-5. Protected `/api/issues` still rejects unauthenticated requests with `401`.
-6. Validation: `POST /api/auth/register` rejects invalid email formats and short passwords with `400`.
-7. Role restriction: `POST /api/auth/register` ignores illegal roles and assigns `student`.
-8. `POST /api/issues` rejects empty titles with `400`.
-9. `POST /api/issues` creates an issue with default status `Open`.
-10. `GET /api/issues` returns the issue list.
-11. `GET /api/issues/:id` retrieves single issue; unknown ID returns `404`.
-12. `PUT /api/issues/:id` forbids student from changing issue status with `403`.
-13. `PUT /api/issues/:id` allows owner to edit details while status is `Open`.
-14. `DELETE /api/issues/:id` allows owner to delete while `Open`.
-15. `DELETE /api/issues/:id` returns `404` for non-existent IDs.
-16. Role hierarchy: Maintenance updates status but cannot delete; Admin can delete any issue.
-17. Authorization guard: Only super_admin can access `/api/users`.
+3. Public issue search matches title and location; status and category filters return only matching rows.
+4. Public pagination uses SQL paging and returns `issues`, `total`, `page`, and `totalPages`; limit values are capped at 20.
+5. Invalid public status, category, page, or limit values return `400` with a clear message.
+6. Privacy Guarantee: `GET /api/public/issues` returns only `id`, `title`, `location`, `category`, `status`, and `created_at`, never description or reporter fields.
+7. Protected `/api/issues` still rejects unauthenticated requests with `401`.
+8. Validation: `POST /api/auth/register` rejects invalid email formats and short passwords with `400`.
+9. Role restriction: `POST /api/auth/register` ignores illegal roles and assigns `student`.
+10. `POST /api/issues` rejects empty titles with `400`.
+11. `POST /api/issues` creates an issue with default status `Open`.
+12. `GET /api/issues` returns the issue list.
+13. `GET /api/issues/:id` retrieves single issue; unknown ID returns `404`.
+14. `PUT /api/issues/:id` forbids student from changing issue status with `403`.
+15. `PUT /api/issues/:id` allows owner to edit details while status is `Open`.
+16. `DELETE /api/issues/:id` allows owner to delete while `Open` and returns `404` for missing IDs.
+17. Role hierarchy: Maintenance updates status but cannot delete; Admin can delete any issue.
+18. Authorization guard: Only super_admin can access `/api/users`.
 
 ---
 
 ## 2. Newcomer Journey & Manual Test Checklist
+
+### Public Pages
+1. While logged out, open `/how-it-works` and `/latest-issues`; confirm both pages render and the public navbar uses real routes.
+2. On `/how-it-works`, check all four steps, the Open → In progress → Resolved status path, status permission note, five-role permission table, and sign-up call to action.
+3. On `/latest-issues`, try title/location search, each status, and each category; confirm rows match the filters.
+4. Use Previous and Next; confirm there are 8 issues per page at most and the page count/disabled buttons are correct.
+5. Refresh after choosing filters or a page; confirm the URL query string restores the same view.
+6. Clear filters from an empty result; confirm the full list returns. Simulate a failed request and use “Try again”.
+7. Resize to mobile; confirm filters stack and the table becomes read-only cards. Repeat both public routes while logged in.
+8. Check hover and keyboard focus styles, enable reduced motion, and confirm the public pages stop moving content. Use a slow network to see skeleton rows, then verify stat counts and row entrance effects. Existing modal/drawer and toast interactions can be checked from the protected app.
 
 ### Full Newcomer Journey Checklist:
 1. **Public Landing (Logged Out)**: Visit `/`. Confirm the public navbar has "Log in" and "Create account". Check the headline *"Report it once. Watch it get fixed."*, 4 live stat cards, "How it works" 3 steps, and read-only "Latest issues" table (omitting reporter names and descriptions).

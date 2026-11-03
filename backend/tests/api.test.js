@@ -234,6 +234,14 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(maintenanceDelete.status, 403);
     const adminDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
     assert.strictEqual(adminDelete.status, 200);
+
+    const someoneElsesIssue = await request(app).post('/api/issues').set('Authorization', `Bearer ${adminToken}`).send({
+      title: 'Ownership permission test', description: 'Temporary test issue', category: 'Other', location: 'Test location',
+    });
+    const studentDelete = await request(app).delete(`/api/issues/${someoneElsesIssue.body.id}`).set('Authorization', `Bearer ${studentToken}`);
+    assert.strictEqual(studentDelete.status, 403);
+    const cleanupDelete = await request(app).delete(`/api/issues/${someoneElsesIssue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
+    assert.strictEqual(cleanupDelete.status, 200);
   });
 
   await t.test('Only super_admin can access user management', async () => {

@@ -1,35 +1,18 @@
 // frontend/src/components/Navbar.jsx
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Per Image 01 mockup, the navbar is hidden on login and register pages
+  // Hidden only on standalone login and register pages per mockup
   if (location.pathname === '/login' || location.pathname === '/register') {
     return null;
-  }
-
-  if (!user) {
-    return (
-      <nav className="sticky top-0 z-30 border-b border-line bg-white">
-        <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2 font-bold text-ink"><span className="flex h-6 w-6 items-center justify-center rounded bg-safetyYellow">C</span>CampusFix</Link>
-            <div className="hidden gap-7 text-xs sm:flex">
-              <a href="#" className="font-semibold text-teal">Home</a>
-              <a href="#" className="text-gray-600">How it works</a>
-              <a href="#latest" className="text-gray-600">Latest issues</a>
-            </div>
-          </div>
-          <div className="flex gap-2"><Link to="/login" className="rounded border border-line px-4 py-1.5 text-xs font-semibold text-ink">Log in</Link><Link to="/register" className="rounded bg-teal px-4 py-1.5 text-xs font-semibold text-white">Create account</Link></div>
-        </div>
-      </nav>
-    );
   }
 
   const isActive = (path) => location.pathname === path;
@@ -51,13 +34,15 @@ export default function Navbar() {
     }
   };
 
+  const isPublicPage = location.pathname === '/';
+
   return (
     <nav className="bg-white border-b border-line sticky top-0 z-30">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex justify-between h-16 items-center">
-          {/* Logo & Main Nav */}
+          {/* Logo & Navigation */}
           <div className="flex items-center space-x-8">
-            <Link to="/issues" className="flex items-center space-x-2 focus:outline-none">
+            <Link to={user ? "/issues" : "/"} className="flex items-center space-x-2 focus:outline-none">
               <div className="w-8 h-8 rounded bg-safetyYellow flex items-center justify-center font-bold text-ink text-base shadow-none">
                 C
               </div>
@@ -66,61 +51,121 @@ export default function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-6">
-              <Link
-                to="/issues"
-                className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                  isActive('/issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                }`}
-              >
-                Issues
-                {isActive('/issues') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                )}
-              </Link>
+              {isPublicPage ? (
+                <>
+                  <Link
+                    to="/"
+                    className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                      isActive('/') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                    }`}
+                  >
+                    Home
+                    {isActive('/') && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                    )}
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="py-5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
+                  >
+                    How it works
+                  </a>
+                  <a
+                    href="#latest-issues"
+                    className="py-5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
+                  >
+                    Latest issues
+                  </a>
+                </>
+              ) : (
+                user && (
+                  <>
+                    <Link
+                      to="/issues"
+                      className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                        isActive('/issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                      }`}
+                    >
+                      Issues
+                      {isActive('/issues') && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                      )}
+                    </Link>
 
-              <Link
-                to="/report"
-                className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                  isActive('/report') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                }`}
-              >
-                Report an issue
-                {isActive('/report') && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                )}
-              </Link>
+                    <Link
+                      to="/report"
+                      className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                        isActive('/report') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                      }`}
+                    >
+                      Report an issue
+                      {isActive('/report') && (
+                        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                      )}
+                    </Link>
 
-              {user.role === 'super_admin' && (
-                <Link
-                  to="/users"
-                  className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                    isActive('/users') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                  }`}
-                >
-                  Users
-                  {isActive('/users') && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                  )}
-                </Link>
+                    {user.role === 'super_admin' && (
+                      <Link
+                        to="/users"
+                        className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                          isActive('/users') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                        }`}
+                      >
+                        Users
+                        {isActive('/users') && (
+                          <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                        )}
+                      </Link>
+                    )}
+                  </>
+                )
               )}
             </div>
           </div>
 
-          {/* Desktop Right Side: User Name, Role Pill, Log out */}
+          {/* Desktop Right Side */}
           <div className="hidden md:flex items-center space-x-4">
-            <span className="text-sm text-ink font-normal">{user.name}</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-              {getRoleBadge(user.role)}
-            </span>
-            <button
-              onClick={logout}
-              className="text-sm text-gray-500 hover:text-ink transition-colors duration-150"
-            >
-              Log out
-            </button>
+            {user ? (
+              <>
+                <span className="text-sm text-ink font-normal">{user.name}</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
+                  {getRoleBadge(user.role)}
+                </span>
+                {isPublicPage ? (
+                  <Link
+                    to="/issues"
+                    className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive"
+                  >
+                    Go to dashboard
+                  </Link>
+                ) : (
+                  <button
+                    onClick={logout}
+                    className="text-sm text-gray-500 hover:text-ink transition-colors duration-150"
+                  >
+                    Log out
+                  </button>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Link
+                  to="/login"
+                  className="px-4 py-2 text-sm font-semibold text-ink hover:text-teal transition-colors"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
+                >
+                  Create account
+                </Link>
+              </div>
+            )}
           </div>
 
-          {/* Mobile hamburger button */}
+          {/* Mobile Hamburger Button */}
           <div className="flex md:hidden items-center">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -133,74 +178,95 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown matching Image 09 */}
+      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-line bg-white px-4 pt-3 pb-4 space-y-2 animate-page-enter">
-          <div className="py-2 border-b border-line flex items-center justify-between">
-            <div>
-              <div className="text-sm font-bold text-ink">{user.name}</div>
-              <div className="text-xs text-gray-500">{user.email}</div>
-            </div>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-              {getRoleBadge(user.role)}
-            </span>
-          </div>
+          {user ? (
+            <>
+              <div className="py-2 border-b border-line flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-bold text-ink">{user.name}</div>
+                  <div className="text-xs text-gray-500">{user.email}</div>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
+                  {getRoleBadge(user.role)}
+                </span>
+              </div>
 
-          <div className="space-y-1 pt-1">
-            <Link
-              to="/issues"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block py-2.5 text-sm rounded ${
-                isActive('/issues')
-                  ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                  : 'text-gray-700 hover:text-ink pl-4 font-medium'
-              }`}
-            >
-              Issues
-            </Link>
+              <div className="space-y-1 pt-1">
+                <Link
+                  to="/issues"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block py-2.5 text-sm rounded ${
+                    isActive('/issues')
+                      ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                      : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                  }`}
+                >
+                  Issues
+                </Link>
 
-            <Link
-              to="/report"
-              onClick={() => setMobileMenuOpen(false)}
-              className={`block py-2.5 text-sm rounded ${
-                isActive('/report')
-                  ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                  : 'text-gray-700 hover:text-ink pl-4 font-medium'
-              }`}
-            >
-              Report an issue
-            </Link>
+                <Link
+                  to="/report"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block py-2.5 text-sm rounded ${
+                    isActive('/report')
+                      ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                      : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                  }`}
+                >
+                  Report an issue
+                </Link>
 
-            {user.role === 'super_admin' && (
+                {user.role === 'super_admin' && (
+                  <Link
+                    to="/users"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`block py-2.5 text-sm rounded ${
+                      isActive('/users')
+                        ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                        : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                    }`}
+                  >
+                    Users
+                  </Link>
+                )}
+
+                <p className="text-[11px] text-gray-400 pl-4 pt-2 pb-1">
+                  Super admin also sees Users.
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-line">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    logout();
+                  }}
+                  className="w-full text-center py-2 text-sm text-ink border border-line rounded font-medium hover:bg-gray-50"
+                >
+                  Log out
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="space-y-2 pt-2">
               <Link
-                to="/users"
+                to="/login"
                 onClick={() => setMobileMenuOpen(false)}
-                className={`block py-2.5 text-sm rounded ${
-                  isActive('/users')
-                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
-                }`}
+                className="block text-center py-2.5 text-sm font-semibold border border-line rounded text-ink"
               >
-                Users
+                Log in
               </Link>
-            )}
-
-            <p className="text-[11px] text-gray-400 pl-4 pt-2 pb-1">
-              Super admin also sees Users.
-            </p>
-          </div>
-
-          <div className="pt-2 border-t border-line">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                logout();
-              }}
-              className="w-full text-center py-2 text-sm text-ink border border-line rounded font-medium hover:bg-gray-50"
-            >
-              Log out
-            </button>
-          </div>
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-center py-2.5 text-sm font-semibold bg-teal text-white rounded"
+              >
+                Create account
+              </Link>
+            </div>
+          )}
         </div>
       )}
     </nav>

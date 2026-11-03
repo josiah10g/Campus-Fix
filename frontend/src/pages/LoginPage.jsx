@@ -1,6 +1,6 @@
 // frontend/src/pages/LoginPage.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -11,6 +11,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Validate internal redirect only
+  const getSafeNext = () => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('://')) {
+      return next;
+    }
+    return '/issues';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +35,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate('/issues');
+      navigate(getSafeNext());
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
     } finally {
@@ -37,6 +48,8 @@ export default function LoginPage() {
     setEmail(demoEmail);
     setPassword('DemoPass123!');
   };
+
+  const nextParam = location.search;
 
   return (
     <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-8 animate-page-enter">
@@ -98,7 +111,7 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 text-center text-sm text-teal font-medium">
-          <Link to="/register" className="hover:underline">
+          <Link to={`/register${nextParam}`} className="hover:underline">
             New here? Create an account
           </Link>
         </div>

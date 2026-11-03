@@ -35,7 +35,21 @@ export default function IssuesPage() {
   // Delete Modal State
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [welcomeVisible, setWelcomeVisible] = useState(Boolean(location.state?.welcome));
+
+  // One-time Welcome Banner state (keyed by user ID in localStorage)
+  const [welcomeVisible, setWelcomeVisible] = useState(() => {
+    if (!user) return false;
+    const dismissed = localStorage.getItem(`welcome_dismissed_${user.id}`);
+    if (dismissed) return false;
+    return Boolean(location.state?.welcome);
+  });
+
+  const dismissWelcome = () => {
+    setWelcomeVisible(false);
+    if (user?.id) {
+      localStorage.setItem(`welcome_dismissed_${user.id}`, 'true');
+    }
+  };
 
   // Newly created highlight
   const newlyCreatedId = location.state?.newIssueId;
@@ -129,22 +143,61 @@ export default function IssuesPage() {
     }
   };
 
+  const isMyReportsEmpty = viewTab === 'my' && issues.length === 0;
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-page-enter">
       <Toast toast={toast} onClose={() => setToast(null)} />
 
+      {/* One-time Welcome Banner matching Image 11 */}
       {welcomeVisible && (
-        <section className="mb-6 rounded-card border border-amber-200 border-l-4 border-l-safetyYellow bg-amber-50 p-5" role="status">
-          <div className="flex justify-between gap-4"><div><h2 className="font-bold text-ink">Welcome to CampusFix, {user?.name}</h2><p className="mt-1 text-sm text-gray-600">Your account is ready. Spotted something broken? Report it and follow its progress here.</p><div className="mt-3 flex gap-2"><Link to="/report" className="rounded bg-teal px-4 py-2 text-xs font-bold text-white">Report my first issue</Link><button onClick={() => { setWelcomeVisible(false); setViewTab('all'); }} className="rounded border border-line bg-white px-4 py-2 text-xs font-bold">Browse all issues</button></div></div><button onClick={() => setWelcomeVisible(false)} className="text-xs text-gray-600 underline">Dismiss</button></div>
+        <section className="mb-6 rounded-card border border-amber-200 border-l-4 border-l-safetyYellow bg-[#FEF9EE] p-6 shadow-sm animate-page-enter" role="status">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-ink">
+                Welcome to CampusFix, {user?.name?.split(' ')[0] || user?.name}
+              </h2>
+              <p className="mt-1 text-sm text-gray-600">
+                Your account is ready. Spotted something broken? Report it and follow its progress right here.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <Link
+                  to="/report"
+                  className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive"
+                >
+                  Report my first issue
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewTab('all');
+                  }}
+                  className="px-4 py-2 bg-white border border-line text-ink hover:bg-gray-50 text-xs font-semibold rounded shadow-none btn-interactive"
+                >
+                  Browse all issues
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={dismissWelcome}
+              className="text-xs font-semibold text-gray-500 hover:text-ink self-start sm:self-auto cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
         </section>
       )}
 
       {/* Page Title & Main Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-ink">Issues</h1>
+          <h1 className="text-2xl font-bold text-ink">
+            {viewTab === 'my' ? 'My reports' : 'Issues'}
+          </h1>
           <p className="text-xs text-gray-500 mt-1">
-            Every report on campus, with its current status.
+            {viewTab === 'my'
+              ? 'Issues you have submitted to campus maintenance.'
+              : 'Every report on campus, with its current status.'}
           </p>
         </div>
         <Link
@@ -232,7 +285,11 @@ export default function IssuesPage() {
       {loading ? (
         <SkeletonLoader />
       ) : issues.length === 0 ? (
-        <EmptyState message="No issues match your current filters or search query." />
+        <EmptyState
+          isMyReports={isMyReportsEmpty}
+          onBrowseIssues={() => setViewTab('all')}
+          message="No issues match your current filters or search query."
+        />
       ) : (
         <>
           {/* Desktop Table View */}
@@ -275,7 +332,11 @@ export default function IssuesPage() {
       {/* Role Behavior Caption Bar per design mockups */}
       <div className="mt-8 bg-white border border-line rounded-card p-4 flex items-center shadow-none">
         <div className="w-1 self-stretch bg-safetyYellow rounded-full mr-3.5" />
-        <p className="text-xs text-gray-700 font-normal">{getRoleCaption()}</p>
+        <p className="text-xs text-gray-700 font-normal">
+          {viewTab === 'my'
+            ? 'First login only: dismissible welcome banner sent after sign-up, plus a friendly empty state in My reports.'
+            : getRoleCaption()}
+        </p>
       </div>
 
       {/* Confirm Delete Modal */}

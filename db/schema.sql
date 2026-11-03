@@ -1,3 +1,4 @@
+
 -- CampusFix Database Schema
 -- Plain SQL schema for PostgreSQL
 

@@ -1,6 +1,6 @@
 // frontend/src/App.jsx
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
@@ -10,12 +10,13 @@ import ReportIssuePage from './pages/ReportIssuePage';
 import EditIssuePage from './pages/EditIssuePage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import UsersPage from './pages/UsersPage';
-import HomePage from './pages/HomePage';
+import PublicHomePage from './pages/PublicHomePage';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -26,7 +27,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    // Preserve next path for newcomers
+    const nextPath = location.pathname + location.search;
+    return <Navigate to={`/login?next=${encodeURIComponent(nextPath)}`} replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
@@ -59,7 +62,9 @@ export default function App() {
           <Navbar />
           <main className="flex-1">
             <Routes>
-              <Route path="/" element={<HomePage />} />
+              {/* Public Landing Page */}
+              <Route path="/" element={<PublicHomePage />} />
+
               {/* Public Auth Routes */}
               <Route
                 path="/login"
@@ -120,8 +125,8 @@ export default function App() {
                 }
               />
 
-              {/* Root redirect */}
-              <Route path="*" element={<Navigate to="/issues" replace />} />
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
         </div>
@@ -129,4 +134,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-

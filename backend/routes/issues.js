@@ -58,7 +58,6 @@ router.get('/', requireAuth, async (req, res, next) => {
         i.status,
         i.reporter_id,
         u.name AS reporter_name,
-        u.email AS reporter_email,
         i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id
@@ -94,7 +93,6 @@ router.get('/:id', requireAuth, async (req, res, next) => {
         i.status,
         i.reporter_id,
         u.name AS reporter_name,
-        u.email AS reporter_email,
         i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id
@@ -166,7 +164,6 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     const createdIssue = result.rows[0];
     createdIssue.reporter_name = req.user.name;
-    createdIssue.reporter_email = req.user.email;
 
     res.status(201).json(createdIssue);
   } catch (error) {
@@ -285,7 +282,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     const fetchSql = `
       SELECT
         i.id, i.title, i.description, i.category, i.location, i.status,
-        i.reporter_id, u.name AS reporter_name, u.email AS reporter_email, i.created_at
+        i.reporter_id, u.name AS reporter_name, i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id
       WHERE i.id = $1

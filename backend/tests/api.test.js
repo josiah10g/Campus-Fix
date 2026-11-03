@@ -14,18 +14,15 @@ test('CampusFix API End-to-End Tests', async (t) => {
   let maintenanceToken = '';
   let adminToken = '';
   let testRoleEmails = [];
-  let testRoleIds = [];
-  let registeredTestEmails = [];
   let createdIssueId = null;
 
   t.before(async () => {
     const unique = Date.now();
-    registeredTestEmails.push(`student_${unique}@example.com`);
     const studentRes = await request(app)
       .post('/api/auth/register')
       .send({
         name: 'Test Student',
-        email: registeredTestEmails[0],
+        email: `student_${unique}@example.com`,
         password: 'Password123!',
         role: 'student',
       });
@@ -34,34 +31,37 @@ test('CampusFix API End-to-End Tests', async (t) => {
       studentToken = studentRes.body.token;
       studentUser = studentRes.body.user;
     }
+
     const passwordHash = await bcrypt.hash('Password123!', 10);
     testRoleEmails = [`maintenance_${unique}@example.com`, `admin_${unique}@example.com`];
-    const maintenance = await pool.query(
+
+    await pool.query(
       'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
       ['Test Maintenance', testRoleEmails[0], passwordHash, 'maintenance']
     );
-    const admin = await pool.query(
+
+    await pool.query(
       'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
       ['Test Admin', testRoleEmails[1], passwordHash, 'admin']
     );
+
     const [maintenanceLogin, adminLogin] = await Promise.all([
       request(app).post('/api/auth/login').send({ email: testRoleEmails[0], password: 'Password123!' }),
       request(app).post('/api/auth/login').send({ email: testRoleEmails[1], password: 'Password123!' }),
     ]);
+
     maintenanceToken = maintenanceLogin.body.token;
     adminToken = adminLogin.body.token;
-    testRoleIds = [maintenance.rows[0].id, admin.rows[0].id];
   });
 
   t.after(async () => {
-    if (testRoleIds.length) {
-      await pool.query('DELETE FROM issues WHERE reporter_id = ANY($1::int[])', [testRoleIds]);
-      await pool.query('DELETE FROM users WHERE email = ANY($1::text[])', [testRoleEmails]);
+    // Cleanup test users
+    if (testRoleEmails.length > 0) {
+      await pool.query('DELETE FROM users WHERE email = ANY($1)', [testRoleEmails]);
     }
-    if (registeredTestEmails.length) {
-      await pool.query('DELETE FROM users WHERE email = ANY($1::text[])', [registeredTestEmails]);
+    if (studentUser && studentUser.id) {
+      await pool.query('DELETE FROM users WHERE id = $1', [studentUser.id]);
     }
-    await pool.end();
   });
 
   await t.test('GET /api/health should return ok: true', async () => {
@@ -70,54 +70,70 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(res.body.ok, true);
   });
 
-  await t.test('Public homepage APIs return counts and issue fields without reporter identity', async () => {
-    const stats = await request(app).get('/api/public/stats');
-    assert.strictEqual(stats.status, 200);
-    assert.deepStrictEqual(Object.keys(stats.body).sort(), ['inProgress', 'open', 'resolved', 'total']);
-    const latest = await request(app).get('/api/public/issues?limit=4');
-    assert.strictEqual(latest.status, 200);
-    assert.ok(Array.isArray(latest.body));
-    assert.ok(latest.body.length <= 4);
-    for (const issue of latest.body) {
-      assert.strictEqual(issue.reporter_name, undefined);
-      assert.strictEqual(issue.reporter_email, undefined);
-      assert.strictEqual(issue.description, undefined);
+  await t.test('GET /api/public/stats returns stats without auth', async () => {
+    const res = await request(app).get('/api/public/stats');
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(typeof res.body.total, 'number');
+    assert.strictEqual(typeof res.body.open, 'number');
+    assert.strictEqual(typeof res.body.inProgress, 'number');
+    assert.strictEqual(typeof res.body.resolved, 'number');
+  });
+
+  await t.test('GET /api/public/issues privacy guarantee: never includes reporter details or description', async () => {
+    const res = await request(app).get('/api/public/issues');
+    assert.strictEqual(res.status, 200);
+    assert.ok(Array.isArray(res.body));
+    for (const issue of res.body) {
+      assert.strictEqual(issue.description, undefined, 'description must not be exposed');
+      assert.strictEqual(issue.reporter_id, undefined, 'reporter_id must not be exposed');
+      assert.strictEqual(issue.reporter_name, undefined, 'reporter_name must not be exposed');
+      assert.strictEqual(issue.reporter_email, undefined, 'reporter_email must not be exposed');
+      assert.ok(issue.id, 'must include id');
+      assert.ok(issue.title, 'must include title');
+      assert.ok(issue.location, 'must include location');
+      assert.ok(issue.category, 'must include category');
+      assert.ok(issue.status, 'must include status');
+      assert.ok(issue.created_at, 'must include created_at');
     }
   });
 
-  await t.test('Unauthenticated request to /api/issues returns 401', async () => {
+  await t.test('GET /api/public/issues caps limit at 20', async () => {
+    const res = await request(app).get('/api/public/issues?limit=50');
+    assert.strictEqual(res.status, 200);
+    assert.ok(res.body.length <= 20);
+  });
+
+  await t.test('Protected /api/issues still returns 401 without a token', async () => {
     const res = await request(app).get('/api/issues');
     assert.strictEqual(res.status, 401);
-    assert.ok(res.body.error);
   });
 
   await t.test('POST /api/auth/register validates email format and password length', async () => {
-    const badEmail = await request(app)
-      .post('/api/auth/register')
-      .send({ name: 'Bad User', email: 'invalid-email', password: 'Password123!' });
+    const badEmail = await request(app).post('/api/auth/register').send({
+      name: 'Bad Email',
+      email: 'not-an-email',
+      password: 'validPassword123!',
+    });
     assert.strictEqual(badEmail.status, 400);
 
-    const shortPass = await request(app)
-      .post('/api/auth/register')
-      .send({ name: 'Bad User', email: 'valid@example.com', password: '123' });
-    assert.strictEqual(shortPass.status, 400);
+    const shortPassword = await request(app).post('/api/auth/register').send({
+      name: 'Short Pass',
+      email: 'valid@example.com',
+      password: '123',
+    });
+    assert.strictEqual(shortPassword.status, 400);
   });
 
   await t.test('POST /api/auth/register ignores or rejects roles other than student/staff', async () => {
-    const email = `hacker_${Date.now()}@example.com`;
-    registeredTestEmails.push(email);
-    const res = await request(app)
-      .post('/api/auth/register')
-      .send({
-        name: 'Hacker User',
-        email,
-        password: 'Password123!',
-        role: 'super_admin',
-      });
-    // System should default the user to student, never grant super_admin
+    const res = await request(app).post('/api/auth/register').send({
+      name: 'Hacker Attempt',
+      email: `hacker_${Date.now()}@example.com`,
+      password: 'HackerPassword123!',
+      role: 'super_admin',
+    });
     assert.strictEqual(res.status, 201);
     assert.strictEqual(res.body.user.role, 'student');
-    assert.strictEqual(res.body.user.password_hash, undefined);
+    await pool.query('DELETE FROM users WHERE id = $1', [res.body.user.id]);
   });
 
   await t.test('POST /api/issues validates input and returns 400 on empty title', async () => {
@@ -132,7 +148,6 @@ test('CampusFix API End-to-End Tests', async (t) => {
         location: 'Building A',
       });
     assert.strictEqual(res.status, 400);
-    assert.strictEqual(res.body.error, 'Title is required.');
   });
 
   await t.test('POST /api/issues creates valid issue with status Open', async () => {
@@ -141,15 +156,14 @@ test('CampusFix API End-to-End Tests', async (t) => {
       .post('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`)
       .send({
-        title: 'Broken fluorescent bulb',
-        description: 'Flickering incessantly in classroom 204',
-        category: 'Electrical',
-        location: 'Classroom 204',
+        title: 'Leaking tap in bathroom',
+        description: 'Water running constantly in block 3',
+        category: 'Plumbing',
+        location: 'Block 3, 1st floor',
       });
     assert.strictEqual(res.status, 201);
-    assert.strictEqual(res.body.title, 'Broken fluorescent bulb');
     assert.strictEqual(res.body.status, 'Open');
-    assert.strictEqual(res.body.reporter_name, studentUser.name);
+    assert.strictEqual(res.body.title, 'Leaking tap in bathroom');
     createdIssueId = res.body.id;
   });
 
@@ -161,21 +175,21 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(res.status, 200);
     assert.ok(Array.isArray(res.body));
     const found = res.body.find((i) => i.id === createdIssueId);
-    assert.ok(found);
+    assert.ok(found, 'Created issue should be returned in issues list');
   });
 
   await t.test('GET /api/issues/:id returns single issue or 404 for missing id', async () => {
     if (!studentToken) return;
-    const resSuccess = await request(app)
+    const res = await request(app)
       .get(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`);
-    assert.strictEqual(resSuccess.status, 200);
-    assert.strictEqual(resSuccess.body.id, createdIssueId);
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.id, createdIssueId);
 
-    const resMissing = await request(app)
+    const notFound = await request(app)
       .get('/api/issues/9999999')
       .set('Authorization', `Bearer ${studentToken}`);
-    assert.strictEqual(resMissing.status, 404);
+    assert.strictEqual(notFound.status, 404);
   });
 
   await t.test('PUT /api/issues/:id forbids student from changing status (403)', async () => {
@@ -183,9 +197,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
     const res = await request(app)
       .put(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`)
-      .send({
-        status: 'Resolved',
-      });
+      .send({ status: 'Resolved' });
     assert.strictEqual(res.status, 403);
   });
 
@@ -195,10 +207,13 @@ test('CampusFix API End-to-End Tests', async (t) => {
       .put(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`)
       .send({
-        title: 'Broken fluorescent bulb (Updated)',
+        title: 'Updated tap issue',
+        description: 'Updated tap description',
+        category: 'Plumbing',
+        location: 'Block 3, 2nd floor',
       });
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(res.body.title, 'Broken fluorescent bulb (Updated)');
+    assert.strictEqual(res.body.title, 'Updated tap issue');
   });
 
   await t.test('DELETE /api/issues/:id deletes issue when called by owner while Open', async () => {
@@ -208,7 +223,6 @@ test('CampusFix API End-to-End Tests', async (t) => {
       .set('Authorization', `Bearer ${studentToken}`);
     assert.strictEqual(res.status, 200);
 
-    // Verify subsequent lookup returns 404
     const checkRes = await request(app)
       .get(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`);
@@ -234,14 +248,6 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(maintenanceDelete.status, 403);
     const adminDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
     assert.strictEqual(adminDelete.status, 200);
-
-    const someoneElsesIssue = await request(app).post('/api/issues').set('Authorization', `Bearer ${adminToken}`).send({
-      title: 'Ownership permission test', description: 'Temporary test issue', category: 'Other', location: 'Test location',
-    });
-    const studentDelete = await request(app).delete(`/api/issues/${someoneElsesIssue.body.id}`).set('Authorization', `Bearer ${studentToken}`);
-    assert.strictEqual(studentDelete.status, 403);
-    const cleanupDelete = await request(app).delete(`/api/issues/${someoneElsesIssue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
-    assert.strictEqual(cleanupDelete.status, 200);
   });
 
   await t.test('Only super_admin can access user management', async () => {

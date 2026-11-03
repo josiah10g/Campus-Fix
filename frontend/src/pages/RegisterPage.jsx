@@ -1,6 +1,6 @@
 // frontend/src/pages/RegisterPage.jsx
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
@@ -15,6 +15,17 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Validate internal redirect only
+  const getSafeNext = () => {
+    const params = new URLSearchParams(location.search);
+    const next = params.get('next');
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('://')) {
+      return next;
+    }
+    return '/issues';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,14 +46,22 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register(formData);
-      navigate('/issues', { state: { welcome: true } });
+      const user = await register(formData);
+      // Mark for welcome banner if landing on /issues
+      const target = getSafeNext();
+      if (target === '/issues') {
+        navigate('/issues', { state: { welcome: true } });
+      } else {
+        navigate(target);
+      }
     } catch (err) {
       setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);
     }
   };
+
+  const nextParam = location.search;
 
   return (
     <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-8 animate-page-enter">
@@ -145,7 +164,7 @@ export default function RegisterPage() {
         </form>
 
         <div className="mt-6 text-center text-xs text-teal">
-          <Link to="/login" className="hover:underline">
+          <Link to={`/login${nextParam}`} className="hover:underline">
             Already registered? Log in
           </Link>
         </div>
@@ -153,4 +172,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-

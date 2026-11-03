@@ -131,6 +131,8 @@ Public endpoints are available without a token: `GET /api/public/stats` and `GET
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
 | `GET` | `/api/health` | Public | Health check `{ ok: true }` |
+| `GET` | `/api/public/stats` | Public | Live counts: total, open, inProgress, resolved (rate limited) |
+| `GET` | `/api/public/issues` | Public | Latest issues (max 20; safe public fields only) |
 | `POST` | `/api/auth/register` | Public | Register student or staff account |
 | `POST` | `/api/auth/login` | Public | Login with email and password |
 | `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile |
@@ -186,4 +188,6 @@ Design mockups are saved in the [`docs/mockups/`](docs/mockups/) directory:
 | 07 | Users page – Super Admin | `07-users-super-admin.png` |
 | 08 | Issue Detail & Feedback states | `08-issue-detail-and-feedback-states.png` |
 | 09 | Mobile responsive views | `09-mobile-views.png` |
+| 10 | Public Homepage (landing page) | `10-public-homepage.png` |
+| 11 | Welcome Banner & Empty State | `11-welcome-after-signup.png` |
 

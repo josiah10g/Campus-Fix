@@ -111,7 +111,7 @@ export default function IssueDetailPage() {
       {/* Main 2-column Detail Layout matching Image 08 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Issue details card */}
-        <div className="lg:col-span-8 bg-white border border-line rounded-card p-6 sm:p-8">
+        <div className="lg:col-span-8 bg-white border border-line rounded-card p-6 sm:p-8 card-interactive">
           <div className="flex items-center justify-between pb-6 border-b border-line">
             <h1 className="text-2xl font-bold text-ink">{issue.title}</h1>
             <StatusPill status={issue.status} />
@@ -155,7 +155,7 @@ export default function IssueDetailPage() {
         </div>
 
         {/* Right Column: Actions Card */}
-        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6">
+        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
           <h2 className="text-base font-bold text-ink mb-4">Actions</h2>
 
           {/* Status update box (maintenance, admin, super_admin) */}

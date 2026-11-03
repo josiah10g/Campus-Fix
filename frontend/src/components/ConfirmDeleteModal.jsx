@@ -69,7 +69,7 @@ export default function ConfirmDeleteModal({
           </div>
 
           <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line pt-4">
-            <span className="text-[11px] text-gray-400">
+            <span className="text-xs text-gray-400">
               Owner while Open, or admin and above
             </span>
             <div className="flex space-x-3 w-full sm:w-auto justify-end">

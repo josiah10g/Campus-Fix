@@ -121,4 +121,4 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
 
 ## 7. Motion and Reduced Motion
 
-The public pages use a brief fade and upward movement when a route opens, and the latest issue rows appear with a short stagger. The four count cards animate once when their values first load. Loading placeholders pulse while data is being fetched. These small cues show where new content appeared without delaying clicks or requests. CSS applies non-essential animation only when the browser reports `prefers-reduced-motion: no-preference`; reduced-motion users see immediate state changes.
+Pages use a brief fade and upward movement when a route opens, and smooth scrolling is enabled when the user has not requested reduced motion. Buttons and cards lift slightly and show a teal glow on hover. The four count cards animate once when their values first load. Loading placeholders pulse while data is being fetched. The base font size is 17px so the rem-based text is a little larger throughout the app. Non-essential motion only runs when the browser reports `prefers-reduced-motion: no-preference`; reduced-motion users see immediate state changes.

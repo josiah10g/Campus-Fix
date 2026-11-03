@@ -42,6 +42,7 @@ npm test
 6. Clear filters from an empty result; confirm the full list returns. Simulate a failed request and use “Try again”.
 7. Resize to mobile; confirm filters stack and the table becomes read-only cards. Repeat both public routes while logged in.
 8. Check hover and keyboard focus styles, enable reduced motion, and confirm the public pages stop moving content. Use a slow network to see skeleton rows, then verify stat counts and row entrance effects. Existing modal/drawer and toast interactions can be checked from the protected app.
+9. Confirm page scrolling is smooth with normal motion enabled; hover buttons and cards for the teal glow; check text is easier to read; and use the “Go back to the home page” link on both Login and Register.
 
 ### Full Newcomer Journey Checklist:
 1. **Public Landing (Logged Out)**: Visit `/`. Confirm the public navbar has "Log in" and "Create account". Check the headline *"Report it once. Watch it get fixed."*, 4 live stat cards, "How it works" 3 steps, and read-only "Latest issues" table (omitting reporter names and descriptions).

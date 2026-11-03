@@ -5,7 +5,7 @@
 
 @layer base {
   html {
-    font-size: 16px;
+    font-size: 17px;
   }
   body {
     background-color: #F1F4F3;
@@ -65,6 +65,10 @@
 
 /* Accessible motion wrapper: only animate if user hasn't requested reduced motion */
 @media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+
   .animate-field-shake {
     animation: fieldShake 250ms ease-in-out;
   }
@@ -93,7 +97,11 @@
 
   /* Micro-interactions */
   .btn-interactive {
-    transition: all 150ms ease-out;
+    transition: transform 200ms ease-out, color 200ms ease-out, background-color 200ms ease-out, box-shadow 200ms ease-out;
+  }
+  .btn-interactive:hover {
+    box-shadow: 0 0 0 1px rgba(14, 107, 111, 0.42), 0 0 22px rgba(14, 107, 111, 0.38);
+    transform: translateY(-1px);
   }
   .btn-interactive:active {
     transform: scale(0.98);
@@ -107,11 +115,12 @@
   }
 
   .card-interactive {
-    transition: transform 150ms ease-out, border-color 150ms ease-out;
+    transition: transform 200ms ease-out, border-color 200ms ease-out, box-shadow 200ms ease-out;
   }
   .card-interactive:hover {
     transform: translateY(-1px);
-    border-color: #B8C7C2;
+    border-color: #0E6B6F;
+    box-shadow: 0 0 0 1px rgba(14, 107, 111, 0.35), 0 0 24px rgba(14, 107, 111, 0.28);
   }
 }
 

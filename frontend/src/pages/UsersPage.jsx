@@ -103,7 +103,7 @@ export default function UsersPage() {
       {/* Main 2-column layout matching Image 07 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: User list table */}
-        <div className="lg:col-span-8 bg-white border border-line rounded-card overflow-hidden">
+        <div className="lg:col-span-8 bg-white border border-line rounded-card overflow-hidden card-interactive">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-line text-left text-sm">
               <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
@@ -154,7 +154,7 @@ export default function UsersPage() {
         </div>
 
         {/* Right: Create account card */}
-        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6">
+        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
           <h2 className="text-base font-bold text-ink">Create account</h2>
           <p className="text-xs text-gray-500 mt-0.5 mb-5">
             Students and staff register themselves.

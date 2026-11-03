@@ -120,7 +120,7 @@ export default function PublicHomePage() {
           <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold text-ink">How it works</h2><Link to="/how-it-works" className="text-sm font-semibold text-teal hover:underline">Learn more</Link></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Step 1 */}
-            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4">
+            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4 card-interactive">
               <div className="w-8 h-8 rounded-full bg-safetyYellow text-ink font-bold flex items-center justify-center shrink-0 text-sm">
                 1
               </div>
@@ -133,7 +133,7 @@ export default function PublicHomePage() {
             </div>
 
             {/* Step 2 */}
-            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4">
+            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4 card-interactive">
               <div className="w-8 h-8 rounded-full bg-safetyYellow text-ink font-bold flex items-center justify-center shrink-0 text-sm">
                 2
               </div>
@@ -146,7 +146,7 @@ export default function PublicHomePage() {
             </div>
 
             {/* Step 3 */}
-            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4">
+            <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4 card-interactive">
               <div className="w-8 h-8 rounded-full bg-safetyYellow text-ink font-bold flex items-center justify-center shrink-0 text-sm">
                 3
               </div>
@@ -174,7 +174,7 @@ export default function PublicHomePage() {
           ) : (
             <>
               {/* Desktop Public Table */}
-              <div className="hidden md:block bg-white border border-line rounded-card overflow-hidden">
+              <div className="hidden md:block bg-white border border-line rounded-card overflow-hidden card-interactive">
                 <table className="min-w-full divide-y divide-line text-left text-sm">
                   <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
                     <tr>
@@ -216,7 +216,7 @@ export default function PublicHomePage() {
               {/* Mobile Cards for Public View */}
               <div className="md:hidden space-y-3">
                 {issues.map((issue) => (
-                  <div key={issue.id} className="bg-white border border-line rounded-card p-4">
+                  <div key={issue.id} className="bg-white border border-line rounded-card p-4 card-interactive">
                     <div className="flex justify-between items-start mb-2">
                       <h4 className="font-bold text-ink text-sm">{issue.title}</h4>
                       <StatusPill status={issue.status} />

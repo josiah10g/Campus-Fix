@@ -2,11 +2,12 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
@@ -52,100 +53,143 @@ export default function LoginPage() {
   const nextParam = location.search;
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-center items-center px-4 py-8 animate-page-enter">
-      <div className="w-full max-w-md bg-white border border-line rounded-card p-8 sm:p-10 shadow-sm">
-        {/* Brand Header */}
-        <div className="flex items-center space-x-3 mb-6">
-          <div className="w-9 h-9 rounded bg-safetyYellow flex items-center justify-center font-bold text-ink text-lg shadow-none">
+    <div className="min-h-screen bg-page flex flex-col justify-between animate-page-enter">
+      {/* Top Bar with Brand Logo and Back to Home */}
+      <header className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+        <Link to="/" className="flex items-center space-x-2.5 focus:outline-none">
+          <div className="w-8 h-8 rounded bg-safetyYellow flex items-center justify-center font-bold text-ink text-base shadow-none">
             C
           </div>
-          <span className="font-bold text-2xl tracking-tight text-ink">CampusFix</span>
+          <span className="font-bold text-xl tracking-tight text-ink">CampusFix</span>
+        </Link>
+
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
+        >
+          <ArrowLeft size={13} aria-hidden="true" />
+          Back to Home
+        </Link>
+      </header>
+
+      {/* Main Centered Login Section */}
+      <main className="flex-1 flex flex-col justify-center items-center px-4 py-8">
+        <div className="w-full max-w-md">
+          {/* Centered Green/Teal Pulse Accent Dot & Header matching inspiration */}
+          <div className="text-center mb-7">
+            <div className="inline-block w-2.5 h-2.5 rounded-full bg-teal mb-3 shadow-[0_0_10px_rgba(14,107,111,0.5)]" />
+            <h1 className="text-3xl font-extrabold text-ink tracking-tight font-serif sm:font-sans">
+              Welcome back
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-500 mt-1.5">
+              Log in to track reports and manage campus issues.
+            </p>
+          </div>
+
+          {/* Form Card */}
+          <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm">
+            {error && (
+              <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-xs sm:text-sm text-statusOpen font-medium">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-ink mb-1.5">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="e.g. amina@example.com"
+                  className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                  autoComplete="email"
+                  required
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-ink">Password</label>
+                  <span className="text-[11px] text-gray-400">DemoPass123!</span>
+                </div>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink focus:outline-none"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
+                >
+                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Log in
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-6 text-center text-xs text-gray-600">
+              Don't have an account?{' '}
+              <Link to={`/register${nextParam}`} className="font-semibold text-teal hover:underline ml-1">
+                Sign up
+              </Link>
+            </div>
+
+            {/* Quick Demo Login Chips */}
+            <div className="mt-8 pt-5 border-t border-line">
+              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider mb-2 text-center">
+                Quick demo accounts (autofill):
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5 text-xs">
+                <button
+                  type="button"
+                  onClick={() => fillDemo('amina@example.com')}
+                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
+                >
+                  Student
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemo('tunde@example.com')}
+                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
+                >
+                  Maintenance
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillDemo('grace@example.com')}
+                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+      </main>
 
-        <h1 className="text-2xl font-bold text-ink tracking-tight">Log in</h1>
-        <p className="text-sm text-gray-500 mt-1 mb-6">Use your campus account.</p>
-
-        {error && (
-          <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-sm text-statusOpen font-medium">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-semibold text-ink mb-1.5">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. amina@example.com"
-              className="w-full px-3.5 py-2.5 text-sm border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
-              autoComplete="email"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-ink mb-1.5">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-3.5 py-2.5 text-sm border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
-              autoComplete="current-password"
-              required
-            />
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
-            >
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Log in
-            </button>
-          </div>
-        </form>
-
-        <div className="mt-6 text-center text-sm text-teal font-medium">
-          <Link to={`/register${nextParam}`} className="hover:underline">
-            New here? Create an account
-          </Link>
-        </div>
-
-        {/* Quick Demo Helper Chips */}
-        <div className="mt-8 pt-5 border-t border-line">
-          <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider mb-2">
-            Quick demo login (click to autofill):
-          </p>
-          <div className="flex flex-wrap gap-1.5 text-xs">
-            <button
-              type="button"
-              onClick={() => fillDemo('amina@example.com')}
-              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium"
-            >
-              Student
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('tunde@example.com')}
-              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium"
-            >
-              Maintenance
-            </button>
-            <button
-              type="button"
-              onClick={() => fillDemo('grace@example.com')}
-              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium"
-            >
-              Admin
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Subtle Footer */}
+      <footer className="py-4 text-center text-[11px] text-gray-400">
+        CampusFix &bull; Campus Issue Reporting and Tracking System
+      </footer>
     </div>
   );
 }

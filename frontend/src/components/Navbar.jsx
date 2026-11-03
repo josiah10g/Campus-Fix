@@ -228,7 +228,7 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                <p className="text-[11px] text-gray-400 pl-4 pt-2 pb-1">
+                <p className="text-xs text-gray-500 pl-4 pt-2 pb-1">
                   Super admin also sees Users.
                 </p>
               </div>

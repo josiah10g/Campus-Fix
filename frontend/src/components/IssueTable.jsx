@@ -16,7 +16,7 @@ export default function IssueTable({
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
 
   return (
-    <div className="bg-white border border-line rounded-card overflow-hidden shadow-none">
+    <div className="bg-white border border-line rounded-card overflow-hidden shadow-none card-interactive">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-line text-left text-sm">
           <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500 uppercase tracking-wider">

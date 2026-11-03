@@ -94,7 +94,7 @@ export default function IssueForm({
           <label htmlFor="title" className="block text-xs font-semibold text-ink">
             Title
           </label>
-          <span className="text-[11px] text-gray-400">
+          <span className="text-xs text-gray-400">
             {formData.title.length}/100
           </span>
         </div>

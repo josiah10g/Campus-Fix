@@ -10,7 +10,7 @@ const CATEGORIES = ['Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
 const PAGE_SIZE = 8;
 
 function LoadingRows() {
-  return <div className="animate-pulse space-y-2 rounded-card border border-line bg-white p-4" aria-label="Loading issues">{Array.from({ length: PAGE_SIZE }, (_, i) => <div key={i} className="h-10 rounded bg-gray-100" />)}</div>;
+  return <div className="animate-pulse space-y-2 rounded-card border border-line bg-white p-4 card-interactive" aria-label="Loading issues">{Array.from({ length: PAGE_SIZE }, (_, i) => <div key={i} className="h-10 rounded bg-gray-100" />)}</div>;
 }
 
 export default function LatestIssuesPage() {
@@ -120,16 +120,16 @@ export default function LatestIssuesPage() {
 
         {issuesError && <ErrorBanner message={issuesError} onRetry={() => setReloadCount((count) => count + 1)} />}
         {loading ? <LoadingRows /> : issues.length === 0 ? (
-          <div className="rounded-card border border-line bg-white px-5 py-12 text-center"><p className="font-semibold text-ink">No issues match your filters</p><button onClick={clearFilters} className="mt-3 text-sm font-semibold text-teal underline">Clear filters</button></div>
+          <div className="rounded-card border border-line bg-white px-5 py-12 text-center card-interactive"><p className="font-semibold text-ink">No issues match your filters</p><button onClick={clearFilters} className="mt-3 text-sm font-semibold text-teal underline">Clear filters</button></div>
         ) : (
           <>
-            <div className="hidden overflow-x-auto rounded-card border border-line bg-white md:block">
+            <div className="hidden overflow-x-auto rounded-card border border-line bg-white md:block card-interactive">
               <table className="w-full min-w-[700px] text-left text-sm">
                 <thead className="bg-[#E8EEEC] text-gray-600"><tr>{['Title', 'Location', 'Category', 'Status', 'Reported'].map((label) => <th key={label} className="px-5 py-3">{label}</th>)}</tr></thead>
                 <tbody className="divide-y divide-line">{issues.map((issue, index) => <tr key={issue.id} style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined} className={`table-row-hover ${index < 8 ? 'animate-row-enter' : ''}`}><td className="px-5 py-4 font-bold text-ink">{issue.title}</td><td className="px-5 py-4 text-gray-600">{issue.location}</td><td className="px-5 py-4">{issue.category}</td><td className="px-5 py-4"><StatusPill status={issue.status} label={issue.status === 'In Progress' ? 'In progress' : issue.status} /></td><td className="px-5 py-4 text-gray-600">{new Date(issue.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td></tr>)}</tbody>
               </table>
             </div>
-            <div className="space-y-3 md:hidden">{issues.map((issue, index) => <article key={issue.id} style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined} className={`rounded-card border border-line bg-white p-4 ${index < 8 ? 'animate-row-enter' : ''}`}><div className="flex items-start justify-between gap-3"><h2 className="font-bold text-ink">{issue.title}</h2><StatusPill status={issue.status} label={issue.status === 'In Progress' ? 'In progress' : issue.status} /></div><p className="mt-2 text-sm text-gray-600">{issue.location} · {issue.category}</p><p className="mt-1 text-xs text-gray-500">{new Date(issue.created_at).toLocaleDateString()}</p></article>)}</div>
+            <div className="space-y-3 md:hidden">{issues.map((issue, index) => <article key={issue.id} style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined} className={`rounded-card border border-line bg-white p-4 card-interactive ${index < 8 ? 'animate-row-enter' : ''}`}><div className="flex items-start justify-between gap-3"><h2 className="font-bold text-ink">{issue.title}</h2><StatusPill status={issue.status} label={issue.status === 'In Progress' ? 'In progress' : issue.status} /></div><p className="mt-2 text-sm text-gray-600">{issue.location} · {issue.category}</p><p className="mt-1 text-xs text-gray-500">{new Date(issue.created_at).toLocaleDateString()}</p></article>)}</div>
             <nav className="mt-4 flex items-center justify-between" aria-label="Issue pages"><button disabled={page <= 1} onClick={() => changePage(page - 1)} className="rounded border border-line bg-white px-5 py-2.5 text-sm font-semibold text-ink disabled:opacity-40">Previous</button><span className="text-sm text-gray-600">Page {page} of {totalPages}</span><button disabled={page >= totalPages} onClick={() => changePage(page + 1)} className="rounded bg-teal px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-40">Next</button></nav>
           </>
         )}

@@ -15,15 +15,17 @@ test('CampusFix API End-to-End Tests', async (t) => {
   let adminToken = '';
   let testRoleEmails = [];
   let testRoleIds = [];
+  let registeredTestEmails = [];
   let createdIssueId = null;
 
   t.before(async () => {
     const unique = Date.now();
+    registeredTestEmails.push(`student_${unique}@example.com`);
     const studentRes = await request(app)
       .post('/api/auth/register')
       .send({
         name: 'Test Student',
-        email: `student_${unique}@example.com`,
+        email: registeredTestEmails[0],
         password: 'Password123!',
         role: 'student',
       });
@@ -55,6 +57,9 @@ test('CampusFix API End-to-End Tests', async (t) => {
     if (testRoleIds.length) {
       await pool.query('DELETE FROM issues WHERE reporter_id = ANY($1::int[])', [testRoleIds]);
       await pool.query('DELETE FROM users WHERE email = ANY($1::text[])', [testRoleEmails]);
+    }
+    if (registeredTestEmails.length) {
+      await pool.query('DELETE FROM users WHERE email = ANY($1::text[])', [registeredTestEmails]);
     }
     await pool.end();
   });
@@ -99,11 +104,13 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('POST /api/auth/register ignores or rejects roles other than student/staff', async () => {
+    const email = `hacker_${Date.now()}@example.com`;
+    registeredTestEmails.push(email);
     const res = await request(app)
       .post('/api/auth/register')
       .send({
         name: 'Hacker User',
-        email: `hacker_${Date.now()}@example.com`,
+        email,
         password: 'Password123!',
         role: 'super_admin',
       });

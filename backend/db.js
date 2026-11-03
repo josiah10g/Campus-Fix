@@ -41,6 +41,7 @@ const initDb = async () => {
       student_id VARCHAR(60),
       level VARCHAR(40),
       staff_type VARCHAR(30),
+      profile_picture_url TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `;
@@ -73,6 +74,7 @@ const initDb = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS student_id VARCHAR(60)');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS level VARCHAR(40)');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_type VARCHAR(30)');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture_url TEXT');
     await pool.query('ALTER TABLE issues ADD COLUMN IF NOT EXISTS category_detail VARCHAR(100)');
     await pool.query(createIndexes);
     console.log('[DB] Database tables initialized successfully.');

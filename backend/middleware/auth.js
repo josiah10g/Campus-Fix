@@ -28,7 +28,7 @@ const requireAuth = async (req, res, next) => {
     }
 
     const result = await query(
-      'SELECT id, name, email, role, created_at FROM users WHERE id = $1',
+      'SELECT id, name, email, role, faculty, department, student_id, level, staff_type, created_at FROM users WHERE id = $1',
       [decoded.userId]
     );
 

@@ -33,7 +33,7 @@ app.use(
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // Request logging (clean, minimal)
 app.use((req, res, next) => {

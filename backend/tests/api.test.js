@@ -14,10 +14,12 @@ test('CampusFix API End-to-End Tests', async (t) => {
   let maintenanceToken = '';
   let adminToken = '';
   let testRoleEmails = [];
+  let publicFixtureIssueIds = [];
   let createdIssueId = null;
 
   t.before(async () => {
     const unique = Date.now();
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture_url TEXT');
     const studentRes = await request(app)
       .post('/api/auth/register')
       .send({
@@ -34,6 +36,17 @@ test('CampusFix API End-to-End Tests', async (t) => {
     if (studentRes.status === 201) {
       studentToken = studentRes.body.token;
       studentUser = studentRes.body.user;
+      for (const [title, location, status, category] of [
+        ['Public filter fixture one', 'Test Library', 'Open', 'Plumbing'],
+        ['Public filter fixture two', 'Test Hall', 'Resolved', 'Electrical'],
+      ]) {
+        const issue = await pool.query(
+          `INSERT INTO issues (title, description, category, location, status, reporter_id)
+           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+          [title, 'Temporary automated test issue', category, location, status, studentUser.id]
+        );
+        publicFixtureIssueIds.push(issue.rows[0].id);
+      }
     }
 
     const passwordHash = await bcrypt.hash('Password123!', 10);
@@ -59,6 +72,9 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   t.after(async () => {
+    if (publicFixtureIssueIds.length) {
+      await pool.query('DELETE FROM issues WHERE id = ANY($1)', [publicFixtureIssueIds]);
+    }
     // Cleanup test users
     if (testRoleEmails.length > 0) {
       await pool.query('DELETE FROM users WHERE email = ANY($1)', [testRoleEmails]);
@@ -181,6 +197,25 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(staff.status, 201);
     assert.strictEqual(staff.body.user.role, 'staff');
     assert.strictEqual(staff.body.user.staff_type, 'Lecturer');
+  });
+
+  await t.test('PUT /api/auth/profile updates account, student details, and optional picture', async () => {
+    const changed = await request(app).put('/api/auth/profile')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .send({
+        name: 'Updated Test Student', email: studentUser.email, password: 'ChangedPass123!',
+        faculty: 'Faculty of Testing', department: 'Test Studies', student_id: studentUser.student_id,
+        level: '200 level', profile_picture_url: 'data:image/png;base64,aGVsbG8=',
+      });
+    assert.strictEqual(changed.status, 200);
+    assert.strictEqual(changed.body.user.name, 'Updated Test Student');
+    assert.strictEqual(changed.body.user.level, '200 level');
+    assert.strictEqual(changed.body.user.profile_picture_url, 'data:image/png;base64,aGVsbG8=');
+    assert.strictEqual(changed.body.user.password_hash, undefined);
+    const login = await request(app).post('/api/auth/login').send({ email: studentUser.email, password: 'ChangedPass123!' });
+    assert.strictEqual(login.status, 200);
+    studentToken = login.body.token;
+    studentUser = changed.body.user;
   });
 
   await t.test('POST /api/auth/register ignores or rejects roles other than student/staff', async () => {
@@ -340,9 +375,17 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(list.body.total, list.body.users.length);
     assert.strictEqual(list.body.users[0].password_hash, undefined);
 
-    const cannotCreate = await request(app).post('/api/users').set('Authorization', `Bearer ${adminToken}`)
-      .send({ name: 'Not Allowed', email: `admin-create-${Date.now()}@example.com`, password: 'Password123!', role: 'maintenance' });
-    assert.strictEqual(cannotCreate.status, 403);
+    const adminCreatedEmail = `admin-created-${Date.now()}@example.com`;
+    testRoleEmails.push(adminCreatedEmail);
+    const adminCreated = await request(app).post('/api/users').set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Admin Created User', email: adminCreatedEmail, password: 'Password123!', role: 'student' });
+    assert.strictEqual(adminCreated.status, 201);
+    const changedRole = await request(app).put(`/api/users/${adminCreated.body.user.id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`).send({ role: 'maintenance' });
+    assert.strictEqual(changedRole.status, 200);
+    assert.strictEqual(changedRole.body.user.role, 'maintenance');
+    const deleted = await request(app).delete(`/api/users/${adminCreated.body.user.id}`).set('Authorization', `Bearer ${adminToken}`);
+    assert.strictEqual(deleted.status, 200);
 
     const promote = await request(app).put(`/api/users/${studentUser.id}/role`)
       .set('Authorization', `Bearer ${adminToken}`).send({ role: 'admin' });

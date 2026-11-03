@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     student_id VARCHAR(60),
     level VARCHAR(40),
     staff_type VARCHAR(30),
+    profile_picture_url TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

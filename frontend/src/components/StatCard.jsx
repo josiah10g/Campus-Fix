@@ -1,8 +1,9 @@
 // frontend/src/components/StatCard.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 export default function StatCard({ label, value, colorClass = 'text-ink' }) {
   const [displayValue, setDisplayValue] = useState(0);
+  const hasAnimated = useRef(false);
 
   // Smooth count-up effect on initial load (approx 600ms)
   useEffect(() => {
@@ -12,6 +13,11 @@ export default function StatCard({ label, value, colorClass = 'text-ink' }) {
       setDisplayValue(0);
       return;
     }
+    if (hasAnimated.current) {
+      setDisplayValue(end);
+      return;
+    }
+    hasAnimated.current = true;
 
     const duration = 600;
     const stepTime = Math.abs(Math.floor(duration / end));

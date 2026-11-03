@@ -10,6 +10,7 @@ export default function IssueCard({
   onStatusChange,
   onDeleteClick,
   isNewlyCreated,
+  index = 0,
 }) {
   const canChangeStatusInline = ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
@@ -21,7 +22,8 @@ export default function IssueCard({
 
   return (
     <div
-      className={`bg-white border border-line rounded-card p-4 card-interactive ${
+      style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined}
+      className={`bg-white border border-line rounded-card p-4 card-interactive ${index < 8 ? 'animate-row-enter' : ''} ${
         isNewlyCreated ? 'animate-highlight-new' : ''
       }`}
     >

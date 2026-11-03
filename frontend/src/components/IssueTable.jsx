@@ -28,7 +28,7 @@ export default function IssueTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-line bg-white">
-            {issues.map((issue) => {
+            {issues.map((issue, index) => {
               const isOwner = issue.reporter_id === currentUser.id;
               const isOwnerOpen = isOwner && issue.status === 'Open';
               const canEdit = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
@@ -38,7 +38,8 @@ export default function IssueTable({
               return (
                 <tr
                   key={issue.id}
-                  className={`table-row-hover ${isNewlyCreated ? 'animate-highlight-new' : ''}`}
+                  className={`table-row-hover ${index < 8 ? 'animate-row-enter' : ''} ${isNewlyCreated ? 'animate-highlight-new' : ''}`}
+                  style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined}
                 >
                   <td className="px-5 py-4 whitespace-nowrap">
                     <div className="font-bold text-ink text-sm">{issue.title}</div>

@@ -305,7 +305,7 @@ export default function IssuesPage() {
 
           {/* Mobile Stacked Cards View */}
           <div className="md:hidden space-y-3">
-            {issues.map((issue) => (
+            {issues.map((issue, index) => (
               <IssueCard
                 key={issue.id}
                 issue={issue}
@@ -313,6 +313,7 @@ export default function IssuesPage() {
                 onStatusChange={handleStatusChange}
                 onDeleteClick={(issue) => setDeleteTarget(issue)}
                 isNewlyCreated={issue.id === newlyCreatedId}
+                index={index}
               />
             ))}
           </div>

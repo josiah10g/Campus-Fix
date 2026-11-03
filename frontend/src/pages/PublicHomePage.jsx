@@ -1,6 +1,6 @@
 // frontend/src/pages/PublicHomePage.jsx
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import StatCard from '../components/StatCard';
@@ -10,14 +10,11 @@ import ErrorBanner from '../components/ErrorBanner';
 
 export default function PublicHomePage() {
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [stats, setStats] = useState({ total: 0, open: 0, inProgress: 0, resolved: 0 });
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showWelcome, setShowWelcome] = useState(true);
-  const [fadeWelcome, setFadeWelcome] = useState(false);
 
   const loadPublicData = async () => {
     try {
@@ -41,15 +38,6 @@ export default function PublicHomePage() {
     loadPublicData();
   }, []);
 
-  useEffect(() => {
-    const fadeTimer = setTimeout(() => setFadeWelcome(true), 800);
-    const hideTimer = setTimeout(() => setShowWelcome(false), 1000);
-    return () => {
-      clearTimeout(fadeTimer);
-      clearTimeout(hideTimer);
-    };
-  }, []);
-
   return (
     <div className="min-h-screen bg-page flex flex-col justify-between animate-page-enter">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
@@ -57,11 +45,9 @@ export default function PublicHomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
           {/* Left Column: Hero Text & Buttons */}
           <div className="lg:col-span-7 pt-2">
-            {showWelcome && (
-              <div className={`inline-block px-3 py-1 bg-[#FEF6E6] border border-safetyYellow rounded-full text-xs font-semibold text-ink mb-4 ${fadeWelcome ? 'animate-welcome-out' : ''}`}>
+            <div className="inline-block px-3 py-1 bg-[#FEF6E6] border border-safetyYellow rounded-full text-xs font-semibold text-ink mb-4 animate-welcome-out">
                 Welcome to CampusFix
-              </div>
-            )}
+            </div>
 
             <h1 className="text-4xl sm:text-5xl font-extrabold text-ink tracking-tight leading-tight mb-2">
               Report it once. <br />

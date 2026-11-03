@@ -89,7 +89,7 @@
   .animate-drawer-out { animation: drawerOut 200ms ease-out both; }
   .animate-row-enter { animation: rowEnter 200ms ease-out both; }
   .animate-row-delete { animation: rowDelete 200ms ease-out both; transform-origin: top; }
-  .animate-welcome-out { animation: welcomeFadeOut 200ms ease-out both; }
+  .animate-welcome-out { animation: welcomeFadeOut 200ms ease-out 800ms both; }
 
   /* Micro-interactions */
   .btn-interactive {
@@ -121,6 +121,7 @@
   *::after {
     scroll-behavior: auto !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }

@@ -53,6 +53,13 @@
   }
 }
 
+@keyframes modalBackdropIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalBackdropOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalPopIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+@keyframes modalPopOut { from { opacity: 1; transform: scale(1); } to { opacity: 0; transform: scale(0.95); } }
+@keyframes drawerIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+@keyframes drawerOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
+
 /* Accessible motion wrapper: only animate if user hasn't requested reduced motion */
 @media (prefers-reduced-motion: no-preference) {
   .animate-field-shake {
@@ -70,6 +77,13 @@
   .animate-toast-in {
     animation: toastSlideIn 250ms ease-out forwards;
   }
+
+  .animate-backdrop-in { animation: modalBackdropIn 200ms ease-out both; }
+  .animate-backdrop-out { animation: modalBackdropOut 200ms ease-out both; }
+  .animate-modal-in { animation: modalPopIn 200ms ease-out both; }
+  .animate-modal-out { animation: modalPopOut 200ms ease-out both; }
+  .animate-drawer-in { animation: drawerIn 200ms ease-out both; }
+  .animate-drawer-out { animation: drawerOut 200ms ease-out both; }
 
   /* Micro-interactions */
   .btn-interactive {

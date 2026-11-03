@@ -1,5 +1,5 @@
 // frontend/src/components/ConfirmDeleteModal.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
 export default function ConfirmDeleteModal({
@@ -10,29 +10,48 @@ export default function ConfirmDeleteModal({
   onCancel,
   loading = false,
 }) {
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      setClosing(false);
+    } else if (visible) {
+      setClosing(true);
+      const timer = setTimeout(() => setVisible(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  const close = () => {
+    if (!loading) {
+      setClosing(true);
+      onCancel();
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen && !loading) {
-        onCancel();
-      }
+      if (e.key === 'Escape' && isOpen && !loading) close();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, loading, onCancel]);
 
-  if (!isOpen) return null;
+  if (!visible) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 transition-opacity animate-page-enter"
-        onClick={() => !loading && onCancel()}
+        className={`fixed inset-0 bg-black/40 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
+        onClick={close}
       />
 
       <div className="flex min-h-full items-center justify-center p-4 text-center">
         <div
-          className="relative transform overflow-hidden rounded-card bg-white text-left shadow-xl transition-all w-full max-w-md p-6 border border-line animate-page-enter"
+          className={`relative transform overflow-hidden rounded-card bg-white text-left shadow-xl w-full max-w-md p-6 border border-line ${closing ? 'animate-modal-out' : 'animate-modal-in'}`}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-start">

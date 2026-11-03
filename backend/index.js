@@ -48,6 +48,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Root greeting endpoint
+app.get('/', (req, res) => res.json({ ok: true, message: 'CampusFix API is live', health: '/api/health' }));
+
 // Health check endpoint for monitoring & Render
 app.get('/api/health', (req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });

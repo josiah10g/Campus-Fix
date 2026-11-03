@@ -37,7 +37,7 @@ export default function ReportIssuePage() {
       <div className="mb-4">
         <Link
           to="/issues"
-          className="inline-flex items-center text-xs font-semibold text-gray-500 hover:text-ink transition-colors"
+          className="inline-flex items-center gap-1 rounded border border-line bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal btn-interactive"
         >
           <ArrowLeft size={14} className="mr-1" />
           Back to all issues

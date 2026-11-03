@@ -92,23 +92,6 @@ export default function IssuesPage() {
     }
   }, [location.state]);
 
-  // Inline Status Change (Maintenance / Admin / Super Admin)
-  const handleStatusChange = async (issueId, newStatus) => {
-    try {
-      const updated = await api.updateIssue(issueId, { status: newStatus });
-      setIssues((prev) => prev.map((item) => (item.id === issueId ? updated : item)));
-      // Refresh stats
-      const newStats = await api.getStats();
-      setStats(newStats);
-      setToast({ type: 'success', message: `Status updated to ${newStatus}.` });
-    } catch (err) {
-      setToast({
-        type: 'error',
-        message: err.message || 'Could not update status.',
-      });
-    }
-  };
-
   // Confirm Delete
   const handleDeleteConfirm = async () => {
     if (!deleteTarget) return;
@@ -128,23 +111,6 @@ export default function IssuesPage() {
       setToast({ type: 'error', message: err.message || 'Failed to delete issue.' });
     } finally {
       setDeleteLoading(false);
-    }
-  };
-
-  // Caption Bar description per role based on design mockups
-  const getRoleCaption = () => {
-    switch (user?.role) {
-      case 'student':
-      case 'staff':
-        return 'Student and staff: report, view everything, edit or delete only their own issues while Open. Status is read only.';
-      case 'maintenance':
-        return 'Maintenance: change status inline, edit any issue, view everything. Cannot delete.';
-      case 'admin':
-        return 'Admin: everything maintenance can do, plus delete any issue.';
-      case 'super_admin':
-        return 'Super admin: complete control including user management, role assignments, and full issue oversight.';
-      default:
-        return '';
     }
   };
 
@@ -302,7 +268,6 @@ export default function IssuesPage() {
             <IssueTable
               issues={issues}
               currentUser={user}
-              onStatusChange={handleStatusChange}
               onDeleteClick={(issue) => setDeleteTarget(issue)}
               newlyCreatedId={newlyCreatedId}
               deletingId={deletingId}
@@ -316,7 +281,6 @@ export default function IssuesPage() {
                 key={issue.id}
                 issue={issue}
                 currentUser={user}
-                onStatusChange={handleStatusChange}
                 onDeleteClick={(issue) => setDeleteTarget(issue)}
                 isNewlyCreated={issue.id === newlyCreatedId}
                 index={index}
@@ -336,16 +300,6 @@ export default function IssuesPage() {
           </div>
         </>
       )}
-
-      {/* Role Behavior Caption Bar per design mockups */}
-      <div className="mt-8 bg-white border border-line rounded-card p-4 flex items-center shadow-none">
-        <div className="w-1 self-stretch bg-safetyYellow rounded-full mr-3.5" />
-        <p className="text-xs text-gray-700 font-normal">
-          {viewTab === 'my'
-            ? 'First login only: dismissible welcome banner sent after sign-up, plus a friendly empty state in My reports.'
-            : getRoleCaption()}
-        </p>
-      </div>
 
       {/* Confirm Delete Modal */}
       <ConfirmDeleteModal

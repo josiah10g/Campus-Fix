@@ -2,18 +2,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import StatusPill from './StatusPill';
-import StatusSelect from './StatusSelect';
 
 export default function IssueCard({
   issue,
   currentUser,
-  onStatusChange,
   onDeleteClick,
   isNewlyCreated,
   index = 0,
   isDeleting = false,
 }) {
-  const canChangeStatusInline = ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
 
   const isOwner = issue.reporter_id === currentUser.id;
@@ -34,14 +31,7 @@ export default function IssueCard({
           <p className="text-xs text-gray-500 mt-0.5">{issue.location}</p>
         </div>
         <div>
-          {canChangeStatusInline ? (
-            <StatusSelect
-              currentStatus={issue.status}
-              onStatusChange={(newStatus) => onStatusChange(issue.id, newStatus)}
-            />
-          ) : (
-            <StatusPill status={issue.status} />
-          )}
+          <StatusPill status={issue.status} />
         </div>
       </div>
 
@@ -50,7 +40,9 @@ export default function IssueCard({
       <div className="flex items-center justify-between pt-3 border-t border-line text-xs">
         <div className="flex items-center space-x-2 text-gray-600">
           <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">
-            {issue.category}
+            {issue.category === 'Other' && issue.category_detail
+              ? `Other: ${issue.category_detail}`
+              : issue.category}
           </span>
           <span>•</span>
           <span>
@@ -62,19 +54,19 @@ export default function IssueCard({
           </span>
         </div>
 
-        <div className="flex items-center space-x-3 font-semibold">
-          <Link to={`/issues/${issue.id}`} className="text-teal hover:underline">
+        <div className="flex flex-wrap items-center justify-end gap-2 font-semibold">
+          <Link to={`/issues/${issue.id}`} className="inline-flex min-w-16 items-center justify-center rounded border border-teal/30 bg-white px-2.5 py-1.5 text-xs text-teal hover:bg-teal hover:text-white btn-interactive">
             View
           </Link>
           {canEdit && (
-            <Link to={`/issues/${issue.id}/edit`} className="text-teal hover:underline">
+            <Link to={`/issues/${issue.id}/edit`} className="inline-flex min-w-16 items-center justify-center rounded border border-teal/30 bg-white px-2.5 py-1.5 text-xs text-teal hover:bg-teal hover:text-white btn-interactive">
               Edit
             </Link>
           )}
           {canDelete && (
             <button
               onClick={() => onDeleteClick(issue)}
-              className="text-statusOpen hover:underline focus:outline-none"
+              className="inline-flex min-w-16 items-center justify-center rounded border border-statusOpen/30 bg-white px-2.5 py-1.5 text-xs text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
             >
               Delete
             </button>

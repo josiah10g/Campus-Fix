@@ -8,17 +8,13 @@ import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import Toast from '../components/Toast';
 import { ChevronLeft, Loader2 } from 'lucide-react';
 
-const STATUS_OPTIONS = ['Open', 'In Progress', 'Resolved'];
-
 export default function IssueDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
   const [issue, setIssue] = useState(null);
-  const [selectedStatus, setSelectedStatus] = useState('Open');
   const [loading, setLoading] = useState(true);
-  const [savingStatus, setSavingStatus] = useState(false);
   const [toast, setToast] = useState(null);
 
   // Delete modal
@@ -30,7 +26,6 @@ export default function IssueDetailPage() {
       try {
         const data = await api.getIssue(id);
         setIssue(data);
-        setSelectedStatus(data.status);
       } catch (err) {
         setToast({ type: 'error', message: err.message || 'Issue not found.' });
       } finally {
@@ -39,19 +34,6 @@ export default function IssueDetailPage() {
     };
     fetchIssue();
   }, [id]);
-
-  const handleSaveStatus = async () => {
-    setSavingStatus(true);
-    try {
-      const updated = await api.updateIssue(id, { status: selectedStatus });
-      setIssue(updated);
-      setToast({ type: 'success', message: 'Status updated successfully.' });
-    } catch (err) {
-      setToast({ type: 'error', message: err.message || 'Could not update status.' });
-    } finally {
-      setSavingStatus(false);
-    }
-  };
 
   const handleDelete = async () => {
     setDeleteLoading(true);
@@ -90,7 +72,6 @@ export default function IssueDetailPage() {
   const isOwner = issue.reporter_id === user.id;
   const isOwnerOpen = isOwner && issue.status === 'Open';
   const canEditDetails = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(user.role);
-  const canChangeStatus = ['maintenance', 'admin', 'super_admin'].includes(user.role);
   const canDelete = isOwnerOpen || ['admin', 'super_admin'].includes(user.role);
 
   return (
@@ -101,7 +82,7 @@ export default function IssueDetailPage() {
       <div className="mb-4">
         <Link
           to="/issues"
-          className="inline-flex items-center text-xs font-semibold text-gray-600 hover:text-ink transition-colors"
+          className="inline-flex items-center gap-1 rounded border border-line bg-white px-3 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal btn-interactive"
         >
           <ChevronLeft size={15} className="mr-0.5" />
           All issues
@@ -120,7 +101,11 @@ export default function IssueDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 border-b border-line text-xs">
             <div>
               <span className="text-gray-400 block mb-1">Category</span>
-              <span className="font-semibold text-ink">{issue.category}</span>
+                <span className="font-semibold text-ink">
+                  {issue.category === 'Other' && issue.category_detail
+                    ? `Other: ${issue.category_detail}`
+                    : issue.category}
+                </span>
             </div>
             <div>
               <span className="text-gray-400 block mb-1">Location</span>
@@ -158,44 +143,16 @@ export default function IssueDetailPage() {
         <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
           <h2 className="text-base font-bold text-ink mb-4">Actions</h2>
 
-          {/* Status update box (maintenance, admin, super_admin) */}
-          {canChangeStatus ? (
-            <div className="space-y-3 mb-5">
-              <label className="block text-xs font-semibold text-ink">Status</label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
-              >
-                {STATUS_OPTIONS.map((st) => (
-                  <option key={st} value={st}>
-                    {st}
-                  </option>
-                ))}
-              </select>
-
-              <button
-                type="button"
-                onClick={handleSaveStatus}
-                disabled={savingStatus}
-                className="w-full py-2.5 px-4 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
-              >
-                {savingStatus && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-                Save status
-              </button>
-            </div>
-          ) : (
-            <div className="mb-4 p-3 bg-gray-50 border border-line rounded text-xs text-gray-500">
-              Status is managed by campus maintenance staff.
-            </div>
-          )}
+          <div className="mb-4 p-3 bg-gray-50 border border-line rounded text-sm text-gray-600">
+            Status is read-only.
+          </div>
 
           {/* Edit details action button */}
           {canEditDetails && (
             <div className="mb-4">
               <Link
                 to={`/issues/${issue.id}/edit`}
-                className="w-full py-2 px-4 border border-line text-ink hover:bg-gray-50 text-xs font-semibold rounded text-center block transition-colors"
+                className="w-full py-2 px-4 border border-line text-ink hover:bg-gray-50 text-sm font-semibold rounded text-center block btn-interactive"
               >
                 Edit details
               </Link>
@@ -208,7 +165,7 @@ export default function IssueDetailPage() {
               <button
                 type="button"
                 onClick={() => setDeleteOpen(true)}
-                className="w-full py-2 px-4 border border-line text-statusOpen hover:bg-red-50 text-xs font-semibold rounded transition-colors"
+                className="w-full py-2 px-4 border border-statusOpen/30 text-statusOpen hover:bg-statusOpen hover:text-white text-sm font-semibold rounded btn-interactive"
               >
                 Delete issue
               </button>

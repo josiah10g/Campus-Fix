@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 
 const CATEGORIES = ['Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
-const STATUSES = ['Open', 'In Progress', 'Resolved'];
 
 export default function IssueForm({
   initialData = {},
@@ -15,17 +14,14 @@ export default function IssueForm({
   const [formData, setFormData] = useState({
     title: initialData.title || '',
     category: initialData.category || '',
+    category_detail: initialData.category_detail || '',
     location: initialData.location || '',
     description: initialData.description || '',
-    status: initialData.status || 'Open',
   });
 
   const [errors, setErrors] = useState({});
   const [shakingFields, setShakingFields] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const canEditStatus =
-    isEdit && ['maintenance', 'admin', 'super_admin'].includes(currentUser?.role);
 
   const triggerShake = (fieldName) => {
     setShakingFields((prev) => ({ ...prev, [fieldName]: true }));
@@ -48,6 +44,13 @@ export default function IssueForm({
       errs.category = 'Please select a category';
       triggerShake('category');
     }
+    if (formData.category === 'Other' && !formData.category_detail.trim()) {
+      errs.category_detail = 'Describe the category';
+      triggerShake('category_detail');
+    } else if (formData.category_detail.trim().length > 100) {
+      errs.category_detail = 'Keep the description to 100 characters or fewer';
+      triggerShake('category_detail');
+    }
 
     if (!formData.location.trim()) {
       errs.location = 'Location is required';
@@ -68,7 +71,11 @@ export default function IssueForm({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+      ...(name === 'category' && value !== 'Other' ? { category_detail: '' } : {}),
+    }));
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -144,6 +151,24 @@ export default function IssueForm({
           {errors.category && (
             <p className="mt-1 text-xs text-statusOpen">{errors.category}</p>
           )}
+          {formData.category === 'Other' && (
+            <div className="mt-3">
+              <label htmlFor="category_detail" className="block text-xs font-semibold text-ink mb-1.5">
+                Specify the category
+              </label>
+              <input
+                id="category_detail"
+                name="category_detail"
+                type="text"
+                maxLength={100}
+                value={formData.category_detail}
+                onChange={handleChange}
+                placeholder="What type of issue is it?"
+                className={`w-full px-3 py-2 text-sm bg-white border rounded focus:outline-none focus:ring-1 focus:ring-teal ${errors.category_detail ? 'border-statusOpen' : 'border-line focus:border-teal'} ${shakingFields.category_detail ? 'animate-field-shake' : ''}`}
+              />
+              {errors.category_detail && <p className="mt-1 text-xs text-statusOpen">{errors.category_detail}</p>}
+            </div>
+          )}
         </div>
 
         <div>
@@ -193,33 +218,6 @@ export default function IssueForm({
         )}
       </div>
 
-      {/* Status Field (Edit only & privileged role) */}
-      {canEditStatus && (
-        <div>
-          <label htmlFor="status" className="block text-xs font-semibold text-ink mb-1.5">
-            Status
-          </label>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <select
-              id="status"
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-              className="w-full sm:w-60 px-3 py-2 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal"
-            >
-              {STATUSES.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-            <span className="text-xs text-gray-500">
-              Maintenance, admin, super admin only
-            </span>
-          </div>
-        </div>
-      )}
-
       {/* Action Buttons */}
       <div className="pt-2 flex items-center justify-end space-x-3">
         {onCancel && (
@@ -240,12 +238,6 @@ export default function IssueForm({
           {isEdit ? 'Save changes' : 'Submit report'}
         </button>
       </div>
-
-      {!isEdit && (
-        <p className="text-xs text-gray-400 mt-2">
-          Create: all five roles
-        </p>
-      )}
     </form>
   );
 }

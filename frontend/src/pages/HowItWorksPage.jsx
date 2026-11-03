@@ -6,16 +6,16 @@ import StatusPill from '../components/StatusPill';
 const steps = [
   ['Sign up', 'Students and staff create an account in under a minute.'],
   ['Report', 'Give it a title, category, place and a short description.'],
-  ['Track', 'Maintenance staff move it from Open to In progress.'],
+  ['Track', 'Follow its progress from Open through In progress to Resolved.'],
   ['Resolved', 'Everyone sees the fix, so nothing is forgotten.'],
 ];
 
 const permissions = [
   ['Student', 'Report issues, follow every status, edit or delete their own issues while Open.'],
   ['Staff member', 'Same as a student.'],
-  ['Maintenance staff', 'Update the status of any issue and edit any issue.'],
-  ['Admin', 'Everything maintenance can do, plus delete any issue.'],
-  ['Super admin', 'Everything an admin can do, plus create accounts and manage roles.'],
+  ['Maintenance staff', 'View every issue and edit any issue. Status is read-only.'],
+  ['Admin', 'View and edit any issue, delete any issue, and promote students or staff to admin. Status is read-only.'],
+  ['Super admin', 'Everything an admin can do, plus create accounts and manage all roles. Status is read-only.'],
 ];
 
 export default function HowItWorksPage() {
@@ -45,7 +45,7 @@ export default function HowItWorksPage() {
             <span aria-hidden="true" className="text-2xl text-gray-400">→</span>
             <div className="text-center"><StatusPill status="Resolved" /><p className="mt-2 text-xs text-gray-500">Fixed</p></div>
           </div>
-          <p className="max-w-lg text-sm text-gray-600">Only maintenance staff, admins and the super admin can change an issue status.</p>
+          <p className="max-w-lg text-sm text-gray-600">Status is read-only for everyone and is shown here so the campus can follow an issue's progress.</p>
         </div>
       </section>
 

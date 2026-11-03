@@ -14,7 +14,7 @@ export default function StatusPill({ status, label = status }) {
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${styleClasses} transition-colors duration-200`}
+      className={`inline-flex h-7 w-28 shrink-0 items-center justify-center whitespace-nowrap rounded-full text-xs font-semibold ${styleClasses} transition-colors duration-200`}
     >
       {label}
     </span>

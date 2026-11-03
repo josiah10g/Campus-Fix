@@ -2,17 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import StatusPill from './StatusPill';
-import StatusSelect from './StatusSelect';
 
 export default function IssueTable({
   issues,
   currentUser,
-  onStatusChange,
   onDeleteClick,
   newlyCreatedId,
   deletingId,
 }) {
-  const canChangeStatusInline = ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
 
   return (
@@ -47,7 +44,9 @@ export default function IssueTable({
                     <div className="text-xs text-gray-500">{issue.location}</div>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm text-gray-700">
-                    {issue.category}
+                    {issue.category === 'Other' && issue.category_detail
+                      ? `Other: ${issue.category_detail}`
+                      : issue.category}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm">
                     {isOwner ? (
@@ -57,19 +56,13 @@ export default function IssueTable({
                     )}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
-                    {canChangeStatusInline ? (
-                      <StatusSelect
-                        currentStatus={issue.status}
-                        onStatusChange={(newStatus) => onStatusChange(issue.id, newStatus)}
-                      />
-                    ) : (
-                      <StatusPill status={issue.status} />
-                    )}
+                    <StatusPill status={issue.status} />
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-right space-x-3 text-xs font-semibold">
+                  <td className="px-5 py-4 whitespace-nowrap text-right">
+                    <div className="flex items-center justify-end gap-2">
                     <Link
                       to={`/issues/${issue.id}`}
-                      className="text-teal hover:underline"
+                      className="inline-flex min-w-16 items-center justify-center rounded border border-teal/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-teal hover:bg-teal hover:text-white btn-interactive"
                     >
                       View
                     </Link>
@@ -77,7 +70,7 @@ export default function IssueTable({
                     {canEdit && (
                       <Link
                         to={`/issues/${issue.id}/edit`}
-                        className="text-teal hover:underline"
+                        className="inline-flex min-w-16 items-center justify-center rounded border border-teal/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-teal hover:bg-teal hover:text-white btn-interactive"
                       >
                         Edit
                       </Link>
@@ -86,11 +79,12 @@ export default function IssueTable({
                     {canDelete && (
                       <button
                         onClick={() => onDeleteClick(issue)}
-                        className="text-statusOpen hover:underline focus:outline-none"
+                        className="inline-flex min-w-16 items-center justify-center rounded border border-statusOpen/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
                       >
                         Delete
                       </button>
                     )}
+                    </div>
                   </td>
                 </tr>
               );

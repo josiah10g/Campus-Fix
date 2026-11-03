@@ -65,6 +65,21 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(res.body.ok, true);
   });
 
+  await t.test('Public homepage APIs return counts and issue fields without reporter identity', async () => {
+    const stats = await request(app).get('/api/public/stats');
+    assert.strictEqual(stats.status, 200);
+    assert.deepStrictEqual(Object.keys(stats.body).sort(), ['inProgress', 'open', 'resolved', 'total']);
+    const latest = await request(app).get('/api/public/issues?limit=4');
+    assert.strictEqual(latest.status, 200);
+    assert.ok(Array.isArray(latest.body));
+    assert.ok(latest.body.length <= 4);
+    for (const issue of latest.body) {
+      assert.strictEqual(issue.reporter_name, undefined);
+      assert.strictEqual(issue.reporter_email, undefined);
+      assert.strictEqual(issue.description, undefined);
+    }
+  });
+
   await t.test('Unauthenticated request to /api/issues returns 401', async () => {
     const res = await request(app).get('/api/issues');
     assert.strictEqual(res.status, 401);

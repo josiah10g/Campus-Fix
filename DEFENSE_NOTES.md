@@ -33,6 +33,7 @@ These notes explain the architectural decisions, request lifecycle, security mec
    - Relational tables `users` and `issues` with foreign key relationships (`reporter_id REFERENCES users(id)`).
    - Uses parameterized queries exclusively to prevent SQL injection.
    - Existing databases can be upgraded with `db/migrations/001_reporter_name_to_users.sql`, which preserves old reports and maps legacy reporter names to reset-required accounts.
+   - Migration `002_signup_profiles_and_other_category.sql` adds student/staff profile details and a custom description for the `Other` category.
 
 ---
 
@@ -87,6 +88,8 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
   - Acts as the true security perimeter.
   - Client-side code can be bypassed (e.g. via Postman, cURL, or disabling JavaScript).
   - Guarantees database integrity by sanitizing strings, verifying character limits, and checking enum constraints.
+  - Registration validates student faculty, department, student ID, and level, or the staff member's lecturer/maintenance-officer selection. Selecting issue category `Other` requires a short description.
+  - Issue status is read-only: the UI shows a fixed-size pill and the API rejects requests that try to change it.
 
 ---
 

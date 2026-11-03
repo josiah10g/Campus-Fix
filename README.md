@@ -22,7 +22,7 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 ### Core CRUD Operations:
 - **Create**: Report an issue with title, category, campus location, and description. Form validates inputs on both client and server.
 - **Read**: View all campus issues, view individual issue details, filter by status or category, and search by keywords.
-- **Update**: Edit issue details (title, category, location, description). Maintenance and admin accounts can update status inline directly from the dashboard.
+- **Update**: Edit issue details (title, category, location, description). Issue status is read-only for every role.
 - **Delete**: Safely delete issues with confirmation dialogs. Students can delete their own open reports; administrators can remove any issue.
 - **Public view**: Visitors can see aggregate counts and a privacy-limited list of recent issues before creating an account.
 - **Public guides**: `/how-it-works` explains the reporting steps and role permissions; `/latest-issues` provides a searchable, filterable, paginated read-only view.
@@ -30,11 +30,13 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 ### Role Permissions:
 | Role | View All | Report Issue | Edit Details | Change Status | Delete Issue | User Admin |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Student** | Yes | Yes | Own (if Open) | No | Own (if Open) | No |
-| **Staff** | Yes | Yes | Own (if Open) | No | Own (if Open) | No |
-| **Maintenance** | Yes | Yes | Any issue | Yes (Inline & Edit) | No | No |
-| **Admin** | Yes | Yes | Any issue | Yes | Any issue | No |
-| **Super Admin** | Yes | Yes | Any issue | Yes | Any issue | Yes (/users) |
+| **Student** | Yes | Yes | Own (if Open) | No (read-only) | Own (if Open) | No |
+| **Staff** | Yes | Yes | Own (if Open) | No (read-only) | Own (if Open) | No |
+| **Maintenance** | Yes | Yes | Any issue | No (read-only) | No | No |
+| **Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Promote student/staff to admin; view users |
+| **Super Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Full user and role management |
+
+Student sign-up also collects faculty, department, student ID, and level. Staff sign-up collects whether the staff member is a lecturer or maintenance officer. Selecting **Other** as an issue category requires a short category description. Issue status is shown as a fixed-size read-only pill throughout the app and cannot be changed through the API.
 
 ### Public page routes
 | Route | Description |
@@ -150,11 +152,11 @@ Public endpoints are available without a token: `GET /api/public/stats` and `GET
 | `GET` | `/api/issues` | Authenticated | List all issues (supports `?status=`, `?category=`, `?search=`, `?myReports=`) |
 | `GET` | `/api/issues/:id` | Authenticated | Get single issue details |
 | `POST` | `/api/issues` | Authenticated | Report an issue (reporter ID extracted from JWT) |
-| `PUT` | `/api/issues/:id` | Authenticated | Update issue details / status (role checked) |
+| `PUT` | `/api/issues/:id` | Authenticated | Update issue details; status is read-only |
 | `DELETE` | `/api/issues/:id` | Authenticated | Delete issue (owner if open, or admin/super_admin) |
-| `GET` | `/api/users` | Super Admin | List all users |
+| `GET` | `/api/users` | Admin, Super Admin | List all users and account count |
 | `POST` | `/api/users` | Super Admin | Provision an account with any role |
-| `PUT` | `/api/users/:id/role` | Super Admin | Change a user's role |
+| `PUT` | `/api/users/:id/role` | Admin, Super Admin | Admin can promote student/staff to admin; super admin can manage roles |
 
 ---
 

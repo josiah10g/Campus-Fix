@@ -1,4 +1,4 @@
-# Testing Guide & Manual Checklist: CampusFix
+﻿# Testing Guide & Manual Checklist: CampusFix
 
 ## 1. Automated Test Suite
 
@@ -23,11 +23,13 @@ npm test
 11. `POST /api/issues` creates an issue with default status `Open`.
 12. `GET /api/issues` returns the issue list.
 13. `GET /api/issues/:id` retrieves single issue; unknown ID returns `404`.
-14. `PUT /api/issues/:id` forbids student from changing issue status with `403`.
+14. `PUT /api/issues/:id` forbids any user from changing issue status with `403`.
 15. `PUT /api/issues/:id` allows owner to edit details while status is `Open`.
 16. `DELETE /api/issues/:id` allows owner to delete while `Open` and returns `404` for missing IDs.
-17. Role hierarchy: Maintenance updates status but cannot delete; Admin can delete any issue.
-18. Authorization guard: Only super_admin can access `/api/users`.
+17. Maintenance cannot delete; Admin can delete any issue.
+18. Admin can view users and promote student/staff to admin; super_admin can create accounts and manage all roles.
+19. Student registration requires faculty, department, student ID, and level; staff must choose Lecturer or Maintenance officer.
+20. An issue with category `Other` requires a custom category description.
 
 ---
 
@@ -35,14 +37,14 @@ npm test
 
 ### Public Pages
 1. While logged out, open `/how-it-works` and `/latest-issues`; confirm both pages render and the public navbar uses real routes.
-2. On `/how-it-works`, check all four steps, the Open → In progress → Resolved status path, status permission note, five-role permission table, and sign-up call to action.
+2. On `/how-it-works`, check all four steps, the Open â†’ In progress â†’ Resolved status path, status permission note, five-role permission table, and sign-up call to action.
 3. On `/latest-issues`, try title/location search, each status, and each category; confirm rows match the filters.
 4. Use Previous and Next; confirm there are 8 issues per page at most and the page count/disabled buttons are correct.
 5. Refresh after choosing filters or a page; confirm the URL query string restores the same view.
-6. Clear filters from an empty result; confirm the full list returns. Simulate a failed request and use “Try again”.
+6. Clear filters from an empty result; confirm the full list returns. Simulate a failed request and use â€œTry againâ€.
 7. Resize to mobile; confirm filters stack and the table becomes read-only cards. Repeat both public routes while logged in.
 8. Check hover and keyboard focus styles, enable reduced motion, and confirm the public pages stop moving content. Use a slow network to see skeleton rows, then verify stat counts and row entrance effects. Existing modal/drawer and toast interactions can be checked from the protected app.
-9. Confirm page scrolling is smooth with normal motion enabled; hover buttons and cards for the teal glow; check text is easier to read; and use the “Go back to the home page” link on both Login and Register.
+9. Confirm page scrolling is smooth with normal motion enabled; hover buttons and cards for the teal glow; check text is easier to read; and use the â€œGo back to the home pageâ€ link on both Login and Register.
 
 ### Full Newcomer Journey Checklist:
 1. **Public Landing (Logged Out)**: Visit `/`. Confirm the public navbar has "Log in" and "Create account". Check the headline *"Report it once. Watch it get fixed."*, 4 live stat cards, "How it works" 3 steps, and read-only "Latest issues" table (omitting reporter names and descriptions).
@@ -62,12 +64,12 @@ npm test
 | **5. Create Valid** | Fill Title, select Category, enter Location and Description. Submit. | Redirects to `/issues`, new row highlights in pale yellow, green toast appears. | [ ] |
 | **6. View Details** | Click "View" on an issue. | Detail page displays full text, category, location, reporter, and date. | [ ] |
 | **7. Student Edit** | Logged in as student: click "Edit" on own Open issue. Change location. | Update succeeds, green toast appears. | [ ] |
-| **8. Student Status Guard** | Student on own Open issue: verify no status dropdown is available. | Status is displayed as a static pill, cannot be tampered with. | [ ] |
-| **9. Maintenance Status Change** | Log in as `tunde@example.com` (Maintenance). Click status chevron on any issue. | Chevron rotates 180°, select "In Progress". Spinner shows briefly, status updates. | [ ] |
-| **10. Maintenance Delete Guard** | Maintenance role viewing issues. | No "Delete" action button is rendered anywhere in UI. | [ ] |
-| **11. Admin Delete** | Log in as `grace@example.com` (Admin). Click "Delete" on any issue. | Confirmation modal appears with backdrop blur. Press Escape -> cancels. Click "Delete issue" -> item fades out. | [ ] |
-| **12. Super Admin Access** | Log in as `superadmin@example.com`. Check navbar. | "Users" link is visible in navbar. Navigate to `/users`. | [ ] |
-| **13. Role Modification** | In `/users`, change a student's role to `maintenance`. | Role updates immediately in UI and database. Demoting last super admin is blocked. | [ ] |
+| **8. Read-only status** | Open an issue as any role; try a direct API status update. | Status is a fixed-size pill without a dropdown; API returns 403 if changed. | [ ] |
+| **9. Signup profile details** | Register as student, then staff. | Students provide faculty, department, student ID, and level; staff selects Lecturer or Maintenance officer. | [ ] |
+| **10. Other issue category** | Create an issue with category Other. | A custom category description is required, saved, and displayed. | [ ] |
+| **11. Admin user management** | As admin, open Users and promote a student/staff account. | Account count appears; Admin can promote to admin only. | [ ] |
+| **12. Super Admin Access** | Log in as super_admin and open Users. | Full role management and account creation are available. | [ ] |
+| **13. No demo autofill** | Open Login while logged out. | Quick demo account autofill chips are absent. | [ ] |
 | **14. Server Down / Error Banner** | Stop backend (`Ctrl+C`), refresh frontend. | Friendly error banner: "Connection or Server Error" with "Try again" button. No crash or white screen. | [ ] |
 | **15. Responsive View** | Resize browser below 768px (mobile width). | Table transforms into individual cards; top navbar collapses into hamburger menu. | [ ] |
 | **16. Reduced Motion** | Enable "prefers-reduced-motion" in browser dev tools. | All animations (shake, page fade, toast slide) become instant with zero layout shifts. | [ ] |

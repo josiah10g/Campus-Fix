@@ -14,9 +14,11 @@ const seed = async () => {
   await pool.query('TRUNCATE issues, users RESTART IDENTITY CASCADE;');
 
   const passwordHash = await bcrypt.hash('DemoPass123!', 10);
-  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD || 'SuperAdminPass123!';
+  const superAdminPassword = process.env.SUPER_ADMIN_PASSWORD;
+  if (!superAdminPassword) throw new Error('Set SUPER_ADMIN_PASSWORD before seeding.');
   const superAdminHash = await bcrypt.hash(superAdminPassword, 10);
-  const superAdminEmail = (process.env.SUPER_ADMIN_EMAIL || 'superadmin@example.com').toLowerCase();
+  const superAdminEmail = process.env.SUPER_ADMIN_EMAIL;
+  if (!superAdminEmail) throw new Error('Set SUPER_ADMIN_EMAIL before seeding.');
 
   // Fictional demo users (one per role + super_admin)
   const users = [

@@ -55,7 +55,7 @@ All demo accounts share the password: `DemoPass123!`
 | **Staff** | David Mwangi | `david@example.com` | `DemoPass123!` |
 | **Maintenance** | Tunde Bello | `tunde@example.com` | `DemoPass123!` |
 | **Admin** | Grace Okoro | `grace@example.com` | `DemoPass123!` |
-| **Super Admin** | Musa Ibrahim | `superadmin@example.com` | `SuperAdminPass123!` |
+| **Super Admin** | Super Admin | Set through `SUPER_ADMIN_EMAIL` | Set through `SUPER_ADMIN_PASSWORD` |
 
 *(The super_admin account is automatically seeded or created on server startup from environment variables).*
 
@@ -82,10 +82,10 @@ cp .env.example .env
 Edit `backend/.env` with your PostgreSQL connection string:
 ```ini
 PORT=3000
-DATABASE_URL=postgres://user:password@localhost:5432/campusfix
-JWT_SECRET=super_secret_development_key_12345
-SUPER_ADMIN_EMAIL=superadmin@example.com
-SUPER_ADMIN_PASSWORD=SuperAdminPass123!
+DATABASE_URL=your_supabase_postgres_connection_string
+JWT_SECRET=your_long_random_secret
+SUPER_ADMIN_EMAIL=your_admin_email
+SUPER_ADMIN_PASSWORD=your_admin_password
 FRONTEND_URL=http://localhost:5173
 NODE_ENV=development
 ```

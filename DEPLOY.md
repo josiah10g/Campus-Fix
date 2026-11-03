@@ -9,11 +9,11 @@ This guide covers deploying CampusFix as two independent services:
 
 ## Step 1: Provision Hosted PostgreSQL Database
 
-1. Sign up or log into [Neon](https://neon.tech) or create a PostgreSQL instance on [Render](https://render.com).
+1. Sign up or log into [Supabase](https://supabase.com) and create a project.
 2. Create a new PostgreSQL database named `campusfix`.
 3. Copy the full connection string URL. It looks like:
    ```text
-   postgres://username:password@ep-cool-sample.region.neon.tech/campusfix?sslmode=require
+   postgres://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres
    ```
 
 ---
@@ -46,9 +46,9 @@ git push -u origin main
    - `NODE_ENV`: `production`
    - `DATABASE_URL`: *(Paste the PostgreSQL connection string from Step 1)*
    - `JWT_SECRET`: *(A long random secret string, e.g. 32+ characters)*
-   - `SUPER_ADMIN_EMAIL`: `superadmin@example.com`
+   - `SUPER_ADMIN_EMAIL`: *(the admin email you choose)*
    - `SUPER_ADMIN_PASSWORD`: *(A strong password for your super admin account)*
-   - `FRONTEND_URL`: `http://localhost:5173` *(Will be updated in Step 5)*
+   - `FRONTEND_URL`: `http://localhost:5173` *(replace with the deployed frontend URL in Step 5)*
 5. Click **Deploy Web Service**.
 6. When deployment finishes, test the health check in your browser:
    ```text
@@ -104,7 +104,7 @@ Yes, you can deploy the frontend on **Vercel** with one click:
 ## Step 6: Verify End-to-End on the Live URL
 
 1. Open your live frontend in your browser.
-2. Log in with the super admin credentials configured in Render (`superadmin@example.com`).
+2. Log in with the super admin credentials configured in Render.
 3. Verify the 4 core CRUD operations:
    - **Create**: Report an issue and ensure it appears immediately.
    - **Read**: Check dashboard stats, category filters, and search bar.

@@ -16,7 +16,6 @@ export default function ProfileSettingsPage() {
     department: user.department || '',
     student_id: user.student_id || '',
     level: user.level || '',
-    staff_type: user.staff_type || '',
     profile_picture_url: user.profile_picture_url || '',
   });
   const [saving, setSaving] = useState(false);
@@ -97,12 +96,6 @@ export default function ProfileSettingsPage() {
               <label className="text-base font-semibold text-ink">Level<input name="level" value={form.level} onChange={updateField} maxLength={40} required className={inputClass} /></label>
             </div>
           </div>}
-
-          {user.role === 'staff' && <label className="block border-t border-line pt-5 text-base font-semibold text-ink">Staff type
-            <select name="staff_type" value={form.staff_type} onChange={updateField} required className={inputClass}>
-              <option value="">Select staff type</option><option value="Lecturer">Lecturer</option><option value="Maintenance officer">Maintenance officer</option>
-            </select>
-          </label>}
 
           <button type="submit" disabled={saving} className="inline-flex min-h-12 items-center justify-center rounded bg-teal px-5 py-3 text-base font-bold text-white hover:bg-teal-dark btn-interactive disabled:opacity-60">
             {saving && <Loader2 size={18} className="mr-2 animate-spin" />}Save profile

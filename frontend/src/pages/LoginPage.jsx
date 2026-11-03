@@ -128,7 +128,10 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 space-y-3">
+                <Link to={`/register${nextParam}`} className="inline-flex w-full items-center justify-center rounded border border-teal px-4 py-3 text-base font-bold text-teal hover:bg-teal hover:text-white btn-interactive">
+                  Sign up
+                </Link>
                 <button
                   type="submit"
                   disabled={loading}
@@ -138,13 +141,7 @@ export default function LoginPage() {
                   Log in
                 </button>
               </div>
-
-              <div className="pt-1 text-center">
-                <p className="mb-2 text-base text-gray-600">New to CampusFix?</p>
-                <Link to={`/register${nextParam}`} className="inline-flex w-full items-center justify-center rounded border border-teal px-4 py-3 text-base font-bold text-teal hover:bg-teal hover:text-white btn-interactive">
-                  Sign up
-                </Link>
-              </div>
+              <p className="text-center text-base text-gray-600">Create an account with Sign up, or enter your details above to log in.</p>
             </form>
 
           </div>

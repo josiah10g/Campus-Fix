@@ -36,9 +36,9 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 | **Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Create, delete, and manage users (cannot manage super admins) |
 | **Super Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Full user and role management |
 
-Student sign-up also collects faculty, department, student ID, and level. Staff sign-up collects whether the staff member is a lecturer or maintenance officer. Selecting **Other** as an issue category requires a short category description. Issue status is shown as a fixed-size read-only pill throughout the app and cannot be changed through the API.
+Student sign-up also collects faculty, department, student ID, and level. Staff can sign up without selecting a staff type. Selecting **Other** as an issue category requires a short category description. Issue status is shown as a fixed-size read-only pill throughout the app and cannot be changed through the API.
 
-Users can update their name, email, password, student/staff details, and optional profile picture in **Profile settings**. Profile pictures are uploaded as PNG, JPEG, or WebP files up to 1 MB. Clicking the profile icon shows saved academic or staff details.
+Users can update their name, email, password, student details, and optional profile picture in **Profile settings**. Profile pictures are uploaded as PNG, JPEG, or WebP files up to 1 MB. Clicking the profile icon shows saved academic details.
 
 ### Public page routes
 | Route | Description |

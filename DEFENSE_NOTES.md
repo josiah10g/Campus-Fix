@@ -89,7 +89,7 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
   - Acts as the true security perimeter.
   - Client-side code can be bypassed (e.g. via Postman, cURL, or disabling JavaScript).
   - Guarantees database integrity by sanitizing strings, verifying character limits, and checking enum constraints.
-  - Registration validates student faculty, department, student ID, and level, or the staff member's lecturer/maintenance-officer selection. Selecting issue category `Other` requires a short description.
+  - Registration validates student faculty, department, student ID, and level. Staff do not need to choose a staff type. Selecting issue category `Other` requires a short description.
   - Issue status is read-only: the UI shows a fixed-size pill and the API rejects requests that try to change it.
 
 ---

@@ -14,7 +14,6 @@ export default function RegisterPage() {
     department: '',
     student_id: '',
     level: '',
-    staff_type: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -53,11 +52,6 @@ export default function RegisterPage() {
       setError('Enter your faculty, department, student ID and level.');
       return;
     }
-    if (formData.role === 'staff' && !formData.staff_type) {
-      setError('Choose whether you are a lecturer or maintenance officer.');
-      return;
-    }
-
     setLoading(true);
     try {
       await register(formData);
@@ -180,7 +174,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {formData.role === 'student' ? (
+                {formData.role === 'student' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-semibold text-ink mb-1.5">Faculty</label>
@@ -198,15 +192,6 @@ export default function RegisterPage() {
                       <label className="block text-sm font-semibold text-ink mb-1.5">Level</label>
                       <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
                     </div>
-                  </div>
-                ) : (
-                  <div>
-                    <label className="block text-sm font-semibold text-ink mb-1.5">Staff type</label>
-                    <select value={formData.staff_type} onChange={(e) => setFormData({ ...formData, staff_type: e.target.value })} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required>
-                      <option value="">Select your staff type</option>
-                      <option value="Lecturer">Lecturer</option>
-                      <option value="Maintenance officer">Maintenance officer</option>
-                    </select>
                   </div>
                 )}
 

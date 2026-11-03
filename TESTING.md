@@ -28,10 +28,9 @@ npm test
 16. `DELETE /api/issues/:id` allows owner to delete while `Open` and returns `404` for missing IDs.
 17. Maintenance cannot delete; Admin can delete any issue.
 18. Admins can create/delete accounts and change roles except for super_admin; super_admin can fully manage accounts.
-19. Student registration requires faculty, department, student ID, and level; staff must choose Lecturer or Maintenance officer.
+19. Student registration requires faculty, department, student ID, and level; staff registration has no staff-type selector.
 20. An issue with category `Other` requires a custom category description.
 21. `PUT /api/auth/profile` updates the current account and never returns the password hash.
-22. Admins can create/delete accounts and change roles except to or from `super_admin`; super admins retain full role control.
 
 ---
 

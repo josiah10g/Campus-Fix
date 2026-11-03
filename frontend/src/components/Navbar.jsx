@@ -196,17 +196,15 @@ export default function Navbar() {
                       </div>
                     </div>
 
-                    {(user.faculty || user.department || user.student_id || user.level || user.staff_type) && (
+                    {(user.faculty || user.department || user.student_id || user.level) && (
                       <div className="border-b border-line px-4 py-3">
-                        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{user.faculty || user.department || user.student_id || user.level ? 'Academic details' : 'Staff details'}</p>
-                        {user.faculty || user.department || user.student_id || user.level ? (
-                          <dl className="space-y-1 text-sm text-gray-700">
-                            <div><dt className="inline font-semibold">Faculty: </dt><dd className="inline">{user.faculty || 'Not set'}</dd></div>
-                            <div><dt className="inline font-semibold">Department: </dt><dd className="inline">{user.department || 'Not set'}</dd></div>
-                            <div><dt className="inline font-semibold">Student ID: </dt><dd className="inline">{user.student_id || 'Not set'}</dd></div>
-                            <div><dt className="inline font-semibold">Level: </dt><dd className="inline">{user.level || 'Not set'}</dd></div>
-                          </dl>
-                        ) : <p className="text-sm text-gray-700">{user.staff_type}</p>}
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">Academic details</p>
+                        <dl className="space-y-1 text-sm text-gray-700">
+                          <div><dt className="inline font-semibold">Faculty: </dt><dd className="inline">{user.faculty || 'Not set'}</dd></div>
+                          <div><dt className="inline font-semibold">Department: </dt><dd className="inline">{user.department || 'Not set'}</dd></div>
+                          <div><dt className="inline font-semibold">Student ID: </dt><dd className="inline">{user.student_id || 'Not set'}</dd></div>
+                          <div><dt className="inline font-semibold">Level: </dt><dd className="inline">{user.level || 'Not set'}</dd></div>
+                        </dl>
                       </div>
                     )}
 
@@ -316,10 +314,10 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {(user.faculty || user.department || user.student_id || user.level || user.staff_type) && (
+              {(user.faculty || user.department || user.student_id || user.level) && (
                 <div className="border-b border-line px-1 py-3 text-sm text-gray-700">
-                  <p className="mb-1 font-bold">{user.faculty || user.department || user.student_id || user.level ? 'Academic details' : 'Staff details'}</p>
-                  {user.faculty || user.department || user.student_id || user.level ? <p>{user.faculty || 'Faculty not set'} · {user.department || 'Department not set'} · ID {user.student_id || 'Not set'} · {user.level || 'Level not set'}</p> : <p>{user.staff_type}</p>}
+                  <p className="mb-1 font-bold">Academic details</p>
+                  <p>{user.faculty || 'Faculty not set'} · {user.department || 'Department not set'} · ID {user.student_id || 'Not set'} · {user.level || 'Level not set'}</p>
                 </div>
               )}
 

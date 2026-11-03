@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
+const bcrypt = require('bcryptjs');
 const app = require('../index');
 const { pool } = require('../db');
 
@@ -10,16 +11,19 @@ const { pool } = require('../db');
 test('CampusFix API End-to-End Tests', async (t) => {
   let studentToken = '';
   let studentUser = null;
+  let maintenanceToken = '';
+  let adminToken = '';
+  let testRoleEmails = [];
+  let testRoleIds = [];
   let createdIssueId = null;
 
   t.before(async () => {
-    // If DATABASE_URL is available, tests run against PostgreSQL
-    // Register a test student
+    const unique = Date.now();
     const studentRes = await request(app)
       .post('/api/auth/register')
       .send({
         name: 'Test Student',
-        email: `student_${Date.now()}@example.com`,
+        email: `student_${unique}@example.com`,
         password: 'Password123!',
         role: 'student',
       });
@@ -28,10 +32,30 @@ test('CampusFix API End-to-End Tests', async (t) => {
       studentToken = studentRes.body.token;
       studentUser = studentRes.body.user;
     }
-
+    const passwordHash = await bcrypt.hash('Password123!', 10);
+    testRoleEmails = [`maintenance_${unique}@example.com`, `admin_${unique}@example.com`];
+    const maintenance = await pool.query(
+      'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
+      ['Test Maintenance', testRoleEmails[0], passwordHash, 'maintenance']
+    );
+    const admin = await pool.query(
+      'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
+      ['Test Admin', testRoleEmails[1], passwordHash, 'admin']
+    );
+    const [maintenanceLogin, adminLogin] = await Promise.all([
+      request(app).post('/api/auth/login').send({ email: testRoleEmails[0], password: 'Password123!' }),
+      request(app).post('/api/auth/login').send({ email: testRoleEmails[1], password: 'Password123!' }),
+    ]);
+    maintenanceToken = maintenanceLogin.body.token;
+    adminToken = adminLogin.body.token;
+    testRoleIds = [maintenance.rows[0].id, admin.rows[0].id];
   });
 
   t.after(async () => {
+    if (testRoleIds.length) {
+      await pool.query('DELETE FROM issues WHERE reporter_id = ANY($1::int[])', [testRoleIds]);
+      await pool.query('DELETE FROM users WHERE email = ANY($1::text[])', [testRoleEmails]);
+    }
     await pool.end();
   });
 
@@ -175,5 +199,23 @@ test('CampusFix API End-to-End Tests', async (t) => {
       .delete('/api/issues/9999999')
       .set('Authorization', `Bearer ${studentToken}`);
     assert.strictEqual(res.status, 404);
+  });
+
+  await t.test('Maintenance can change status but cannot delete; admin can delete', async () => {
+    const issue = await request(app).post('/api/issues').set('Authorization', `Bearer ${studentToken}`).send({
+      title: 'Role permission test', description: 'Temporary test issue', category: 'Other', location: 'Test location',
+    });
+    assert.strictEqual(issue.status, 201);
+    const statusUpdate = await request(app).put(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${maintenanceToken}`).send({ status: 'In Progress' });
+    assert.strictEqual(statusUpdate.status, 200);
+    const maintenanceDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${maintenanceToken}`);
+    assert.strictEqual(maintenanceDelete.status, 403);
+    const adminDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
+    assert.strictEqual(adminDelete.status, 200);
+  });
+
+  await t.test('Only super_admin can access user management', async () => {
+    const response = await request(app).get('/api/users').set('Authorization', `Bearer ${studentToken}`);
+    assert.strictEqual(response.status, 403);
   });
 });

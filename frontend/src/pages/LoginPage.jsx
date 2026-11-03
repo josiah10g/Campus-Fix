@@ -75,7 +75,7 @@ export default function LoginPage() {
             <h1 className="text-3xl font-extrabold text-ink tracking-tight font-serif sm:font-sans">
               Welcome back
             </h1>
-            <p className="text-xs sm:text-sm text-gray-500 mt-1.5">
+            <p className="text-base text-gray-600 mt-2">
               Log in to track reports and manage campus issues.
             </p>
           </div>
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1.5">Email address</label>
+                <label className="block text-sm font-semibold text-ink mb-1.5">Email address</label>
                 <input
                   type="email"
                   value={email}
@@ -104,7 +104,7 @@ export default function LoginPage() {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-semibold text-ink">Password</label>
+                  <label className="block text-sm font-semibold text-ink">Password</label>
                   <span className="text-[11px] text-gray-400">DemoPass123!</span>
                 </div>
                 <div className="relative">
@@ -138,21 +138,21 @@ export default function LoginPage() {
                   Log in
                 </button>
               </div>
-            </form>
 
-            <div className="mt-6 text-center text-xs text-gray-600">
-              Don't have an account?{' '}
-              <Link to={`/register${nextParam}`} className="font-semibold text-teal hover:underline ml-1">
-                Sign up
-              </Link>
-            </div>
+              <div className="pt-1 text-center">
+                <p className="mb-2 text-base text-gray-600">New to CampusFix?</p>
+                <Link to={`/register${nextParam}`} className="inline-flex w-full items-center justify-center rounded border border-teal px-4 py-3 text-base font-bold text-teal hover:bg-teal hover:text-white btn-interactive">
+                  Sign up
+                </Link>
+              </div>
+            </form>
 
           </div>
         </div>
       </main>
 
       {/* Subtle Footer */}
-      <footer className="py-4 text-center text-[11px] text-gray-400">
+      <footer className="py-4 text-center text-sm text-gray-500">
         CampusFix &bull; Campus Issue Reporting and Tracking System
       </footer>
     </div>

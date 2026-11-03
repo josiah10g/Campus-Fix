@@ -55,13 +55,18 @@ export const AuthProvider = ({ children }) => {
     return res.user;
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('campusfix_user', JSON.stringify(updatedUser));
+  };
+
   const logout = () => {
     clearAuthSession();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, login, register, updateUser, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   );

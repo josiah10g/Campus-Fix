@@ -106,6 +106,7 @@ export const api = {
   login: (credentials) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
   getMe: () => request('/api/auth/me'),
+  updateProfile: (profile) => request('/api/auth/profile', { method: 'PUT', body: JSON.stringify(profile) }),
 
   // Stats & Health
   getStats: () => request('/api/stats'),
@@ -127,9 +128,10 @@ export const api = {
   updateIssue: (id, issueData) => request(`/api/issues/${id}`, { method: 'PUT', body: JSON.stringify(issueData) }),
   deleteIssue: (id) => request(`/api/issues/${id}`, { method: 'DELETE' }),
 
-  // User Management (super_admin)
+  // User management
   getUsers: () => request('/api/users'),
   createUser: (userData) => request('/api/users', { method: 'POST', body: JSON.stringify(userData) }),
   updateUserRole: (id, role) => request(`/api/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) }),
+  deleteUser: (id) => request(`/api/users/${id}`, { method: 'DELETE' }),
 };
 

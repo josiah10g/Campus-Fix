@@ -1,25 +1,28 @@
 // frontend/src/components/Toast.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { CheckCircle, AlertCircle, X } from 'lucide-react';
 
 export default function Toast({ toast, onClose }) {
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; }, [onClose]);
+
+  useEffect(() => {
+    // Success toasts auto dismiss after 3 seconds; errors stay until dismissed
+    if (toast?.type !== 'error' && toast) {
+      const timer = setTimeout(() => {
+        closeRef.current?.();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   if (!toast) return null;
 
   const { type = 'success', message } = toast;
   const isSuccess = type === 'success';
 
-  useEffect(() => {
-    // Success toasts auto dismiss after 3 seconds; errors stay until dismissed
-    if (isSuccess) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isSuccess, onClose]);
-
   return (
-    <div className="fixed top-4 right-4 z-50 max-w-sm w-full animate-toast-in">
+    <div className="fixed bottom-4 right-4 z-50 w-[calc(100%-2rem)] max-w-sm animate-toast-in">
       <div
         className={`flex items-start p-3.5 rounded shadow-md ${
           isSuccess

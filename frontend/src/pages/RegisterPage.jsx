@@ -101,7 +101,7 @@ export default function RegisterPage() {
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Campus Statement & Stats */}
           <div className="lg:col-span-5 text-left py-4">
-            <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-teal mb-3">
+            <div className="inline-flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-teal mb-3">
               <span className="w-1.5 h-3.5 bg-teal rounded-full" />
               Join CampusFix
             </div>
@@ -110,7 +110,7 @@ export default function RegisterPage() {
               Report campus issues in minutes.
             </h1>
 
-            <p className="text-sm text-gray-600 leading-relaxed mb-8">
+            <p className="text-base text-gray-700 leading-relaxed mb-8">
               Create your account to submit facility problems, follow live repair progress, and keep campus infrastructure safe for everyone.
             </p>
 
@@ -120,13 +120,13 @@ export default function RegisterPage() {
                 <div className="text-2xl sm:text-3xl font-extrabold text-ink font-serif sm:font-sans">
                   5 Roles
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">Role-based oversight</div>
+                <div className="text-sm text-gray-600 mt-1">Role-based oversight</div>
               </div>
               <div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-teal font-serif sm:font-sans">
                   24/7
                 </div>
-                <div className="text-xs text-gray-500 mt-0.5">Open campus tracking</div>
+                <div className="text-sm text-gray-600 mt-1">Open campus tracking</div>
               </div>
             </div>
           </div>
@@ -138,7 +138,7 @@ export default function RegisterPage() {
                 <h2 className="text-2xl font-bold text-ink tracking-tight font-serif sm:font-sans">
                   Create your account
                 </h2>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                <p className="text-base text-gray-600 mt-1">
                   Choose how you use CampusFix on campus.
                 </p>
               </div>
@@ -183,25 +183,25 @@ export default function RegisterPage() {
                 {formData.role === 'student' ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-semibold text-ink mb-1.5">Faculty</label>
+                      <label className="block text-sm font-semibold text-ink mb-1.5">Faculty</label>
                       <input type="text" value={formData.faculty} onChange={(e) => setFormData({ ...formData, faculty: e.target.value })} placeholder="Your faculty" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-ink mb-1.5">Department</label>
+                      <label className="block text-sm font-semibold text-ink mb-1.5">Department</label>
                       <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="Your department" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-ink mb-1.5">Student ID</label>
+                      <label className="block text-sm font-semibold text-ink mb-1.5">Student ID</label>
                       <input type="text" value={formData.student_id} onChange={(e) => setFormData({ ...formData, student_id: e.target.value })} placeholder="Your student ID" maxLength={60} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-ink mb-1.5">Level</label>
+                      <label className="block text-sm font-semibold text-ink mb-1.5">Level</label>
                       <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
                     </div>
                   </div>
                 ) : (
                   <div>
-                    <label className="block text-xs font-semibold text-ink mb-1.5">Staff type</label>
+                    <label className="block text-sm font-semibold text-ink mb-1.5">Staff type</label>
                     <select value={formData.staff_type} onChange={(e) => setFormData({ ...formData, staff_type: e.target.value })} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required>
                       <option value="">Select your staff type</option>
                       <option value="Lecturer">Lecturer</option>
@@ -211,7 +211,7 @@ export default function RegisterPage() {
                 )}
 
                 <div>
-                  <label className="block text-xs font-semibold text-ink mb-1.5">Full name</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Full name</label>
                   <input
                     type="text"
                     value={formData.name}
@@ -223,7 +223,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-ink mb-1.5">Email address</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Email address</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -236,8 +236,8 @@ export default function RegisterPage() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-semibold text-ink">Password</label>
-                    <span className="text-[11px] text-gray-400">At least 8 characters</span>
+                    <label className="block text-sm font-semibold text-ink">Password</label>
+                    <span className="text-sm text-gray-500">At least 8 characters</span>
                   </div>
                   <div className="relative">
                     <input
@@ -260,9 +260,9 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Trust / Security notice badge */}
-                <div className="p-3 bg-[#FAFBFB] border border-line rounded text-xs text-gray-600 flex items-center gap-2">
+                <div className="p-3 bg-[#FAFBFB] border border-line rounded text-sm text-gray-700 flex items-center gap-2">
                   <ShieldCheck size={16} className="text-teal shrink-0" />
-                  <span>Maintenance and administrative accounts are managed securely by the super admin.</span>
+                  <span>Account permissions are managed by CampusFix administrators.</span>
                 </div>
 
                 <div className="pt-2">
@@ -277,7 +277,7 @@ export default function RegisterPage() {
                 </div>
               </form>
 
-              <div className="mt-5 text-center text-xs text-gray-600">
+              <div className="mt-5 text-center text-base text-gray-700">
                 Already have an account?{' '}
                 <Link to={`/login${nextParam}`} className="font-semibold text-teal hover:underline ml-1">
                   Log in
@@ -289,7 +289,7 @@ export default function RegisterPage() {
       </main>
 
       {/* Subtle Footer */}
-      <footer className="py-4 text-center text-[11px] text-gray-400">
+      <footer className="py-4 text-center text-sm text-gray-500">
         CampusFix &bull; Campus Issue Reporting and Tracking System
       </footer>
     </div>

@@ -10,6 +10,7 @@ import ReportIssuePage from './pages/ReportIssuePage';
 import EditIssuePage from './pages/EditIssuePage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import UsersPage from './pages/UsersPage';
+import ProfileSettingsPage from './pages/ProfileSettingsPage';
 import PublicHomePage from './pages/PublicHomePage';
 import HowItWorksPage from './pages/HowItWorksPage';
 import LatestIssuesPage from './pages/LatestIssuesPage';
@@ -128,6 +129,7 @@ export default function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route path="/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
 
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />

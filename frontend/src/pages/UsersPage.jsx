@@ -61,6 +61,19 @@ export default function UsersPage() {
     }
   };
 
+  const handleDeleteUser = async (target) => {
+    const confirmed = window.confirm(`Delete ${target.name} and all reports created by this account? This cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      await api.deleteUser(target.id);
+      setUsers((previous) => previous.filter((user) => user.id !== target.id));
+      setTotalUsers((count) => Math.max(0, count - 1));
+      setToast({ type: 'success', message: 'User account deleted.' });
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Could not delete user account.' });
+    }
+  };
+
   const handleCreateUser = async (e) => {
     e.preventDefault();
     const errs = {};
@@ -118,6 +131,7 @@ export default function UsersPage() {
                   <th className="px-5 py-3.5">Name</th>
                   <th className="px-5 py-3.5">Email</th>
                   <th className="px-5 py-3.5">Role</th>
+                  <th className="px-5 py-3.5">Account</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line bg-white">
@@ -138,28 +152,25 @@ export default function UsersPage() {
                           <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 font-medium rounded border border-gray-200 inline-block min-w-36">
                             {ROLES.find((role) => role.value === u.role)?.label} (you)
                           </div>
-                        ) : currentUser.role === 'admin' ? (
-                          ['student', 'staff'].includes(u.role) ? (
-                            <button onClick={() => handleRoleChange(u.id, 'admin')} className="rounded border border-teal/30 bg-white px-3 py-1.5 text-xs font-semibold text-teal hover:bg-teal hover:text-white btn-interactive">
-                              Promote to admin
-                            </button>
-                          ) : (
-                            <span className="inline-flex min-w-36 justify-center rounded border border-line bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600">
-                              {ROLES.find((role) => role.value === u.role)?.label}
-                            </span>
-                          )
                         ) : (
                           <select
                             value={u.role}
                             onChange={(e) => handleRoleChange(u.id, e.target.value)}
                             className="w-44 px-3 py-1.5 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
                           >
-                            {ROLES.map((r) => (
+                            {ROLES.filter((r) => currentUser.role === 'super_admin' || r.value !== 'super_admin').map((r) => (
                               <option key={r.value} value={r.value}>
                                 {r.label}
                               </option>
                             ))}
                           </select>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        {!isSelf && (currentUser.role === 'super_admin' || u.role !== 'super_admin') && (
+                          <button type="button" onClick={() => handleDeleteUser(u)} className="rounded border border-statusOpen/30 px-3 py-1.5 text-sm font-semibold text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive">
+                            Delete user
+                          </button>
                         )}
                       </td>
                     </tr>
@@ -171,10 +182,10 @@ export default function UsersPage() {
         </div>
 
       {/* Only super admins can provision privileged accounts. */}
-      {currentUser.role === 'super_admin' && <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
+      {['admin', 'super_admin'].includes(currentUser.role) && <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
           <h2 className="text-base font-bold text-ink">Create account</h2>
           <p className="text-xs text-gray-500 mt-0.5 mb-5">
-            Students and staff register themselves.
+            Create a campus account and assign its starting role.
           </p>
 
           <form onSubmit={handleCreateUser} className="space-y-4" noValidate>
@@ -227,7 +238,7 @@ export default function UsersPage() {
                 onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                 className="w-full px-3 py-2 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
               >
-                {ROLES.filter((r) => r.value !== 'student' && r.value !== 'staff').map((r) => (
+                {ROLES.filter((r) => currentUser.role === 'super_admin' || r.value !== 'super_admin').map((r) => (
                   <option key={r.value} value={r.value}>
                     {r.label}
                   </option>

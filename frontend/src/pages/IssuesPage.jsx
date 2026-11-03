@@ -1,6 +1,7 @@
 // frontend/src/pages/IssuesPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { Settings } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
 import StatCard from '../components/StatCard';
@@ -171,12 +172,17 @@ export default function IssuesPage() {
               : 'Every report on campus, with its current status.'}
           </p>
         </div>
-        <Link
-          to="/report"
-          className="inline-flex items-center justify-center px-4 py-2 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
-        >
-          Report an issue
-        </Link>
+        <div className="flex flex-wrap gap-3">
+          <Link to="/profile" className="inline-flex items-center justify-center gap-2 rounded border border-line bg-white px-4 py-2 text-sm font-semibold text-ink hover:border-teal hover:text-teal btn-interactive">
+            <Settings size={16} /> Profile settings
+          </Link>
+          <Link
+            to="/report"
+            className="inline-flex items-center justify-center px-4 py-2 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
+          >
+            Report an issue
+          </Link>
+        </div>
       </div>
 
       {/* Summary Cards */}

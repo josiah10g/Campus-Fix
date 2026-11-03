@@ -14,8 +14,8 @@ const permissions = [
   ['Student', 'Report issues, follow every status, edit or delete their own issues while Open.'],
   ['Staff member', 'Same as a student.'],
   ['Maintenance staff', 'View every issue and edit any issue. Status is read-only.'],
-  ['Admin', 'View and edit any issue, delete any issue, and promote students or staff to admin. Status is read-only.'],
-  ['Super admin', 'Everything an admin can do, plus create accounts and manage all roles. Status is read-only.'],
+  ['Admin', 'View/edit/delete any issue. Create and delete accounts and change user roles, except for super-admin accounts. Status is read-only.'],
+  ['Super admin', 'Full user and role management, including super-admin accounts. Status is read-only.'],
 ];
 
 export default function HowItWorksPage() {

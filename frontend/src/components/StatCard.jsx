@@ -35,8 +35,8 @@ export default function StatCard({ label, value, colorClass = 'text-ink' }) {
 
   return (
     <div className="bg-white border border-line rounded-card p-4 card-interactive">
-      <div className="text-xs text-gray-500 font-medium mb-1">{label}</div>
-      <div className={`text-2xl font-bold tracking-tight ${colorClass}`}>
+      <div className="mb-1 text-base font-bold leading-tight text-ink">{label}</div>
+      <div className={`text-3xl font-extrabold tracking-tight ${colorClass}`}>
         {displayValue}
       </div>
     </div>

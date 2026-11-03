@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X, ChevronDown, User, Shield, LogOut } from 'lucide-react';
+import { Menu, X, ChevronDown, User, Shield, LogOut, Settings } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -171,8 +171,8 @@ export default function Navbar() {
                       {getRoleBadge(user.role)}
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                    {getInitials(user.name)}
+                  <div className="w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm overflow-hidden">
+                    {user.profile_picture_url ? <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" /> : getInitials(user.name)}
                   </div>
                   <ChevronDown
                     size={14}
@@ -187,14 +187,28 @@ export default function Navbar() {
                   <div className="absolute right-0 mt-2 w-64 rounded-card bg-white border border-line shadow-lg py-2 z-50 animate-page-enter">
                     {/* User header section */}
                     <div className="px-4 py-3 border-b border-line flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0">
-                        {getInitials(user.name)}
+                      <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                        {user.profile_picture_url ? <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" /> : getInitials(user.name)}
                       </div>
                       <div className="min-w-0">
                         <div className="text-sm font-bold text-ink truncate">{user.name}</div>
                         <div className="text-xs text-gray-500 truncate">{user.email}</div>
                       </div>
                     </div>
+
+                    {(user.faculty || user.department || user.student_id || user.level || user.staff_type) && (
+                      <div className="border-b border-line px-4 py-3">
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">{user.faculty || user.department || user.student_id || user.level ? 'Academic details' : 'Staff details'}</p>
+                        {user.faculty || user.department || user.student_id || user.level ? (
+                          <dl className="space-y-1 text-sm text-gray-700">
+                            <div><dt className="inline font-semibold">Faculty: </dt><dd className="inline">{user.faculty || 'Not set'}</dd></div>
+                            <div><dt className="inline font-semibold">Department: </dt><dd className="inline">{user.department || 'Not set'}</dd></div>
+                            <div><dt className="inline font-semibold">Student ID: </dt><dd className="inline">{user.student_id || 'Not set'}</dd></div>
+                            <div><dt className="inline font-semibold">Level: </dt><dd className="inline">{user.level || 'Not set'}</dd></div>
+                          </dl>
+                        ) : <p className="text-sm text-gray-700">{user.staff_type}</p>}
+                      </div>
+                    )}
 
                     {/* Role Chip */}
                     <div className="px-4 py-2 border-b border-line bg-[#FAFBFB] flex items-center justify-between">
@@ -213,6 +227,15 @@ export default function Navbar() {
                       >
                         <User size={15} className="text-teal" />
                         Campus Dashboard
+                      </Link>
+
+                      <Link
+                        to="/profile"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings size={15} className="text-teal" />
+                        Profile settings
                       </Link>
 
                       {['admin', 'super_admin'].includes(user.role) && (
@@ -281,8 +304,8 @@ export default function Navbar() {
           {user ? (
             <>
               <div className="py-3 border-b border-line flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {getInitials(user.name)}
+                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                  {user.profile_picture_url ? <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" /> : getInitials(user.name)}
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-ink truncate">{user.name}</div>
@@ -292,6 +315,13 @@ export default function Navbar() {
                   </span>
                 </div>
               </div>
+
+              {(user.faculty || user.department || user.student_id || user.level || user.staff_type) && (
+                <div className="border-b border-line px-1 py-3 text-sm text-gray-700">
+                  <p className="mb-1 font-bold">{user.faculty || user.department || user.student_id || user.level ? 'Academic details' : 'Staff details'}</p>
+                  {user.faculty || user.department || user.student_id || user.level ? <p>{user.faculty || 'Faculty not set'} · {user.department || 'Department not set'} · ID {user.student_id || 'Not set'} · {user.level || 'Level not set'}</p> : <p>{user.staff_type}</p>}
+                </div>
+              )}
 
               <div className="space-y-1 pt-1">
                 <Link
@@ -305,6 +335,8 @@ export default function Navbar() {
                 >
                   Issues
                 </Link>
+
+                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="block rounded py-2.5 pl-4 text-sm font-medium text-gray-700 hover:text-ink">Profile settings</Link>
 
                 <Link
                   to="/report"

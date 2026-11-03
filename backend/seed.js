@@ -7,6 +7,9 @@ const { pool, initDb } = require('./db');
 dotenv.config();
 
 const seed = async () => {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('The seed script is for development databases only.');
+  }
   console.log('[Seed] Initializing tables...');
   await initDb();
 

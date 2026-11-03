@@ -10,10 +10,6 @@ const { pool } = require('../db');
 test('CampusFix API End-to-End Tests', async (t) => {
   let studentToken = '';
   let studentUser = null;
-  let adminToken = '';
-  let adminUser = null;
-  let maintenanceToken = '';
-  let maintenanceUser = null;
   let createdIssueId = null;
 
   t.before(async () => {
@@ -33,18 +29,6 @@ test('CampusFix API End-to-End Tests', async (t) => {
       studentUser = studentRes.body.user;
     }
 
-    // Register a test staff/maintenance user or login
-    const adminRes = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: process.env.SUPER_ADMIN_EMAIL || 'superadmin@example.com',
-        password: process.env.SUPER_ADMIN_PASSWORD || 'SuperAdminPass123!',
-      });
-    
-    if (adminRes.status === 200) {
-      adminToken = adminRes.body.token;
-      adminUser = adminRes.body.user;
-    }
   });
 
   t.after(async () => {

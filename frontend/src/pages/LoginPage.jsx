@@ -130,16 +130,6 @@ export default function LoginPage() {
             >
               Admin
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEmail('superadmin@example.com');
-                setPassword('SuperAdminPass123!');
-              }}
-              className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium"
-            >
-              Super admin
-            </button>
           </div>
         </div>
       </div>

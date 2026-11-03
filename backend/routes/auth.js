@@ -61,7 +61,8 @@ router.post('/register', async (req, res, next) => {
     const user = insertResult.rows[0];
 
     // Generate JWT token
-    const secret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'Server authentication is not configured.' });
     const token = jwt.sign({ userId: user.id, role: user.role }, secret, { expiresIn: '1d' });
 
     res.status(201).json({
@@ -109,7 +110,8 @@ router.post('/login', async (req, res, next) => {
     // Never return password_hash in response
     const { password_hash, ...user } = userRecord;
 
-    const secret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'Server authentication is not configured.' });
     const token = jwt.sign({ userId: user.id, role: user.role }, secret, { expiresIn: '1d' });
 
     res.json({

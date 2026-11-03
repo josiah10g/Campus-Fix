@@ -17,7 +17,8 @@ const requireAuth = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-    const secret = process.env.JWT_SECRET || 'fallback_secret_for_development_only';
+    const secret = process.env.JWT_SECRET;
+    if (!secret) return res.status(500).json({ error: 'Server authentication is not configured.' });
 
     let decoded;
     try {

@@ -111,17 +111,19 @@ app.use((err, req, res, next) => {
 // Bootstrap super admin account if not already present
 const ensureSuperAdmin = async () => {
   try {
-    const email = (process.env.SUPER_ADMIN_EMAIL || 'superadmin@example.com').toLowerCase();
+    const emailSetting = process.env.SUPER_ADMIN_EMAIL;
+    const password = process.env.SUPER_ADMIN_PASSWORD;
+    if (!emailSetting || !password) throw new Error('SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD must be set.');
+    const email = emailSetting.toLowerCase();
     const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length === 0) {
-      const password = process.env.SUPER_ADMIN_PASSWORD || 'SuperAdminPass123!';
       const passwordHash = await bcrypt.hash(password, 10);
       await query(
         `INSERT INTO users (name, email, password_hash, role)
          VALUES ($1, $2, $3, 'super_admin')`,
         ['Super Admin', email, passwordHash]
       );
-      console.log(`[Auth] Created initial super_admin account for ${email}.`);
+      console.log('[Auth] Created initial super_admin account.');
     }
   } catch (err) {
     console.error('[Auth] Error checking or creating super admin:', err.message);
@@ -131,7 +133,7 @@ const ensureSuperAdmin = async () => {
 // Start server function
 const startServer = async () => {
   try {
-    if (process.env.DATABASE_URL) {
+    if (process.env.NODE_ENV !== 'test' && (process.env.DATABASE_URL || process.env.SUPABASE_DB_URL)) {
       await initDb();
       await ensureSuperAdmin();
     }

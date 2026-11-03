@@ -1,7 +1,9 @@
 // frontend/src/api.js
 // Single centralized API client for CampusFix
 
-const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+// Development uses Vite's /api proxy so local UI work talks to the local backend.
+// Production uses the separately deployed backend URL from VITE_API_URL.
+const BASE_URL = (import.meta.env.DEV ? '' : import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
 /**
  * Helper to retrieve stored auth token

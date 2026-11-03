@@ -13,6 +13,19 @@ export default function UserDrawer({ isOpen, onClose, onSubmit }) {
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [visible, setVisible] = useState(isOpen);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setVisible(true);
+      setClosing(false);
+    } else if (visible) {
+      setClosing(true);
+      const timer = setTimeout(() => setVisible(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -24,7 +37,7 @@ export default function UserDrawer({ isOpen, onClose, onSubmit }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!visible) return null;
 
   const validate = () => {
     const errs = {};
@@ -58,12 +71,12 @@ export default function UserDrawer({ isOpen, onClose, onSubmit }) {
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/40 transition-opacity animate-page-enter"
+        className={`fixed inset-0 bg-black/40 ${closing ? 'animate-backdrop-out' : 'animate-backdrop-in'}`}
         onClick={onClose}
       />
 
       <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-        <div className="w-screen max-w-md bg-white border-l border-line p-6 flex flex-col justify-between animate-page-enter">
+        <div className={`w-screen max-w-md bg-white border-l border-line p-6 flex flex-col justify-between ${closing ? 'animate-drawer-out' : 'animate-drawer-in'}`}>
           <div>
             <div className="flex items-center justify-between pb-4 border-b border-line">
               <h2 className="text-lg font-bold text-ink">Create new account</h2>

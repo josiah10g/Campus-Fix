@@ -22,16 +22,16 @@ export default function PublicHomePage() {
       setLoading(true);
       const [statsData, issuesData] = await Promise.all([
         api.getPublicStats(),
-        api.getPublicIssues(4),
+        api.getPublicIssues({ limit: 4 }),
       ]);
-      if (!Array.isArray(issuesData)) {
+      if (!issuesData || !Array.isArray(issuesData.issues)) {
         throw new Error('The issue service returned an invalid response. Check the frontend API URL.');
       }
       if (!statsData || typeof statsData !== 'object' || Array.isArray(statsData)) {
         throw new Error('The stats service returned an invalid response. Check the frontend API URL.');
       }
       setStats(statsData);
-      setIssues(issuesData);
+      setIssues(issuesData.issues);
     } catch (err) {
       console.error('[PublicHomePage] Failed to load data:', err);
       setError(err.message || 'Unable to connect to CampusFix server.');
@@ -88,12 +88,12 @@ export default function PublicHomePage() {
                   </Link>
                 </>
               )}
-              <a
-                href="#latest-issues"
+              <Link
+                to="/latest-issues"
                 className="text-sm font-semibold text-teal hover:underline ml-2"
               >
                 See latest issues
-              </a>
+              </Link>
             </div>
 
             <p className="text-xs text-gray-500">
@@ -116,8 +116,8 @@ export default function PublicHomePage() {
         </div>
 
         {/* How It Works Section */}
-        <div className="mb-14">
-          <h2 className="text-xl font-bold text-ink mb-4">How it works</h2>
+        <div id="how-it-works" className="mb-14">
+          <div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-bold text-ink">How it works</h2><Link to="/how-it-works" className="text-sm font-semibold text-teal hover:underline">Learn more</Link></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Step 1 */}
             <div className="bg-white border border-line rounded-card p-5 flex items-start space-x-4">
@@ -164,12 +164,7 @@ export default function PublicHomePage() {
         <div id="latest-issues" className="mb-14">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
             <h2 className="text-xl font-bold text-ink">Latest issues</h2>
-            <Link
-              to="/login?next=/report"
-              className="text-xs font-semibold text-teal hover:underline"
-            >
-              Log in to report, edit or update an issue
-            </Link>
+            <Link to="/latest-issues" className="text-xs font-semibold text-teal hover:underline">View all issues</Link>
           </div>
 
           {error && <ErrorBanner message={error} onRetry={loadPublicData} />}

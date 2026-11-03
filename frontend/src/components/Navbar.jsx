@@ -34,7 +34,7 @@ export default function Navbar() {
     }
   };
 
-  const isPublicPage = location.pathname === '/';
+  const isPublicPage = !user && ['/', '/how-it-works', '/latest-issues'].includes(location.pathname);
 
   return (
     <nav className="bg-white border-b border-line sticky top-0 z-30">
@@ -64,18 +64,14 @@ export default function Navbar() {
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
                     )}
                   </Link>
-                  <a
-                    href="#how-it-works"
-                    className="py-5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
-                  >
+                  <Link to="/how-it-works" className={`relative py-5 text-sm font-semibold transition-colors ${isActive('/how-it-works') ? 'text-ink' : 'text-gray-600 hover:text-ink'}`}>
                     How it works
-                  </a>
-                  <a
-                    href="#latest-issues"
-                    className="py-5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
-                  >
+                    {isActive('/how-it-works') && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />}
+                  </Link>
+                  <Link to="/latest-issues" className={`relative py-5 text-sm font-semibold transition-colors ${isActive('/latest-issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'}`}>
                     Latest issues
-                  </a>
+                    {isActive('/latest-issues') && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />}
+                  </Link>
                 </>
               ) : (
                 user && (

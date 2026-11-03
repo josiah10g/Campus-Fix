@@ -11,6 +11,8 @@ import EditIssuePage from './pages/EditIssuePage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import UsersPage from './pages/UsersPage';
 import PublicHomePage from './pages/PublicHomePage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import LatestIssuesPage from './pages/LatestIssuesPage';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
@@ -64,6 +66,8 @@ export default function App() {
             <Routes>
               {/* Public Landing Page */}
               <Route path="/" element={<PublicHomePage />} />
+              <Route path="/how-it-works" element={<HowItWorksPage />} />
+              <Route path="/latest-issues" element={<LatestIssuesPage />} />
 
               {/* Public Auth Routes */}
               <Route

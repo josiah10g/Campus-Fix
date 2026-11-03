@@ -92,7 +92,14 @@ const request = async (endpoint, options = {}) => {
 // API Endpoints
 export const api = {
   getPublicStats: () => request('/api/public/stats'),
-  getPublicIssues: (limit = 4) => request(`/api/public/issues?limit=${limit}`),
+  getPublicIssues: (params = {}) => {
+    const search = new URLSearchParams();
+    for (const key of ['search', 'status', 'category', 'page', 'limit']) {
+      if (params[key] !== undefined && params[key] !== '') search.set(key, params[key]);
+    }
+    const query = search.toString();
+    return request(`/api/public/issues${query ? `?${query}` : ''}`);
+  },
   // Auth
   login: (credentials) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(userData) }),

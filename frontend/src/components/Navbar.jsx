@@ -115,55 +115,70 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown matching Image 09 */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-line bg-white px-4 pt-2 pb-4 space-y-2 animate-page-enter">
+        <div className="md:hidden border-t border-line bg-white px-4 pt-3 pb-4 space-y-2 animate-page-enter">
           <div className="py-2 border-b border-line flex items-center justify-between">
             <div>
-              <div className="text-sm font-medium text-ink">{user.name}</div>
+              <div className="text-sm font-bold text-ink">{user.name}</div>
               <div className="text-xs text-gray-500">{user.email}</div>
             </div>
             <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
               {getRoleBadge(user.role)}
             </span>
           </div>
-          <Link
-            to="/issues"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block py-2 text-sm font-medium ${
-              isActive('/issues') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
-            }`}
-          >
-            Issues
-          </Link>
-          <Link
-            to="/report"
-            onClick={() => setMobileMenuOpen(false)}
-            className={`block py-2 text-sm font-medium ${
-              isActive('/report') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
-            }`}
-          >
-            Report an issue
-          </Link>
-          {user.role === 'super_admin' && (
+
+          <div className="space-y-1 pt-1">
             <Link
-              to="/users"
+              to="/issues"
               onClick={() => setMobileMenuOpen(false)}
-              className={`block py-2 text-sm font-medium ${
-                isActive('/users') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
+              className={`block py-2.5 text-sm rounded ${
+                isActive('/issues')
+                  ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                  : 'text-gray-700 hover:text-ink pl-4 font-medium'
               }`}
             >
-              Users
+              Issues
             </Link>
-          )}
-          <p className="text-xs text-gray-400 px-4 pt-1">Super admin also sees Users.</p>
+
+            <Link
+              to="/report"
+              onClick={() => setMobileMenuOpen(false)}
+              className={`block py-2.5 text-sm rounded ${
+                isActive('/report')
+                  ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                  : 'text-gray-700 hover:text-ink pl-4 font-medium'
+              }`}
+            >
+              Report an issue
+            </Link>
+
+            {user.role === 'super_admin' && (
+              <Link
+                to="/users"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2.5 text-sm rounded ${
+                  isActive('/users')
+                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                }`}
+              >
+                Users
+              </Link>
+            )}
+
+            <p className="text-[11px] text-gray-400 pl-4 pt-2 pb-1">
+              Super admin also sees Users.
+            </p>
+          </div>
+
           <div className="pt-2 border-t border-line">
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 logout();
               }}
-              className="w-full text-left py-2 text-sm text-statusOpen font-medium"
+              className="w-full text-center py-2 text-sm text-ink border border-line rounded font-medium hover:bg-gray-50"
             >
               Log out
             </button>

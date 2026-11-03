@@ -225,6 +225,7 @@ export default function IssueDetailPage() {
       <ConfirmDeleteModal
         isOpen={deleteOpen}
         title={issue.title}
+        location={issue.location}
         loading={deleteLoading}
         onConfirm={handleDelete}
         onCancel={() => setDeleteOpen(false)}

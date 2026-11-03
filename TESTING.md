@@ -27,9 +27,11 @@ npm test
 15. `PUT /api/issues/:id` allows owner to edit details while status is `Open`.
 16. `DELETE /api/issues/:id` allows owner to delete while `Open` and returns `404` for missing IDs.
 17. Maintenance cannot delete; Admin can delete any issue.
-18. Admin can view users and promote student/staff to admin; super_admin can create accounts and manage all roles.
+18. Admins can create/delete accounts and change roles except for super_admin; super_admin can fully manage accounts.
 19. Student registration requires faculty, department, student ID, and level; staff must choose Lecturer or Maintenance officer.
 20. An issue with category `Other` requires a custom category description.
+21. `PUT /api/auth/profile` updates the current account and never returns the password hash.
+22. Admins can create/delete accounts and change roles except to or from `super_admin`; super admins retain full role control.
 
 ---
 
@@ -76,3 +78,6 @@ npm test
 | **17. Refresh Persistence** | Refresh `/issues` or `/users` on live deployment. | SPA rewrites work seamlessly without returning 404. | [ ] |
 | **18. CORS Verification** | Inspect network tab in live deployment. | API calls send `Origin` header and succeed without CORS errors. | [ ] |
 | **19. Hover and focus** | Tab through controls; hover buttons, links, cards, and rows. | Visible focus rings remain; hover tint and active press feel quick. | [ ] |
+| **20. Profile settings** | From the dashboard or profile menu, update name/email and optionally password and picture. | Changes persist after refresh; academic details appear from the profile menu. | [ ] |
+| **21. Admin user actions** | As Admin, create an account, change another user's role, then delete a different account. | User count updates; Admin cannot create, edit, or delete super admins. | [ ] |
+| **22. Toast position and readability** | Trigger success and error messages; view stats and auth pages. | Toasts appear bottom-right; stat labels and supporting text are easy to read. | [ ] |

@@ -29,6 +29,7 @@ These notes explain the architectural decisions, request lifecycle, security mec
    - Validates all input data server-side (trims whitespace, checks lengths and allowed enums).
    - Enforces authentication (`requireAuth`) and role-based permissions (`requireRole`).
    - Serves public endpoints under `/api/public/*` with express rate-limiting.
+   - A profile update changes only the authenticated user's account. Passwords are bcrypt-hashed, and profile images are accepted only as small PNG, JPEG, or WebP data images (or an HTTPS/HTTP image URL).
 3. **Database (PostgreSQL)**:
    - Relational tables `users` and `issues` with foreign key relationships (`reporter_id REFERENCES users(id)`).
    - Uses parameterized queries exclusively to prevent SQL injection.
@@ -105,6 +106,10 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
 3. **Safe "next" Redirects (Open Redirect Prevention)**:
    - During redirects from unauthenticated pages (e.g., `/login?next=/report`), the client validates that `next` starts with a single `/` and does not contain `://` or `//`.
    - Prevents malicious open redirect attacks that forward users to external phishing sites.
+4. **Profile and user administration**:
+   - `/api/auth/profile` uses the verified token user ID, so users cannot select another account to edit.
+   - Admins can create/delete accounts and change roles, but cannot manage super-admin accounts or create a super admin. Super admins can manage roles, with self-change and last-super-admin safeguards.
+   - Profile pictures are limited to PNG, JPEG, and WebP and 1 MB; the profile image is only loaded on login/profile refresh, not on every API request.
 
 ---
 

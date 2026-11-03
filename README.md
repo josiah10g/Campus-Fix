@@ -33,10 +33,12 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 | **Student** | Yes | Yes | Own (if Open) | No (read-only) | Own (if Open) | No |
 | **Staff** | Yes | Yes | Own (if Open) | No (read-only) | Own (if Open) | No |
 | **Maintenance** | Yes | Yes | Any issue | No (read-only) | No | No |
-| **Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Promote student/staff to admin; view users |
+| **Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Create, delete, and manage users (cannot manage super admins) |
 | **Super Admin** | Yes | Yes | Any issue | No (read-only) | Any issue | Full user and role management |
 
 Student sign-up also collects faculty, department, student ID, and level. Staff sign-up collects whether the staff member is a lecturer or maintenance officer. Selecting **Other** as an issue category requires a short category description. Issue status is shown as a fixed-size read-only pill throughout the app and cannot be changed through the API.
+
+Users can update their name, email, password, student/staff details, and optional profile picture in **Profile settings**. Profile pictures are uploaded as PNG, JPEG, or WebP files up to 1 MB. Clicking the profile icon shows saved academic or staff details.
 
 ### Public page routes
 | Route | Description |
@@ -148,6 +150,7 @@ Public endpoints are available without a token: `GET /api/public/stats` and `GET
 | `POST` | `/api/auth/register` | Public | Register student or staff account |
 | `POST` | `/api/auth/login` | Public | Login with email and password |
 | `GET` | `/api/auth/me` | Authenticated | Retrieve current user profile |
+| `PUT` | `/api/auth/profile` | Authenticated | Update own account and profile details |
 | `GET` | `/api/stats` | Authenticated | Summary counts: total, open, inProgress, resolved |
 | `GET` | `/api/issues` | Authenticated | List all issues (supports `?status=`, `?category=`, `?search=`, `?myReports=`) |
 | `GET` | `/api/issues/:id` | Authenticated | Get single issue details |
@@ -155,8 +158,9 @@ Public endpoints are available without a token: `GET /api/public/stats` and `GET
 | `PUT` | `/api/issues/:id` | Authenticated | Update issue details; status is read-only |
 | `DELETE` | `/api/issues/:id` | Authenticated | Delete issue (owner if open, or admin/super_admin) |
 | `GET` | `/api/users` | Admin, Super Admin | List all users and account count |
-| `POST` | `/api/users` | Super Admin | Provision an account with any role |
-| `PUT` | `/api/users/:id/role` | Admin, Super Admin | Admin can promote student/staff to admin; super admin can manage roles |
+| `POST` | `/api/users` | Admin, Super Admin | Create an account; only super admin can create another super admin |
+| `PUT` | `/api/users/:id/role` | Admin, Super Admin | Change user roles; only super admin can manage super admins |
+| `DELETE` | `/api/users/:id` | Admin, Super Admin | Delete a user and their reports; last super admin is protected |
 
 ---
 

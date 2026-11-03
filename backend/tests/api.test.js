@@ -176,7 +176,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(shortPassword.status, 400);
   });
 
-  await t.test('POST /api/auth/register requires student details and accepts staff type', async () => {
+  await t.test('POST /api/auth/register requires student details and accepts staff without a type field', async () => {
     const missingStudentDetails = await request(app).post('/api/auth/register').send({
       name: 'Student Missing Details',
       email: `missing_${Date.now()}@example.com`,
@@ -192,11 +192,10 @@ test('CampusFix API End-to-End Tests', async (t) => {
       email: lecturerEmail,
       password: 'Password123!',
       role: 'staff',
-      staff_type: 'Lecturer',
     });
     assert.strictEqual(staff.status, 201);
     assert.strictEqual(staff.body.user.role, 'staff');
-    assert.strictEqual(staff.body.user.staff_type, 'Lecturer');
+    assert.strictEqual(staff.body.user.staff_type, null);
   });
 
   await t.test('PUT /api/auth/profile updates account, student details, and optional picture', async () => {

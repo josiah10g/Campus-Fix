@@ -62,14 +62,11 @@ router.post('/register', async (req, res, next) => {
       level = level.trim();
       staff_type = null;
     } else {
-      const staffTypes = ['Lecturer', 'Maintenance officer'];
-      if (!staffTypes.includes(staff_type)) {
-        return res.status(400).json({ error: 'Select Lecturer or Maintenance officer.' });
-      }
       faculty = null;
       department = null;
       student_id = null;
       level = null;
+      staff_type = null;
     }
 
     // Check if email already exists
@@ -157,7 +154,7 @@ router.post('/login', async (req, res, next) => {
 /** Update the signed-in user's own account and optional profile picture URL. */
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
-    let { name, email, password, faculty, department, student_id, level, staff_type, profile_picture_url } = req.body;
+    let { name, email, password, faculty, department, student_id, level, profile_picture_url } = req.body;
     if (typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'Full name is required.' });
     if (name.trim().length > 60) return res.status(400).json({ error: 'Full name cannot exceed 60 characters.' });
     if (typeof email !== 'string' || !email.trim()) return res.status(400).json({ error: 'Email address is required.' });
@@ -182,10 +179,6 @@ router.put('/profile', requireAuth, async (req, res, next) => {
         if (value.trim().length > max) return res.status(400).json({ error: `${label} cannot exceed ${max} characters.` });
       }
     }
-    if (req.user.role === 'staff' && !['Lecturer', 'Maintenance officer'].includes(staff_type)) {
-      return res.status(400).json({ error: 'Select Lecturer or Maintenance officer.' });
-    }
-
     const duplicate = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
     if (duplicate.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
 
@@ -194,11 +187,11 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       `UPDATE users SET name = $1, email = $2,
         password_hash = COALESCE($3, password_hash),
         faculty = $4, department = $5, student_id = $6, level = $7,
-        staff_type = $8, profile_picture_url = $9
-       WHERE id = $10
+        profile_picture_url = $8
+       WHERE id = $9
        RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
       [name.trim(), email, passwordHash, faculty?.trim() || null, department?.trim() || null,
-        student_id?.trim() || null, level?.trim() || null, staff_type || null, picture || null, req.user.id]
+        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id]
     );
     res.json({ user: result.rows[0] });
   } catch (error) {

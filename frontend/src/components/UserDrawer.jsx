@@ -4,7 +4,7 @@ import { X, Loader2 } from 'lucide-react';
 
 const ROLES = ['student', 'staff', 'maintenance', 'admin', 'super_admin'];
 
-export default function UserDrawer({ isOpen, onClose, onSubmit }) {
+export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = ROLES }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -138,7 +138,7 @@ export default function UserDrawer({ isOpen, onClose, onSubmit }) {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-3 py-2 text-sm border border-line rounded focus:outline-none focus:border-teal"
                 >
-                  {ROLES.map((r) => (
+                  {allowedRoles.map((r) => (
                     <option key={r} value={r}>
                       {r}
                     </option>

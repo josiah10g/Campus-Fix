@@ -4,7 +4,7 @@ import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import ErrorBanner from '../components/ErrorBanner';
-import { Loader2 } from 'lucide-react';
+import UserDrawer from '../components/UserDrawer';
 
 const ROLES = [
   { value: 'student', label: 'Student' },
@@ -21,16 +21,7 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
-
-  // Create account card form state
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'maintenance',
-  });
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const loadUsers = async () => {
     try {
@@ -74,32 +65,11 @@ export default function UsersPage() {
     }
   };
 
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    const errs = {};
-    if (!formData.name.trim()) errs.name = 'Full name is required';
-    if (!formData.email.trim()) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      errs.email = 'Enter a valid email address';
-    }
-    if (!formData.password || formData.password.length < 8) {
-      errs.password = 'At least 8 characters';
-    }
-    setFormErrors(errs);
-    if (Object.keys(errs).length > 0) return;
-
-    setIsSubmitting(true);
-    try {
-      const res = await api.createUser(formData);
-      setUsers((prev) => [res.user, ...prev]);
-      setTotalUsers((count) => count + 1);
-      setFormData({ name: '', email: '', password: '', role: 'maintenance' });
-      setToast({ type: 'success', message: 'Account created successfully.' });
-    } catch (err) {
-      setToast({ type: 'error', message: err.message || 'Could not create account.' });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleCreateUser = async (formData) => {
+    const res = await api.createUser(formData);
+    setUsers((prev) => [res.user, ...prev]);
+    setTotalUsers((count) => count + 1);
+    setToast({ type: 'success', message: 'Account created successfully.' });
   };
 
   return (
@@ -112,9 +82,14 @@ export default function UsersPage() {
           <h1 className="text-2xl font-bold text-ink">Users</h1>
           <p className="text-sm text-gray-500 mt-1">Manage campus accounts and roles.</p>
         </div>
-        <div className="rounded-card border border-line bg-white px-5 py-3 card-interactive">
-          <p className="text-xs text-gray-500">Accounts on CampusFix</p>
-          <p className="text-2xl font-bold text-ink">{totalUsers}</p>
+        <div className="flex items-center gap-3">
+          <div className="rounded-card border border-line bg-white px-5 py-3 card-interactive">
+            <p className="text-sm font-semibold text-gray-600">Accounts on CampusFix</p>
+            <p className="text-2xl font-bold text-ink">{totalUsers}</p>
+          </div>
+          <button type="button" onClick={() => setCreateOpen(true)} className="rounded bg-teal px-4 py-3 text-sm font-bold text-white hover:bg-teal-dark btn-interactive">
+            Create user
+          </button>
         </div>
       </div>
 
@@ -123,7 +98,7 @@ export default function UsersPage() {
       {/* Main 2-column layout matching Image 07 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: User list table */}
-        <div className={`${currentUser.role === 'admin' ? 'lg:col-span-12' : 'lg:col-span-8'} bg-white border border-line rounded-card overflow-hidden card-interactive`}>
+        <div className="lg:col-span-12 bg-white border border-line rounded-card overflow-hidden card-interactive">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-line text-left text-sm">
               <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
@@ -181,84 +156,13 @@ export default function UsersPage() {
           </div>
         </div>
 
-      {/* Only super admins can provision privileged accounts. */}
-      {['admin', 'super_admin'].includes(currentUser.role) && <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
-          <h2 className="text-base font-bold text-ink">Create account</h2>
-          <p className="text-xs text-gray-500 mt-0.5 mb-5">
-            Create a campus account and assign its starting role.
-          </p>
-
-          <form onSubmit={handleCreateUser} className="space-y-4" noValidate>
-            <div>
-              <label className="block text-xs font-semibold text-ink mb-1">Full name</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Full name"
-                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
-              />
-              {formErrors.name && (
-                <p className="mt-1 text-xs text-statusOpen">{formErrors.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-ink mb-1">Email</label>
-              <input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="name@example.com"
-                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
-              />
-              {formErrors.email && (
-                <p className="mt-1 text-xs text-statusOpen">{formErrors.email}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-ink mb-1">Temporary password</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="At least 8 characters"
-                className="w-full px-3 py-2 text-xs border border-line rounded focus:outline-none focus:border-teal"
-              />
-              {formErrors.password && (
-                <p className="mt-1 text-xs text-statusOpen">{formErrors.password}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-ink mb-1">Role</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full px-3 py-2 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
-              >
-                {ROLES.filter((r) => currentUser.role === 'super_admin' || r.value !== 'super_admin').map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-2.5 px-4 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
-              >
-                {isSubmitting && <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />}
-                Create account
-              </button>
-            </div>
-          </form>
-        </div>}
       </div>
+      <UserDrawer
+        isOpen={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={handleCreateUser}
+        allowedRoles={ROLES.filter((role) => currentUser.role === 'super_admin' || role.value !== 'super_admin').map((role) => role.value)}
+      />
     </div>
   );
 }

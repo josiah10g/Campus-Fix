@@ -35,6 +35,7 @@ export default function IssuesPage() {
   // Delete Modal State
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // One-time Welcome Banner state (keyed by user ID in localStorage)
   const [welcomeVisible, setWelcomeVisible] = useState(() => {
@@ -114,12 +115,16 @@ export default function IssuesPage() {
     setDeleteLoading(true);
     try {
       await api.deleteIssue(deleteTarget.id);
+      setDeletingId(deleteTarget.id);
+      await new Promise((resolve) => setTimeout(resolve, 200));
       setIssues((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+      setDeletingId(null);
       const newStats = await api.getStats();
       setStats(newStats);
       setToast({ type: 'success', message: 'Issue deleted successfully.' });
       setDeleteTarget(null);
     } catch (err) {
+      setDeletingId(null);
       setToast({ type: 'error', message: err.message || 'Failed to delete issue.' });
     } finally {
       setDeleteLoading(false);
@@ -300,6 +305,7 @@ export default function IssuesPage() {
               onStatusChange={handleStatusChange}
               onDeleteClick={(issue) => setDeleteTarget(issue)}
               newlyCreatedId={newlyCreatedId}
+              deletingId={deletingId}
             />
           </div>
 
@@ -314,6 +320,7 @@ export default function IssuesPage() {
                 onDeleteClick={(issue) => setDeleteTarget(issue)}
                 isNewlyCreated={issue.id === newlyCreatedId}
                 index={index}
+                isDeleting={issue.id === deletingId}
               />
             ))}
           </div>

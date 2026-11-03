@@ -10,6 +10,7 @@ export default function IssueTable({
   onStatusChange,
   onDeleteClick,
   newlyCreatedId,
+  deletingId,
 }) {
   const canChangeStatusInline = ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
@@ -38,7 +39,7 @@ export default function IssueTable({
               return (
                 <tr
                   key={issue.id}
-                  className={`table-row-hover ${index < 8 ? 'animate-row-enter' : ''} ${isNewlyCreated ? 'animate-highlight-new' : ''}`}
+                  className={`table-row-hover ${index < 8 ? 'animate-row-enter' : ''} ${isNewlyCreated ? 'animate-highlight-new' : ''} ${issue.id === deletingId ? 'animate-row-delete' : ''}`}
                   style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined}
                 >
                   <td className="px-5 py-4 whitespace-nowrap">

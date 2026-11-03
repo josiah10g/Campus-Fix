@@ -168,3 +168,4 @@ Refer to [TESTING.md](TESTING.md) for full interactive test checklist.
 ## 9. Screenshots
 
 *(Place screenshots of Dashboard, Issue Form, Detail View, and Mobile layout here).*
+

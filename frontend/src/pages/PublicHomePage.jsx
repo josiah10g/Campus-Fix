@@ -24,6 +24,12 @@ export default function PublicHomePage() {
         api.getPublicStats(),
         api.getPublicIssues(4),
       ]);
+      if (!Array.isArray(issuesData)) {
+        throw new Error('The issue service returned an invalid response. Check the frontend API URL.');
+      }
+      if (!statsData || typeof statsData !== 'object' || Array.isArray(statsData)) {
+        throw new Error('The stats service returned an invalid response. Check the frontend API URL.');
+      }
       setStats(statsData);
       setIssues(issuesData);
     } catch (err) {

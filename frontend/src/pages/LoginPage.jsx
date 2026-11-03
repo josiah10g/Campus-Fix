@@ -44,12 +44,6 @@ export default function LoginPage() {
     }
   };
 
-  // Quick fill helper for testing / defense demo
-  const fillDemo = (demoEmail) => {
-    setEmail(demoEmail);
-    setPassword('DemoPass123!');
-  };
-
   const nextParam = location.search;
 
   return (
@@ -153,35 +147,6 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            {/* Quick Demo Login Chips */}
-            <div className="mt-8 pt-5 border-t border-line">
-              <p className="text-[11px] text-gray-400 font-semibold uppercase tracking-wider mb-2 text-center">
-                Quick demo accounts (autofill):
-              </p>
-              <div className="flex flex-wrap justify-center gap-1.5 text-xs">
-                <button
-                  type="button"
-                  onClick={() => fillDemo('amina@example.com')}
-                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
-                >
-                  Student
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemo('tunde@example.com')}
-                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
-                >
-                  Maintenance
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillDemo('grace@example.com')}
-                  className="px-2.5 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded font-medium transition-colors"
-                >
-                  Admin
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>

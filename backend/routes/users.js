@@ -1,5 +1,5 @@
 // backend/routes/users.js
-// User management routes (super_admin only)
+// User management routes (admin and super_admin)
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const { query } = require('../db');
@@ -7,8 +7,8 @@ const { requireAuth, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Enforce requireAuth and super_admin role for all /api/users endpoints
-router.use(requireAuth, requireRole('super_admin'));
+// Keep user access and role changes protected on the server.
+router.use(requireAuth, requireRole('admin', 'super_admin'));
 
 const VALID_ROLES = ['student', 'staff', 'maintenance', 'admin', 'super_admin'];
 
@@ -19,9 +19,10 @@ const VALID_ROLES = ['student', 'staff', 'maintenance', 'admin', 'super_admin'];
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT id, name, email, role, created_at FROM users ORDER BY created_at DESC'
+      `SELECT id, name, email, role, faculty, department, student_id, level, staff_type, created_at
+       FROM users ORDER BY created_at DESC`
     );
-    res.json(result.rows);
+    res.json({ users: result.rows, total: result.rows.length });
   } catch (error) {
     next(error);
   }
@@ -31,7 +32,7 @@ router.get('/', async (req, res, next) => {
  * POST /api/users
  * Create a user with any valid role (e.g., maintenance, admin)
  */
-router.post('/', async (req, res, next) => {
+router.post('/', requireRole('super_admin'), async (req, res, next) => {
   try {
     let { name, email, password, role } = req.body;
 
@@ -68,7 +69,7 @@ router.post('/', async (req, res, next) => {
     const result = await query(
       `INSERT INTO users (name, email, password_hash, role)
        VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role, created_at`,
+       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, created_at`,
       [name, email, passwordHash, role]
     );
 
@@ -114,6 +115,12 @@ router.put('/:id/role', async (req, res, next) => {
     }
     const targetUser = targetResult.rows[0];
 
+    if (req.user.role === 'admin') {
+      if (!['student', 'staff'].includes(targetUser.role) || role !== 'admin') {
+        return res.status(403).json({ error: 'Admins can only promote student and staff accounts to admin.' });
+      }
+    }
+
     // If target is currently super_admin and being changed to something else, check if another super_admin exists
     if (targetUser.role === 'super_admin' && role !== 'super_admin') {
       const superAdminCountResult = await query(
@@ -130,7 +137,7 @@ router.put('/:id/role', async (req, res, next) => {
       `UPDATE users
        SET role = $1
        WHERE id = $2
-       RETURNING id, name, email, role, created_at`,
+      RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, created_at`,
       [role, targetUserId]
     );
 

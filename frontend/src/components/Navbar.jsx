@@ -135,7 +135,7 @@ export default function Navbar() {
                       )}
                     </Link>
 
-                    {user.role === 'super_admin' && (
+                    {['admin', 'super_admin'].includes(user.role) && (
                       <Link
                         to="/users"
                         className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
@@ -215,7 +215,7 @@ export default function Navbar() {
                         Campus Dashboard
                       </Link>
 
-                      {user.role === 'super_admin' && (
+                      {['admin', 'super_admin'].includes(user.role) && (
                         <Link
                           to="/users"
                           onClick={() => setDropdownOpen(false)}
@@ -318,7 +318,7 @@ export default function Navbar() {
                   Report an issue
                 </Link>
 
-                {user.role === 'super_admin' && (
+                {['admin', 'super_admin'].includes(user.role) && (
                   <Link
                     to="/users"
                     onClick={() => setMobileMenuOpen(false)}

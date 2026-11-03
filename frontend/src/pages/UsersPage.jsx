@@ -17,6 +17,7 @@ const ROLES = [
 export default function UsersPage() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
@@ -35,7 +36,8 @@ export default function UsersPage() {
     try {
       setError(null);
       const data = await api.getUsers();
-      setUsers(data);
+      setUsers(data.users);
+      setTotalUsers(data.total);
     } catch (err) {
       setError(err.message || "Couldn't reach the server.");
     } finally {
@@ -77,6 +79,7 @@ export default function UsersPage() {
     try {
       const res = await api.createUser(formData);
       setUsers((prev) => [res.user, ...prev]);
+      setTotalUsers((count) => count + 1);
       setFormData({ name: '', email: '', password: '', role: 'maintenance' });
       setToast({ type: 'success', message: 'Account created successfully.' });
     } catch (err) {
@@ -91,11 +94,15 @@ export default function UsersPage() {
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {/* Page Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-ink">Users</h1>
-        <p className="text-xs text-gray-500 mt-1">
-          Create accounts and change roles. Only the super admin sees this page.
-        </p>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-ink">Users</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage campus accounts and roles.</p>
+        </div>
+        <div className="rounded-card border border-line bg-white px-5 py-3 card-interactive">
+          <p className="text-xs text-gray-500">Accounts on CampusFix</p>
+          <p className="text-2xl font-bold text-ink">{totalUsers}</p>
+        </div>
       </div>
 
       {error && <ErrorBanner message={error} onRetry={loadUsers} />}
@@ -103,7 +110,7 @@ export default function UsersPage() {
       {/* Main 2-column layout matching Image 07 */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: User list table */}
-        <div className="lg:col-span-8 bg-white border border-line rounded-card overflow-hidden card-interactive">
+        <div className={`${currentUser.role === 'admin' ? 'lg:col-span-12' : 'lg:col-span-8'} bg-white border border-line rounded-card overflow-hidden card-interactive`}>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-line text-left text-sm">
               <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
@@ -128,9 +135,19 @@ export default function UsersPage() {
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap">
                         {isSelf ? (
-                          <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-500 font-medium rounded border border-gray-200 inline-block w-44">
-                            Super admin (locked)
+                          <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 font-medium rounded border border-gray-200 inline-block min-w-36">
+                            {ROLES.find((role) => role.value === u.role)?.label} (you)
                           </div>
+                        ) : currentUser.role === 'admin' ? (
+                          ['student', 'staff'].includes(u.role) ? (
+                            <button onClick={() => handleRoleChange(u.id, 'admin')} className="rounded border border-teal/30 bg-white px-3 py-1.5 text-xs font-semibold text-teal hover:bg-teal hover:text-white btn-interactive">
+                              Promote to admin
+                            </button>
+                          ) : (
+                            <span className="inline-flex min-w-36 justify-center rounded border border-line bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-600">
+                              {ROLES.find((role) => role.value === u.role)?.label}
+                            </span>
+                          )
                         ) : (
                           <select
                             value={u.role}
@@ -153,8 +170,8 @@ export default function UsersPage() {
           </div>
         </div>
 
-        {/* Right: Create account card */}
-        <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
+      {/* Only super admins can provision privileged accounts. */}
+      {currentUser.role === 'super_admin' && <div className="lg:col-span-4 bg-white border border-line rounded-card p-6 card-interactive">
           <h2 className="text-base font-bold text-ink">Create account</h2>
           <p className="text-xs text-gray-500 mt-0.5 mb-5">
             Students and staff register themselves.
@@ -229,15 +246,7 @@ export default function UsersPage() {
               </button>
             </div>
           </form>
-        </div>
-      </div>
-
-      {/* Role Behavior Caption Bar matching image 07 */}
-      <div className="mt-8 bg-white border border-line rounded-card p-4 flex items-center shadow-none">
-        <div className="w-1 self-stretch bg-safetyYellow rounded-full mr-3.5" />
-        <p className="text-xs text-gray-700 font-normal">
-          Super admin creates maintenance and admin accounts and changes any role. The first super admin comes from server environment variables.
-        </p>
+        </div>}
       </div>
     </div>
   );

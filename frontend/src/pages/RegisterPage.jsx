@@ -10,6 +10,11 @@ export default function RegisterPage() {
     email: '',
     password: '',
     role: 'student', // student or staff
+    faculty: '',
+    department: '',
+    student_id: '',
+    level: '',
+    staff_type: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -42,6 +47,14 @@ export default function RegisterPage() {
     }
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters.');
+      return;
+    }
+    if (formData.role === 'student' && ['faculty', 'department', 'student_id', 'level'].some((field) => !formData[field].trim())) {
+      setError('Enter your faculty, department, student ID and level.');
+      return;
+    }
+    if (formData.role === 'staff' && !formData.staff_type) {
+      setError('Choose whether you are a lecturer or maintenance officer.');
       return;
     }
 
@@ -166,6 +179,36 @@ export default function RegisterPage() {
                     </button>
                   </div>
                 </div>
+
+                {formData.role === 'student' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-ink mb-1.5">Faculty</label>
+                      <input type="text" value={formData.faculty} onChange={(e) => setFormData({ ...formData, faculty: e.target.value })} placeholder="Your faculty" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-ink mb-1.5">Department</label>
+                      <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="Your department" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-ink mb-1.5">Student ID</label>
+                      <input type="text" value={formData.student_id} onChange={(e) => setFormData({ ...formData, student_id: e.target.value })} placeholder="Your student ID" maxLength={60} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-ink mb-1.5">Level</label>
+                      <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-semibold text-ink mb-1.5">Staff type</label>
+                    <select value={formData.staff_type} onChange={(e) => setFormData({ ...formData, staff_type: e.target.value })} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required>
+                      <option value="">Select your staff type</option>
+                      <option value="Lecturer">Lecturer</option>
+                      <option value="Maintenance officer">Maintenance officer</option>
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-ink mb-1.5">Full name</label>

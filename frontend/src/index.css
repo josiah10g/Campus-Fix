@@ -61,6 +61,7 @@
 @keyframes drawerOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } }
 @keyframes rowEnter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes rowDelete { to { opacity: 0; transform: scaleY(0.85); } }
+@keyframes welcomeFadeOut { to { opacity: 0; } }
 
 /* Accessible motion wrapper: only animate if user hasn't requested reduced motion */
 @media (prefers-reduced-motion: no-preference) {
@@ -88,6 +89,7 @@
   .animate-drawer-out { animation: drawerOut 200ms ease-out both; }
   .animate-row-enter { animation: rowEnter 200ms ease-out both; }
   .animate-row-delete { animation: rowDelete 200ms ease-out both; transform-origin: top; }
+  .animate-welcome-out { animation: welcomeFadeOut 200ms ease-out both; }
 
   /* Micro-interactions */
   .btn-interactive {

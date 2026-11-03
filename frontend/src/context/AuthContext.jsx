@@ -6,7 +6,9 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(getStoredUser());
-  const [loading, setLoading] = useState(true);
+  // Only block protected routes while an existing token is being verified.
+  // Visitors without a token can render the public home immediately.
+  const [loading, setLoading] = useState(() => Boolean(getToken()));
 
   // Sync session on mount
   useEffect(() => {

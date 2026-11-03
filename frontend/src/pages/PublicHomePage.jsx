@@ -16,6 +16,8 @@ export default function PublicHomePage() {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [fadeWelcome, setFadeWelcome] = useState(false);
 
   const loadPublicData = async () => {
     try {
@@ -39,6 +41,15 @@ export default function PublicHomePage() {
     loadPublicData();
   }, []);
 
+  useEffect(() => {
+    const fadeTimer = setTimeout(() => setFadeWelcome(true), 800);
+    const hideTimer = setTimeout(() => setShowWelcome(false), 1000);
+    return () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-page flex flex-col justify-between animate-page-enter">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 w-full">
@@ -46,9 +57,11 @@ export default function PublicHomePage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
           {/* Left Column: Hero Text & Buttons */}
           <div className="lg:col-span-7 pt-2">
-            <div className="inline-block px-3 py-1 bg-[#FEF6E6] border border-safetyYellow rounded-full text-xs font-semibold text-ink mb-4">
-              Welcome to CampusFix
-            </div>
+            {showWelcome && (
+              <div className={`inline-block px-3 py-1 bg-[#FEF6E6] border border-safetyYellow rounded-full text-xs font-semibold text-ink mb-4 ${fadeWelcome ? 'animate-welcome-out' : ''}`}>
+                Welcome to CampusFix
+              </div>
+            )}
 
             <h1 className="text-4xl sm:text-5xl font-extrabold text-ink tracking-tight leading-tight mb-2">
               Report it once. <br />

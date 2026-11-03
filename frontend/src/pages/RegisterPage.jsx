@@ -36,7 +36,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await register(formData);
-      navigate('/issues');
+      navigate('/issues', { state: { welcome: true } });
     } catch (err) {
       setError(err.message || 'Registration failed.');
     } finally {

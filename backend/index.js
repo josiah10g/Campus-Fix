@@ -81,7 +81,9 @@ app.get('/api/stats', requireAuth, async (req, res, next) => {
 const authRoutes = require('./routes/auth');
 const issuesRoutes = require('./routes/issues');
 const usersRoutes = require('./routes/users');
+const publicRoutes = require('./routes/public');
 
+app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/issues', issuesRoutes);
 app.use('/api/users', usersRoutes);

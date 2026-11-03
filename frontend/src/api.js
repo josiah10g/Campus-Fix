@@ -91,6 +91,8 @@ const request = async (endpoint, options = {}) => {
 
 // API Endpoints
 export const api = {
+  getPublicStats: () => request('/api/public/stats'),
+  getPublicIssues: (limit = 4) => request(`/api/public/issues?limit=${limit}`),
   // Auth
   login: (credentials) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(userData) }),

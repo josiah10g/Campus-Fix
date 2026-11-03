@@ -10,8 +10,26 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Per Image 01 mockup, the navbar is hidden on login and register pages
-  if (!user || location.pathname === '/login' || location.pathname === '/register') {
+  if (location.pathname === '/login' || location.pathname === '/register') {
     return null;
+  }
+
+  if (!user) {
+    return (
+      <nav className="sticky top-0 z-30 border-b border-line bg-white">
+        <div className="mx-auto flex h-12 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <div className="flex items-center gap-8">
+            <Link to="/" className="flex items-center gap-2 font-bold text-ink"><span className="flex h-6 w-6 items-center justify-center rounded bg-safetyYellow">C</span>CampusFix</Link>
+            <div className="hidden gap-7 text-xs sm:flex">
+              <a href="#" className="font-semibold text-teal">Home</a>
+              <a href="#" className="text-gray-600">How it works</a>
+              <a href="#latest" className="text-gray-600">Latest issues</a>
+            </div>
+          </div>
+          <div className="flex gap-2"><Link to="/login" className="rounded border border-line px-4 py-1.5 text-xs font-semibold text-ink">Log in</Link><Link to="/register" className="rounded bg-teal px-4 py-1.5 text-xs font-semibold text-white">Create account</Link></div>
+        </div>
+      </nav>
+    );
   }
 
   const isActive = (path) => location.pathname === path;

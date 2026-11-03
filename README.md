@@ -4,6 +4,8 @@ A campus facility management and issue-tracking system developed for the CLBG So
 
 CampusFix enables students and campus staff to report maintenance problems (broken lights, leaking taps, faulty Wi-Fi, damaged furniture) and track their resolution status in real time.
 
+The public home page shows issue counts and recent issue titles, locations, categories, and statuses. It omits reporter identities and descriptions until a visitor signs in.
+
 ---
 
 ## 1. Problem Being Solved
@@ -22,6 +24,7 @@ On college campuses, facility issues frequently go unreported or unnoticed due t
 - **Read**: View all campus issues, view individual issue details, filter by status or category, and search by keywords.
 - **Update**: Edit issue details (title, category, location, description). Maintenance and admin accounts can update status inline directly from the dashboard.
 - **Delete**: Safely delete issues with confirmation dialogs. Students can delete their own open reports; administrators can remove any issue.
+- **Public view**: Visitors can see aggregate counts and a privacy-limited list of recent issues before creating an account.
 
 ### Role Permissions:
 | Role | View All | Report Issue | Edit Details | Change Status | Delete Issue | User Admin |
@@ -122,6 +125,8 @@ npm run dev
 ## 6. API Endpoints Table
 
 All protected routes require an `Authorization: Bearer <token>` header.
+
+Public endpoints are available without a token: `GET /api/public/stats` and `GET /api/public/issues?limit=4`. The issue list intentionally excludes reporter names, email addresses, and descriptions.
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |

@@ -10,6 +10,7 @@ import ReportIssuePage from './pages/ReportIssuePage';
 import EditIssuePage from './pages/EditIssuePage';
 import IssueDetailPage from './pages/IssueDetailPage';
 import UsersPage from './pages/UsersPage';
+import HomePage from './pages/HomePage';
 import { Loader2 } from 'lucide-react';
 
 // Protected Route Component
@@ -58,6 +59,7 @@ export default function App() {
           <Navbar />
           <main className="flex-1">
             <Routes>
+              <Route path="/" element={<HomePage />} />
               {/* Public Auth Routes */}
               <Route
                 path="/login"

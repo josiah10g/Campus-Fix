@@ -35,6 +35,7 @@ export default function IssuesPage() {
   // Delete Modal State
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [welcomeVisible, setWelcomeVisible] = useState(Boolean(location.state?.welcome));
 
   // Newly created highlight
   const newlyCreatedId = location.state?.newIssueId;
@@ -131,6 +132,12 @@ export default function IssuesPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-page-enter">
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {welcomeVisible && (
+        <section className="mb-6 rounded-card border border-amber-200 border-l-4 border-l-safetyYellow bg-amber-50 p-5" role="status">
+          <div className="flex justify-between gap-4"><div><h2 className="font-bold text-ink">Welcome to CampusFix, {user?.name}</h2><p className="mt-1 text-sm text-gray-600">Your account is ready. Spotted something broken? Report it and follow its progress here.</p><div className="mt-3 flex gap-2"><Link to="/report" className="rounded bg-teal px-4 py-2 text-xs font-bold text-white">Report my first issue</Link><button onClick={() => { setWelcomeVisible(false); setViewTab('all'); }} className="rounded border border-line bg-white px-4 py-2 text-xs font-bold">Browse all issues</button></div></div><button onClick={() => setWelcomeVisible(false)} className="text-xs text-gray-600 underline">Dismiss</button></div>
+        </section>
+      )}
 
       {/* Page Title & Main Action Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

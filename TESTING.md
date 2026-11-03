@@ -51,3 +51,5 @@ npm test
 | **20. Toast timing** | Trigger a success toast and an error toast. | Success dismisses after about 3 seconds; errors remain until dismissed. | [ ] |
 | **21. Modal and drawer** | Open delete confirmation and user drawer; close by Escape, backdrop, and close control. | Both open and close cleanly without trapping the page. | [ ] |
 | **22. Skeleton loading** | Throttle network and open the issues page. | Skeleton cards/rows appear while data loads. | [ ] |
+| **23. Public home** | Open `/` while logged out. | Summary and latest issue list load; reporter and description fields stay private. | [ ] |
+| **24. Signup welcome** | Create a new student account. | Issues page shows a welcome banner with report and browse actions; dismiss hides it. | [ ] |

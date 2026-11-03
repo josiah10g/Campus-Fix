@@ -14,7 +14,7 @@ const router = express.Router();
  */
 router.post('/register', async (req, res, next) => {
   try {
-    let { name, email, password, role } = req.body;
+    let { name, email, password, role, faculty, department, student_id, level, staff_type } = req.body;
 
     // Validation
     if (!name || typeof name !== 'string' || !name.trim()) {
@@ -41,6 +41,37 @@ router.post('/register', async (req, res, next) => {
     const validRoles = ['student', 'staff'];
     const assignedRole = validRoles.includes(role) ? role : 'student';
 
+    if (assignedRole === 'student') {
+      const studentFields = [
+        ['faculty', faculty, 100],
+        ['department', department, 100],
+        ['student ID', student_id, 60],
+        ['level', level, 40],
+      ];
+      for (const [label, value, maxLength] of studentFields) {
+        if (typeof value !== 'string' || !value.trim()) {
+          return res.status(400).json({ error: `${label} is required for students.` });
+        }
+        if (value.trim().length > maxLength) {
+          return res.status(400).json({ error: `${label} cannot exceed ${maxLength} characters.` });
+        }
+      }
+      faculty = faculty.trim();
+      department = department.trim();
+      student_id = student_id.trim();
+      level = level.trim();
+      staff_type = null;
+    } else {
+      const staffTypes = ['Lecturer', 'Maintenance officer'];
+      if (!staffTypes.includes(staff_type)) {
+        return res.status(400).json({ error: 'Select Lecturer or Maintenance officer.' });
+      }
+      faculty = null;
+      department = null;
+      student_id = null;
+      level = null;
+    }
+
     // Check if email already exists
     const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
@@ -52,10 +83,10 @@ router.post('/register', async (req, res, next) => {
 
     // Insert user
     const insertResult = await query(
-      `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, name, email, role, created_at`,
-      [name, email, passwordHash, assignedRole]
+      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, created_at`,
+      [name, email, passwordHash, assignedRole, faculty, department, student_id, level, staff_type]
     );
 
     const user = insertResult.rows[0];

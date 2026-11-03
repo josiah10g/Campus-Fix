@@ -54,6 +54,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         i.title,
         i.description,
         i.category,
+        i.category_detail,
         i.location,
         i.status,
         i.reporter_id,
@@ -89,6 +90,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
         i.title,
         i.description,
         i.category,
+        i.category_detail,
         i.location,
         i.status,
         i.reporter_id,
@@ -117,7 +119,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
  */
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    let { title, description, category, location } = req.body;
+    let { title, description, category, category_detail, location } = req.body;
 
     // Server-side validation
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -139,6 +141,18 @@ router.post('/', requireAuth, async (req, res, next) => {
       });
     }
 
+    if (category === 'Other') {
+      if (typeof category_detail !== 'string' || !category_detail.trim()) {
+        return res.status(400).json({ error: 'Please describe the issue category.' });
+      }
+      category_detail = category_detail.trim();
+      if (category_detail.length > 100) {
+        return res.status(400).json({ error: 'The category description cannot exceed 100 characters.' });
+      }
+    } else {
+      category_detail = null;
+    }
+
     if (!location || typeof location !== 'string' || !location.trim()) {
       return res.status(400).json({ error: 'Location is required.' });
     }
@@ -149,8 +163,8 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     // Default status is always 'Open' on creation
     const insertSql = `
-      INSERT INTO issues (title, description, category, location, status, reporter_id)
-       VALUES ($1, $2, $3, $4, 'Open', $5)
+      INSERT INTO issues (title, description, category, category_detail, location, status, reporter_id)
+       VALUES ($1, $2, $3, $4, $5, 'Open', $6)
        RETURNING *
     `;
 
@@ -158,6 +172,7 @@ router.post('/', requireAuth, async (req, res, next) => {
       title,
       description,
       category,
+      category_detail,
       location,
       req.user.id,
     ]);
@@ -200,23 +215,13 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     const isOwner = existing.reporter_id === user.id;
     const isPrivilegedStaff = ['maintenance', 'admin', 'super_admin'].includes(user.role);
 
-    let { title, description, category, location, status } = req.body;
+    let { title, description, category, category_detail, location, status } = req.body;
 
-    // Check if status change is attempted
+    // Statuses are read-only; this remains enforced even when a request bypasses the UI.
     if (status !== undefined && status !== existing.status) {
-      if (!isPrivilegedStaff) {
-        return res.status(403).json({
-          error: "You don't have permission to change the status of an issue.",
-        });
-      }
-      if (!ALLOWED_STATUSES.includes(status)) {
-        return res.status(400).json({
-          error: `Status must be one of: ${ALLOWED_STATUSES.join(', ')}.`,
-        });
-      }
-    } else {
-      status = existing.status;
+      return res.status(403).json({ error: 'Issue status is read-only.' });
     }
+    status = existing.status;
 
     // Check detail edit permission:
     // If user is neither privileged staff nor (owner with Open status), reject with 403
@@ -254,6 +259,20 @@ router.put('/:id', requireAuth, async (req, res, next) => {
       });
     }
 
+    let newCategoryDetail = category_detail !== undefined
+      ? String(category_detail).trim()
+      : existing.category_detail;
+    if (newCategory === 'Other') {
+      if (!newCategoryDetail) {
+        return res.status(400).json({ error: 'Please describe the issue category.' });
+      }
+      if (newCategoryDetail.length > 100) {
+        return res.status(400).json({ error: 'The category description cannot exceed 100 characters.' });
+      }
+    } else {
+      newCategoryDetail = null;
+    }
+
     let newLocation = location !== undefined ? String(location).trim() : existing.location;
     if (!newLocation) {
       return res.status(400).json({ error: 'Location is required.' });
@@ -264,8 +283,8 @@ router.put('/:id', requireAuth, async (req, res, next) => {
 
     const updateSql = `
       UPDATE issues
-      SET title = $1, description = $2, category = $3, location = $4, status = $5
-      WHERE id = $6
+      SET title = $1, description = $2, category = $3, category_detail = $4, location = $5, status = $6
+      WHERE id = $7
       RETURNING *
     `;
 
@@ -273,6 +292,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
       newTitle,
       newDescription,
       newCategory,
+      newCategoryDetail,
       newLocation,
       status,
       issueId,
@@ -281,7 +301,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     // Fetch joined reporter details for response
     const fetchSql = `
       SELECT
-        i.id, i.title, i.description, i.category, i.location, i.status,
+        i.id, i.title, i.description, i.category, i.category_detail, i.location, i.status,
         i.reporter_id, u.name AS reporter_name, i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id

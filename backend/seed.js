@@ -25,9 +25,9 @@ const seed = async () => {
 
   // Fictional demo users (one per role + super_admin)
   const users = [
-    { name: 'Amina Yusuf', email: 'amina@example.com', password_hash: passwordHash, role: 'student' },
-    { name: 'David Mwangi', email: 'david@example.com', password_hash: passwordHash, role: 'staff' },
-    { name: 'Tunde Bello', email: 'tunde@example.com', password_hash: passwordHash, role: 'maintenance' },
+    { name: 'Amina Yusuf', email: 'amina@example.com', password_hash: passwordHash, role: 'student', faculty: 'Faculty of Science', department: 'Computer Science', student_id: 'CF-STU-001', level: '200 level' },
+    { name: 'David Mwangi', email: 'david@example.com', password_hash: passwordHash, role: 'staff', staff_type: 'Lecturer' },
+    { name: 'Tunde Bello', email: 'tunde@example.com', password_hash: passwordHash, role: 'maintenance', staff_type: 'Maintenance officer' },
     { name: 'Grace Okoro', email: 'grace@example.com', password_hash: passwordHash, role: 'admin' },
     { name: 'Musa Ibrahim', email: superAdminEmail, password_hash: superAdminHash, role: 'super_admin' },
   ];
@@ -36,10 +36,10 @@ const seed = async () => {
   const insertedUsers = {};
   for (const u of users) {
     const res = await pool.query(
-      `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING id, name, email, role`,
-      [u.name, u.email, u.password_hash, u.role]
+      [u.name, u.email, u.password_hash, u.role, u.faculty || null, u.department || null, u.student_id || null, u.level || null, u.staff_type || null]
     );
     insertedUsers[u.name] = res.rows[0].id;
   }

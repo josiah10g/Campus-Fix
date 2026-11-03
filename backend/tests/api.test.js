@@ -25,6 +25,10 @@ test('CampusFix API End-to-End Tests', async (t) => {
         email: `student_${unique}@example.com`,
         password: 'Password123!',
         role: 'student',
+        faculty: 'Faculty of Testing',
+        department: 'Test Studies',
+        student_id: `TEST-${unique}`,
+        level: '100 level',
       });
     
     if (studentRes.status === 201) {
@@ -156,16 +160,62 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(shortPassword.status, 400);
   });
 
+  await t.test('POST /api/auth/register requires student details and accepts staff type', async () => {
+    const missingStudentDetails = await request(app).post('/api/auth/register').send({
+      name: 'Student Missing Details',
+      email: `missing_${Date.now()}@example.com`,
+      password: 'Password123!',
+      role: 'student',
+    });
+    assert.strictEqual(missingStudentDetails.status, 400);
+
+    const lecturerEmail = `lecturer_${Date.now()}@example.com`;
+    testRoleEmails.push(lecturerEmail);
+    const staff = await request(app).post('/api/auth/register').send({
+      name: 'Test Lecturer',
+      email: lecturerEmail,
+      password: 'Password123!',
+      role: 'staff',
+      staff_type: 'Lecturer',
+    });
+    assert.strictEqual(staff.status, 201);
+    assert.strictEqual(staff.body.user.role, 'staff');
+    assert.strictEqual(staff.body.user.staff_type, 'Lecturer');
+  });
+
   await t.test('POST /api/auth/register ignores or rejects roles other than student/staff', async () => {
     const res = await request(app).post('/api/auth/register').send({
       name: 'Hacker Attempt',
       email: `hacker_${Date.now()}@example.com`,
       password: 'HackerPassword123!',
       role: 'super_admin',
+      faculty: 'Faculty of Testing',
+      department: 'Test Studies',
+      student_id: `TEST-${Date.now()}`,
+      level: '100 level',
     });
     assert.strictEqual(res.status, 201);
     assert.strictEqual(res.body.user.role, 'student');
     await pool.query('DELETE FROM users WHERE id = $1', [res.body.user.id]);
+  });
+
+  await t.test('POST /api/issues requires details when category is Other', async () => {
+    if (!studentToken) return;
+    const res = await request(app).post('/api/issues')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .send({ title: 'An unusual issue', description: 'Something needs attention', category: 'Other', location: 'Room 12' });
+    assert.strictEqual(res.status, 400);
+    assert.strictEqual(res.body.error, 'Please describe the issue category.');
+  });
+
+  await t.test('POST /api/issues saves Other category detail', async () => {
+    if (!studentToken) return;
+    const created = await request(app).post('/api/issues')
+      .set('Authorization', `Bearer ${studentToken}`)
+      .send({ title: 'Unusual campus issue', description: 'Temporary test issue', category: 'Other', category_detail: 'Pest control', location: 'Test location' });
+    assert.strictEqual(created.status, 201);
+    assert.strictEqual(created.body.category_detail, 'Pest control');
+    await request(app).delete(`/api/issues/${created.body.id}`).set('Authorization', `Bearer ${studentToken}`);
   });
 
   await t.test('POST /api/issues validates input and returns 400 on empty title', async () => {
@@ -269,21 +319,45 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(res.status, 404);
   });
 
-  await t.test('Maintenance can change status but cannot delete; admin can delete', async () => {
+  await t.test('Issue status is read-only; maintenance cannot delete and admin can delete', async () => {
     const issue = await request(app).post('/api/issues').set('Authorization', `Bearer ${studentToken}`).send({
-      title: 'Role permission test', description: 'Temporary test issue', category: 'Other', location: 'Test location',
+      title: 'Role permission test', description: 'Temporary test issue', category: 'Plumbing', location: 'Test location',
     });
     assert.strictEqual(issue.status, 201);
     const statusUpdate = await request(app).put(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${maintenanceToken}`).send({ status: 'In Progress' });
-    assert.strictEqual(statusUpdate.status, 200);
+    assert.strictEqual(statusUpdate.status, 403);
+    assert.strictEqual(statusUpdate.body.error, 'Issue status is read-only.');
     const maintenanceDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${maintenanceToken}`);
     assert.strictEqual(maintenanceDelete.status, 403);
     const adminDelete = await request(app).delete(`/api/issues/${issue.body.id}`).set('Authorization', `Bearer ${adminToken}`);
     assert.strictEqual(adminDelete.status, 200);
   });
 
-  await t.test('Only super_admin can access user management', async () => {
-    const response = await request(app).get('/api/users').set('Authorization', `Bearer ${studentToken}`);
+  await t.test('Admins can view users and promote students or staff to admin', async () => {
+    const list = await request(app).get('/api/users').set('Authorization', `Bearer ${adminToken}`);
+    assert.strictEqual(list.status, 200);
+    assert.ok(Array.isArray(list.body.users));
+    assert.strictEqual(list.body.total, list.body.users.length);
+    assert.strictEqual(list.body.users[0].password_hash, undefined);
+
+    const cannotCreate = await request(app).post('/api/users').set('Authorization', `Bearer ${adminToken}`)
+      .send({ name: 'Not Allowed', email: `admin-create-${Date.now()}@example.com`, password: 'Password123!', role: 'maintenance' });
+    assert.strictEqual(cannotCreate.status, 403);
+
+    const promote = await request(app).put(`/api/users/${studentUser.id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`).send({ role: 'admin' });
+    assert.strictEqual(promote.status, 200);
+    assert.strictEqual(promote.body.user.role, 'admin');
+
+    const forbidden = await request(app).put(`/api/users/${studentUser.id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`).send({ role: 'super_admin' });
+    assert.strictEqual(forbidden.status, 403);
+  });
+
+  await t.test('User management rejects students and unauthenticated requests', async () => {
+    const response = await request(app).get('/api/users').set('Authorization', `Bearer ${maintenanceToken}`);
     assert.strictEqual(response.status, 403);
+    const unauthenticated = await request(app).get('/api/users');
+    assert.strictEqual(unauthenticated.status, 401);
   });
 });

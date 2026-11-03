@@ -68,7 +68,7 @@ export default function LoginPage() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
         >
           <ArrowLeft size={13} aria-hidden="true" />
-          Back to Home
+          Go back to the home page
         </Link>
       </header>
 
@@ -87,7 +87,7 @@ export default function LoginPage() {
           </div>
 
           {/* Form Card */}
-          <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm">
+          <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm card-interactive">
             {error && (
               <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-xs sm:text-sm text-statusOpen font-medium">
                 {error}

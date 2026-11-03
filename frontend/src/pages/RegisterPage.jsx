@@ -79,7 +79,7 @@ export default function RegisterPage() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
         >
           <ArrowLeft size={13} aria-hidden="true" />
-          Back to Home
+          Go back to the home page
         </Link>
       </header>
 
@@ -120,7 +120,7 @@ export default function RegisterPage() {
 
           {/* Right Column: Clean Registration Form Card */}
           <div className="lg:col-span-7">
-            <div className="bg-white border border-line rounded-card p-6 sm:p-9 shadow-sm">
+            <div className="bg-white border border-line rounded-card p-6 sm:p-9 shadow-sm card-interactive">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-ink tracking-tight font-serif sm:font-sans">
                   Create your account

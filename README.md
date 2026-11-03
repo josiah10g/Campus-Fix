@@ -158,14 +158,27 @@ Refer to [TESTING.md](TESTING.md) for full interactive test checklist.
 
 ## 8. Live Deployment
 
-- **Frontend Live URL**: `[PASTE_LIVE_FRONTEND_URL_HERE]`
-- **Backend API URL**: `[PASTE_LIVE_BACKEND_URL_HERE]`
+- **Frontend Live URL**: https://campus-fix-ochre.vercel.app
+- **Backend API URL**: https://campus-fix-bic4.onrender.com
 
 *(See [DEPLOY.md](DEPLOY.md) for deployment walkthrough on Render and hosted Postgres).*
 
 ---
 
-## 9. Screenshots
+## 9. Screenshots / Design Mockups
 
-*(Place screenshots of Dashboard, Issue Form, Detail View, and Mobile layout here).*
+Design mockups are saved in the [`docs/mockups/`](docs/mockups/) directory:
+
+| # | Screen | File |
+|---|--------|------|
+| 00 | Design System (colours, fonts, tokens) | `00-design-system.png` |
+| 01 | Auth – Login / Register | `01-auth-login-register.png` |
+| 02 | Dashboard – Student / Staff view | `02-dashboard-student-staff.png` |
+| 03 | Dashboard – Maintenance view | `03-dashboard-maintenance.png` |
+| 04 | Dashboard – Admin view | `04-dashboard-admin.png` |
+| 05 | Dashboard – Super Admin view | `05-dashboard-super-admin.png` |
+| 06 | Forms – Report, Edit, Delete modal | `06-forms-report-edit-delete.png` |
+| 07 | Users page – Super Admin | `07-users-super-admin.png` |
+| 08 | Issue Detail & Feedback states | `08-issue-detail-and-feedback-states.png` |
+| 09 | Mobile responsive views | `09-mobile-views.png` |
 

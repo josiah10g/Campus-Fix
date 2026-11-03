@@ -21,8 +21,10 @@ export default function Toast({ toast, onClose }) {
   return (
     <div className="fixed top-4 right-4 z-50 max-w-sm w-full animate-toast-in">
       <div
-        className={`flex items-start p-3.5 rounded border shadow-md bg-white ${
-          isSuccess ? 'border-emerald-200' : 'border-rose-200'
+        className={`flex items-start p-3.5 rounded shadow-md ${
+          isSuccess
+            ? 'bg-white border-l-4 border-l-safetyYellow border-y border-r border-y-emerald-200 border-r-emerald-200'
+            : 'bg-[#FFF5F5] border border-rose-200'
         }`}
       >
         <div className="flex-shrink-0 mt-0.5">
@@ -47,4 +49,3 @@ export default function Toast({ toast, onClose }) {
     </div>
   );
 }
-

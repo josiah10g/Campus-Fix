@@ -17,7 +17,7 @@ export default function ReportIssuePage() {
       const created = await api.createIssue(formData);
       navigate('/issues', {
         state: {
-          message: 'Issue reported successfully!',
+          message: 'Issue reported. It now shows in the list as Open.',
           newIssueId: created.id,
         },
       });
@@ -47,12 +47,16 @@ export default function ReportIssuePage() {
       <div className="bg-white border border-line rounded-card p-6 sm:p-8">
         <h1 className="text-xl font-bold text-ink">Report an issue</h1>
         <p className="text-xs text-gray-500 mt-1 mb-6">
-          Submit details about maintenance, facilities, or network problems on campus.
+          Say what is broken and where. Your name is added automatically.
         </p>
 
-        <IssueForm onSubmit={handleSubmit} currentUser={user} isEdit={false} />
+        <IssueForm
+          onSubmit={handleSubmit}
+          onCancel={() => navigate('/issues')}
+          currentUser={user}
+          isEdit={false}
+        />
       </div>
     </div>
   );
 }
-

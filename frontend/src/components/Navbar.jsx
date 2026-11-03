@@ -131,7 +131,7 @@ export default function Navbar() {
             to="/issues"
             onClick={() => setMobileMenuOpen(false)}
             className={`block py-2 text-sm font-medium ${
-              isActive('/issues') ? 'text-teal font-bold' : 'text-ink'
+              isActive('/issues') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
             }`}
           >
             Issues
@@ -140,7 +140,7 @@ export default function Navbar() {
             to="/report"
             onClick={() => setMobileMenuOpen(false)}
             className={`block py-2 text-sm font-medium ${
-              isActive('/report') ? 'text-teal font-bold' : 'text-ink'
+              isActive('/report') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
             }`}
           >
             Report an issue
@@ -150,12 +150,13 @@ export default function Navbar() {
               to="/users"
               onClick={() => setMobileMenuOpen(false)}
               className={`block py-2 text-sm font-medium ${
-                isActive('/users') ? 'text-teal font-bold' : 'text-ink'
+                isActive('/users') ? 'border-l-4 border-safetyYellow pl-2 text-teal font-bold bg-[#F8FAF9]' : 'pl-4 text-ink'
               }`}
             >
               Users
             </Link>
           )}
+          <p className="text-xs text-gray-400 px-4 pt-1">Super admin also sees Users.</p>
           <div className="pt-2 border-t border-line">
             <button
               onClick={() => {

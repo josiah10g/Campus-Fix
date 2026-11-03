@@ -2,7 +2,14 @@
 import React, { useEffect } from 'react';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
-export default function ConfirmDeleteModal({ isOpen, title, onConfirm, onCancel, loading = false }) {
+export default function ConfirmDeleteModal({
+  isOpen,
+  title,
+  location = '',
+  onConfirm,
+  onCancel,
+  loading = false,
+}) {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen && !loading) {
@@ -17,7 +24,7 @@ export default function ConfirmDeleteModal({ isOpen, title, onConfirm, onCancel,
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      {/* Backdrop with fade-in */}
+      {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/40 transition-opacity animate-page-enter"
         onClick={() => !loading && onCancel()}
@@ -33,35 +40,41 @@ export default function ConfirmDeleteModal({ isOpen, title, onConfirm, onCancel,
               <AlertCircle className="h-5 w-5 text-statusOpen" />
             </div>
             <div className="mt-0.5 ml-4 text-left">
-              <h3 className="text-base font-bold text-ink">Delete issue</h3>
+              <h3 className="text-base font-bold text-ink">Delete this issue?</h3>
               <p className="mt-1 text-sm text-gray-600">
-                Are you sure you want to delete <span className="font-semibold text-ink">"{title}"</span>? This action cannot be undone.
+                <span className="font-semibold text-ink">{title}</span>
+                {location ? ` in ${location}` : ''} will be removed for everyone.
               </p>
+              <p className="text-xs text-gray-500 mt-1">This cannot be undone.</p>
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end space-x-3">
-            <button
-              type="button"
-              disabled={loading}
-              onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-ink bg-white border border-line rounded hover:bg-gray-50 focus:outline-none disabled:opacity-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={onConfirm}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-statusOpen rounded hover:bg-[#A32F28] focus:outline-none disabled:opacity-50 transition-colors"
-            >
-              {loading && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-              Delete issue
-            </button>
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-line pt-4">
+            <span className="text-[11px] text-gray-400">
+              Owner while Open, or admin and above
+            </span>
+            <div className="flex space-x-3 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={onCancel}
+                className="px-4 py-2 text-xs font-semibold text-ink bg-white border border-line rounded hover:bg-gray-50 focus:outline-none disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={onConfirm}
+                className="inline-flex items-center px-4 py-2 text-xs font-semibold text-white bg-statusOpen rounded hover:bg-[#A32F28] focus:outline-none disabled:opacity-50 transition-colors"
+              >
+                {loading && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
+                Delete issue
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

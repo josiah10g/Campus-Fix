@@ -30,7 +30,7 @@ export default function IssuesPage() {
   const [search, setSearch] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All statuses');
   const [selectedCategory, setSelectedCategory] = useState('All categories');
-  const [viewTab, setViewTab] = useState('all'); // 'all' or 'my' or 'attention'
+  const [viewTab, setViewTab] = useState('all'); // 'all' or 'my'
 
   // Delete Modal State
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -252,6 +252,16 @@ export default function IssuesPage() {
               />
             ))}
           </div>
+
+          {/* Mobile full-width report button matching Image 09 */}
+          <div className="md:hidden mt-4">
+            <Link
+              to="/report"
+              className="w-full block text-center py-3 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
+            >
+              Report an issue
+            </Link>
+          </div>
         </>
       )}
 
@@ -265,6 +275,7 @@ export default function IssuesPage() {
       <ConfirmDeleteModal
         isOpen={!!deleteTarget}
         title={deleteTarget?.title || ''}
+        location={deleteTarget?.location || ''}
         loading={deleteLoading}
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
@@ -272,4 +283,3 @@ export default function IssuesPage() {
     </div>
   );
 }
-

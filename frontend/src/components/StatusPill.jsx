@@ -5,11 +5,11 @@ export default function StatusPill({ status }) {
   let styleClasses = 'bg-gray-100 text-gray-700';
 
   if (status === 'Open') {
-    styleClasses = 'bg-[#FDEDEB] text-[#B93A32]';
+    styleClasses = 'bg-statusOpen-bg text-statusOpen';
   } else if (status === 'In Progress') {
-    styleClasses = 'bg-[#FEF6E6] text-[#8A5A00]';
+    styleClasses = 'bg-statusProgress-bg text-statusProgress';
   } else if (status === 'Resolved') {
-    styleClasses = 'bg-[#EAF6F0] text-[#22724F]';
+    styleClasses = 'bg-statusResolved-bg text-statusResolved';
   }
 
   return (

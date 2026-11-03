@@ -1,14 +1,27 @@
 // frontend/src/components/Navbar.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown, User, Shield, LogOut } from 'lucide-react';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close user dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Hidden only on standalone login and register pages per mockup
   if (location.pathname === '/login' || location.pathname === '/register') {
@@ -32,6 +45,14 @@ export default function Navbar() {
       default:
         return role;
     }
+  };
+
+  // Get user initials for avatar
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   };
 
   const isPublicPage = !user && ['/', '/how-it-works', '/latest-issues'].includes(location.pathname);
@@ -64,13 +85,27 @@ export default function Navbar() {
                       <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
                     )}
                   </Link>
-                  <Link to="/how-it-works" className={`relative py-5 text-sm font-semibold transition-colors ${isActive('/how-it-works') ? 'text-ink' : 'text-gray-600 hover:text-ink'}`}>
+                  <Link
+                    to="/how-it-works"
+                    className={`relative py-5 text-sm font-semibold transition-colors ${
+                      isActive('/how-it-works') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                    }`}
+                  >
                     How it works
-                    {isActive('/how-it-works') && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />}
+                    {isActive('/how-it-works') && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                    )}
                   </Link>
-                  <Link to="/latest-issues" className={`relative py-5 text-sm font-semibold transition-colors ${isActive('/latest-issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'}`}>
+                  <Link
+                    to="/latest-issues"
+                    className={`relative py-5 text-sm font-semibold transition-colors ${
+                      isActive('/latest-issues') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                    }`}
+                  >
                     Latest issues
-                    {isActive('/latest-issues') && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />}
+                    {isActive('/latest-issues') && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                    )}
                   </Link>
                 </>
               ) : (
@@ -122,27 +157,93 @@ export default function Navbar() {
           {/* Desktop Right Side */}
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <>
-                <span className="text-sm text-ink font-normal">{user.name}</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-                  {getRoleBadge(user.role)}
-                </span>
-                {isPublicPage ? (
-                  <Link
-                    to="/issues"
-                    className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive"
-                  >
-                    Go to dashboard
-                  </Link>
-                ) : (
-                  <button
-                    onClick={logout}
-                    className="text-sm text-gray-500 hover:text-ink transition-colors duration-150"
-                  >
-                    Log out
-                  </button>
+              <div className="relative" ref={dropdownRef}>
+                {/* Pill Profile Chip styled after inspiration Image 02 */}
+                <button
+                  type="button"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-3 pl-3.5 pr-2 py-1.5 rounded-full border border-line bg-white hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-teal shadow-sm transition-all"
+                  aria-expanded={dropdownOpen}
+                >
+                  <div className="text-right leading-tight">
+                    <div className="text-xs font-bold text-ink truncate max-w-[120px]">{user.name}</div>
+                    <div className="text-[10px] font-semibold text-teal tracking-wide uppercase">
+                      {getRoleBadge(user.role)}
+                    </div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-teal text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
+                    {getInitials(user.name)}
+                  </div>
+                  <ChevronDown
+                    size={14}
+                    className={`text-gray-400 transition-transform duration-150 ${
+                      dropdownOpen ? 'rotate-180 text-ink' : ''
+                    }`}
+                  />
+                </button>
+
+                {/* Profile Dropdown Menu styled after inspiration Image 02 */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-64 rounded-card bg-white border border-line shadow-lg py-2 z-50 animate-page-enter">
+                    {/* User header section */}
+                    <div className="px-4 py-3 border-b border-line flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0">
+                        {getInitials(user.name)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-ink truncate">{user.name}</div>
+                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                      </div>
+                    </div>
+
+                    {/* Role Chip */}
+                    <div className="px-4 py-2 border-b border-line bg-[#FAFBFB] flex items-center justify-between">
+                      <span className="text-[11px] text-gray-500 font-medium">Account role</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F3F3] text-teal">
+                        {getRoleBadge(user.role)}
+                      </span>
+                    </div>
+
+                    {/* Navigation items */}
+                    <div className="py-1">
+                      <Link
+                        to="/issues"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                      >
+                        <User size={15} className="text-teal" />
+                        Campus Dashboard
+                      </Link>
+
+                      {user.role === 'super_admin' && (
+                        <Link
+                          to="/users"
+                          onClick={() => setDropdownOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                        >
+                          <Shield size={15} className="text-teal" />
+                          User Management
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Sign out item */}
+                    <div className="border-t border-line pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDropdownOpen(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-statusOpen hover:bg-red-50 transition-colors text-left"
+                      >
+                        <LogOut size={15} />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </>
+              </div>
             ) : (
               <div className="flex items-center space-x-3">
                 <Link
@@ -179,14 +280,17 @@ export default function Navbar() {
         <div className="md:hidden border-t border-line bg-white px-4 pt-3 pb-4 space-y-2 animate-page-enter">
           {user ? (
             <>
-              <div className="py-2 border-b border-line flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-bold text-ink">{user.name}</div>
-                  <div className="text-xs text-gray-500">{user.email}</div>
+              <div className="py-3 border-b border-line flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0">
+                  {getInitials(user.name)}
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#E6F3F3] text-teal">
-                  {getRoleBadge(user.role)}
-                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-ink truncate">{user.name}</div>
+                  <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F3F3] text-teal">
+                    {getRoleBadge(user.role)}
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-1 pt-1">
@@ -227,10 +331,6 @@ export default function Navbar() {
                     Users
                   </Link>
                 )}
-
-                <p className="text-xs text-gray-500 pl-4 pt-2 pb-1">
-                  Super admin also sees Users.
-                </p>
               </div>
 
               <div className="pt-2 border-t border-line">
@@ -239,9 +339,9 @@ export default function Navbar() {
                     setMobileMenuOpen(false);
                     logout();
                   }}
-                  className="w-full text-center py-2 text-sm text-ink border border-line rounded font-medium hover:bg-gray-50"
+                  className="w-full text-center py-2 text-sm text-statusOpen border border-line rounded font-medium hover:bg-red-50"
                 >
-                  Log out
+                  Sign out
                 </button>
               </div>
             </>

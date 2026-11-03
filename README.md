@@ -101,6 +101,8 @@ npm start
 ```
 *The server will start at `http://localhost:3000`.*
 
+For a database that still uses the earlier `reporter_name` column, back it up and run `db/migrations/001_reporter_name_to_users.sql` once before deploying this version. It preserves reports and creates password-reset-required legacy user accounts.
+
 ### 3. Frontend Setup
 In a new terminal window:
 ```bash

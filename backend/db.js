@@ -1,17 +1,22 @@
 // backend/db.js
-// PostgreSQL connection pool configuration
+// Database connection configuration supporting both PostgreSQL pg Pool and Supabase
 const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-// In production (Render + hosted Postgres like Neon), rejectUnauthorized: false is required for SSL.
-// In local development, SSL is typically disabled.
 const isProduction = process.env.NODE_ENV === 'production';
 
+// Support both SUPABASE_DB_URL, DATABASE_URL, and direct pool configuration
+const connectionString =
+  process.env.DATABASE_URL ||
+  process.env.SUPABASE_DB_URL;
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false,
+  connectionString: connectionString,
+  ssl: isProduction || (connectionString && connectionString.includes('supabase.co'))
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 // Helper for running parameterised SQL queries
@@ -65,4 +70,3 @@ module.exports = {
   query,
   initDb,
 };
-

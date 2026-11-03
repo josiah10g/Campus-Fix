@@ -19,6 +19,11 @@ const pool = new Pool({
     : false,
 });
 
+// PostgreSQL can close idle connections; handle the pool event so it does not crash Node.
+pool.on('error', (error) => {
+  console.error('[DB] Idle PostgreSQL client error:', error.message);
+});
+
 // Helper for running parameterised SQL queries
 const query = (text, params) => pool.query(text, params);
 

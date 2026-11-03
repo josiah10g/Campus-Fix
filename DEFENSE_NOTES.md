@@ -114,6 +114,8 @@ When a user clicks "Delete" on an issue, the following sequence occurs:
 
 ## 7. Motion & Accessibility
 
+Motion is limited to short hover, focus, toast, modal, and page transitions so feedback is visible without slowing down actions. All non-essential movement is inside `prefers-reduced-motion: no-preference`; reduced-motion users get the same content without animation.
+
 - **CSS-Only Micro-interactions**: Built using Tailwind utilities and CSS keyframes in `index.css`. No heavy JavaScript animation libraries.
 - **Accessible Motion (`prefers-reduced-motion`)**:
   - All non-essential animations (shakes, page slide-ins, toast entrance) are wrapped inside `@media (prefers-reduced-motion: no-preference)`.

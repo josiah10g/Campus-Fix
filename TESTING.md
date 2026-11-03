@@ -47,3 +47,7 @@ npm test
 | **16. Reduced Motion** | Enable "prefers-reduced-motion" in browser dev tools. | All animations (shake, page fade, toast slide) become instant with zero layout shifts. | [ ] |
 | **17. Refresh Persistence** | Refresh `/issues` or `/users` on live deployment. | SPA rewrites work seamlessly without returning 404. | [ ] |
 | **18. CORS Verification** | Inspect network tab in live deployment. | API calls send `Origin` header and succeed without CORS errors. | [ ] |
+| **19. Hover and focus** | Tab through controls; hover buttons, links, cards, and rows. | Visible focus rings remain; hover tint and active press feel quick. | [ ] |
+| **20. Toast timing** | Trigger a success toast and an error toast. | Success dismisses after about 3 seconds; errors remain until dismissed. | [ ] |
+| **21. Modal and drawer** | Open delete confirmation and user drawer; close by Escape, backdrop, and close control. | Both open and close cleanly without trapping the page. | [ ] |
+| **22. Skeleton loading** | Throttle network and open the issues page. | Skeleton cards/rows appear while data loads. | [ ] |

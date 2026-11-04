@@ -1,5 +1,5 @@
 // backend/routes/auth.js
-// Authentication routes: register, login, me
+// Authentication routes: register, login, me, profile
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -82,7 +82,7 @@ router.post('/register', async (req, res, next) => {
     const insertResult = await query(
       `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, created_at`,
+       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
       [name, email, passwordHash, assignedRole, faculty, department, student_id, level, staff_type]
     );
 
@@ -119,7 +119,8 @@ router.post('/login', async (req, res, next) => {
 
     // Query user including password_hash
     const result = await query(
-      'SELECT id, name, email, password_hash, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at FROM users WHERE email = $1',
+      `SELECT id, name, email, password_hash, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at
+       FROM users WHERE email = $1`,
       [email]
     );
 
@@ -151,17 +152,30 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-/** Update the signed-in user's own account and optional profile picture URL. */
+/** Update the signed-in user's own account. All roles can edit academic status/details. Admins, maintenance and users must confirm password if updating password. */
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
-    let { name, email, password, faculty, department, student_id, level, profile_picture_url } = req.body;
+    let { name, email, password, current_password, faculty, department, student_id, level, profile_picture_url } = req.body;
     if (typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'Full name is required.' });
     if (name.trim().length > 60) return res.status(400).json({ error: 'Full name cannot exceed 60 characters.' });
     if (typeof email !== 'string' || !email.trim()) return res.status(400).json({ error: 'Email address is required.' });
     email = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
-    if (password !== undefined && password !== '' && (typeof password !== 'string' || password.length < 8)) {
-      return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+
+    // If changing password, verify length and optionally require current password check
+    if (password !== undefined && password !== '') {
+      if (typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+      }
+      if (['admin', 'maintenance', 'super_admin'].includes(req.user.role)) {
+        if (!current_password) {
+          return res.status(400).json({ error: 'Current password is required to change your password.' });
+        }
+        const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+        if (!userRow.rows.length) return res.status(404).json({ error: 'User not found.' });
+        const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
+        if (!match) return res.status(400).json({ error: 'Current password does not match.' });
+      }
     }
 
     const picture = typeof profile_picture_url === 'string' ? profile_picture_url.trim() : '';
@@ -172,6 +186,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     }
     if (isImageData && picture.length > 1400000) return res.status(400).json({ error: 'Profile picture must be 1 MB or smaller.' });
 
+    // Validate academic fields if provided or required
     if (req.user.role === 'student') {
       const studentDetails = [['faculty', faculty, 100], ['department', department, 100], ['student ID', student_id, 60], ['level', level, 40]];
       for (const [label, value, max] of studentDetails) {
@@ -179,6 +194,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
         if (value.trim().length > max) return res.status(400).json({ error: `${label} cannot exceed ${max} characters.` });
       }
     }
+
     const duplicate = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
     if (duplicate.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
 

@@ -1,5 +1,5 @@
 // frontend/src/pages/IssuesPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../api';
@@ -11,9 +11,11 @@ import Toast from '../components/Toast';
 import ErrorBanner from '../components/ErrorBanner';
 import EmptyState from '../components/EmptyState';
 import SkeletonLoader from '../components/SkeletonLoader';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORIES = ['All categories', 'Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
 const STATUSES = ['All statuses', 'Open', 'In Progress', 'Resolved'];
+const PAGE_SIZE = 8;
 
 export default function IssuesPage() {
   const { user } = useAuth();
@@ -25,6 +27,9 @@ export default function IssuesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -51,6 +56,11 @@ export default function IssuesPage() {
       localStorage.setItem(`welcome_dismissed_${user.id}`, 'true');
     }
   };
+
+  // Reset pagination to page 1 whenever filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedStatus, selectedCategory, viewTab]);
 
   // Newly created highlight
   const newlyCreatedId = location.state?.newIssueId;
@@ -83,11 +93,10 @@ export default function IssuesPage() {
     loadData();
   }, [loadData]);
 
-  // Handle toast passed from navigation (e.g. after create or edit)
+  // Handle toast passed from navigation (e.g. after create, edit, or profile save)
   useEffect(() => {
     if (location.state?.message) {
       setToast({ type: 'success', message: location.state.message });
-      // Clear state so reload doesn't repeat toast
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -99,16 +108,23 @@ export default function IssuesPage() {
     try {
       await api.deleteIssue(deleteTarget.id);
       setDeletingId(deleteTarget.id);
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      setIssues((prev) => prev.filter((i) => i.id !== deleteTarget.id));
-      setDeletingId(null);
-      const newStats = await api.getStats();
-      setStats(newStats);
-      setToast({ type: 'success', message: 'Issue deleted successfully.' });
       setDeleteTarget(null);
+
+      setTimeout(() => {
+        setIssues((prev) => prev.filter((i) => i.id !== deleteTarget.id));
+        setStats((prev) => ({
+          ...prev,
+          total: Math.max(0, prev.total - 1),
+          open: deleteTarget.status === 'Open' ? Math.max(0, prev.open - 1) : prev.open,
+          inProgress: deleteTarget.status === 'In Progress' ? Math.max(0, prev.inProgress - 1) : prev.inProgress,
+          resolved: deleteTarget.status === 'Resolved' ? Math.max(0, prev.resolved - 1) : prev.resolved,
+        }));
+        setToast({ type: 'success', message: 'Issue deleted successfully.' });
+        setDeletingId(null);
+      }, 300);
     } catch (err) {
-      setDeletingId(null);
-      setToast({ type: 'error', message: err.message || 'Failed to delete issue.' });
+      setToast({ type: 'error', message: err.message || 'Could not delete issue.' });
+      setDeleteTarget(null);
     } finally {
       setDeleteLoading(false);
     }
@@ -116,34 +132,39 @@ export default function IssuesPage() {
 
   const isMyReportsEmpty = viewTab === 'my' && issues.length === 0;
 
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(issues.length / PAGE_SIZE));
+  const paginatedIssues = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return issues.slice(start, start + PAGE_SIZE);
+  }, [issues, currentPage]);
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-page-enter">
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {/* One-time Welcome Banner matching Image 11 */}
+      {/* Dismissible Welcome Banner (First login only, from Image 11) */}
       {welcomeVisible && (
-        <section className="mb-6 rounded-card border border-amber-200 border-l-4 border-l-safetyYellow bg-[#FEF9EE] p-6 shadow-sm animate-page-enter" role="status">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="mb-6 rounded-card border-l-4 border-l-safetyYellow border border-line bg-[#FFFDF5] p-5 relative animate-slide-down">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-xl font-bold text-ink">
-                Welcome to CampusFix, {user?.name?.split(' ')[0] || user?.name}
+                Welcome to CampusFix{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
               </h2>
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="text-sm text-gray-600 mt-1">
                 Your account is ready. Spotted something broken? Report it and follow its progress right here.
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 mt-4">
                 <Link
                   to="/report"
-                  className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-xs font-semibold rounded shadow-none btn-interactive"
+                  className="px-4 py-2 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
                 >
                   Report my first issue
                 </Link>
                 <button
                   type="button"
-                  onClick={() => {
-                    setViewTab('all');
-                  }}
-                  className="px-4 py-2 bg-white border border-line text-ink hover:bg-gray-50 text-xs font-semibold rounded shadow-none btn-interactive"
+                  onClick={() => setViewTab('all')}
+                  className="px-4 py-2 bg-white border border-line hover:bg-gray-50 text-ink text-sm font-semibold rounded shadow-none btn-interactive"
                 >
                   Browse all issues
                 </button>
@@ -151,21 +172,21 @@ export default function IssuesPage() {
             </div>
             <button
               onClick={dismissWelcome}
-              className="text-xs font-semibold text-gray-500 hover:text-ink self-start sm:self-auto cursor-pointer"
+              className="text-xs font-semibold text-gray-500 hover:text-ink self-start sm:self-center"
             >
               Dismiss
             </button>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* Page Title & Main Action Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      {/* Page Header (No hover scale on dashboard hero container) */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between border-b border-line pb-4">
         <div>
           <h1 className="text-2xl font-bold text-ink">
-            {viewTab === 'my' ? 'My reports' : 'Issues'}
+            {viewTab === 'my' ? 'My reports' : 'Campus Issues'}
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 mt-1">
             {viewTab === 'my'
               ? 'Issues you have submitted to campus maintenance.'
               : 'Every report on campus, with its current status.'}
@@ -179,17 +200,16 @@ export default function IssuesPage() {
         </Link>
       </div>
 
-      {/* Summary Cards */}
+      {/* Summary Cards (interactive={false} to not hover/bounce the hero stats container) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total issues" value={stats.total} colorClass="text-ink" />
-        <StatCard label="Open" value={stats.open} colorClass="text-statusOpen" />
-        <StatCard label="In progress" value={stats.inProgress} colorClass="text-statusProgress" />
-        <StatCard label="Resolved" value={stats.resolved} colorClass="text-statusResolved" />
+        <StatCard label="Total issues" value={stats.total} colorClass="text-ink" interactive={false} />
+        <StatCard label="Open" value={stats.open} colorClass="text-statusOpen" interactive={false} />
+        <StatCard label="In progress" value={stats.inProgress} colorClass="text-statusProgress" interactive={false} />
+        <StatCard label="Resolved" value={stats.resolved} colorClass="text-statusResolved" interactive={false} />
       </div>
 
       {/* Search, Filters, and Tab Toggle Bar */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between mb-4">
-        {/* Left side filters */}
         <div className="flex flex-1 flex-col sm:flex-row gap-3">
           <input
             type="text"
@@ -224,7 +244,6 @@ export default function IssuesPage() {
           </select>
         </div>
 
-        {/* Right side Toggle Buttons */}
         <div className="flex items-center bg-white border border-line rounded p-0.5 self-start md:self-auto">
           <button
             onClick={() => setViewTab('all')}
@@ -266,7 +285,7 @@ export default function IssuesPage() {
           {/* Desktop Table View */}
           <div className="hidden md:block">
             <IssueTable
-              issues={issues}
+              issues={paginatedIssues}
               currentUser={user}
               onDeleteClick={(issue) => setDeleteTarget(issue)}
               newlyCreatedId={newlyCreatedId}
@@ -276,7 +295,7 @@ export default function IssuesPage() {
 
           {/* Mobile Stacked Cards View */}
           <div className="md:hidden space-y-3">
-            {issues.map((issue, index) => (
+            {paginatedIssues.map((issue, index) => (
               <IssueCard
                 key={issue.id}
                 issue={issue}
@@ -289,7 +308,40 @@ export default function IssuesPage() {
             ))}
           </div>
 
-          {/* Mobile full-width report button matching Image 09 */}
+          {/* Pagination Controls */}
+          {issues.length > PAGE_SIZE && (
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-line pt-4 text-sm text-gray-600">
+              <div>
+                Showing <span className="font-semibold text-ink">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
+                <span className="font-semibold text-ink">{Math.min(currentPage * PAGE_SIZE, issues.length)}</span> of{' '}
+                <span className="font-semibold text-ink">{issues.length}</span> issues
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  className="inline-flex items-center gap-1 rounded border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:border-teal disabled:opacity-40 disabled:hover:border-line btn-interactive"
+                >
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <span className="px-2 text-xs font-semibold text-ink">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  className="inline-flex items-center gap-1 rounded border border-line bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:border-teal disabled:opacity-40 disabled:hover:border-line btn-interactive"
+                >
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Mobile full-width report button */}
           <div className="md:hidden mt-4">
             <Link
               to="/report"

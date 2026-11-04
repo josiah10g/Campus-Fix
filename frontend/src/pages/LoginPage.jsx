@@ -62,26 +62,26 @@ export default function LoginPage() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
         >
           <ArrowLeft size={13} aria-hidden="true" />
-          Go back to the home page
+          Back to Home
         </Link>
       </header>
 
       {/* Main Centered Login Section */}
       <main className="flex-1 flex flex-col justify-center items-center px-4 py-8">
         <div className="w-full max-w-md">
-          {/* Centered Green/Teal Pulse Accent Dot & Header matching inspiration */}
+          {/* Centered Green/Teal Pulse Accent Dot & Header */}
           <div className="text-center mb-7">
             <div className="inline-block w-2.5 h-2.5 rounded-full bg-teal mb-3 shadow-[0_0_10px_rgba(14,107,111,0.5)]" />
             <h1 className="text-3xl font-extrabold text-ink tracking-tight font-serif sm:font-sans">
               Welcome back
             </h1>
-            <p className="text-base text-gray-600 mt-2">
+            <p className="text-sm text-gray-600 mt-1.5">
               Log in to track reports and manage campus issues.
             </p>
           </div>
 
           {/* Form Card */}
-          <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm card-interactive">
+          <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm">
             {error && (
               <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-xs sm:text-sm text-statusOpen font-medium">
                 {error}
@@ -95,7 +95,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="e.g. amina@example.com"
+                  placeholder="name@example.com"
                   className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
                   autoComplete="email"
                   required
@@ -105,7 +105,6 @@ export default function LoginPage() {
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <label className="block text-sm font-semibold text-ink">Password</label>
-                  <span className="text-[11px] text-gray-400">DemoPass123!</span>
                 </div>
                 <div className="relative">
                   <input
@@ -128,22 +127,25 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              {/* Login Button on TOP of Sign up Button */}
               <div className="pt-2 space-y-3">
-                <Link to={`/register${nextParam}`} className="inline-flex w-full items-center justify-center rounded border border-teal px-4 py-3 text-base font-bold text-teal hover:bg-teal hover:text-white btn-interactive">
-                  Sign up
-                </Link>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
+                  className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-base font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
                 >
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                   Log in
                 </button>
+                <Link
+                  to={`/register${nextParam}`}
+                  className="inline-flex w-full items-center justify-center rounded border border-teal px-4 py-3 text-base font-bold text-teal hover:bg-teal hover:text-white btn-interactive"
+                >
+                  Sign up
+                </Link>
               </div>
-              <p className="text-center text-base text-gray-600">Create an account with Sign up, or enter your details above to log in.</p>
+              <p className="text-center text-sm text-gray-600">Enter your credentials above to log in, or create an account with Sign up.</p>
             </form>
-
           </div>
         </div>
       </main>

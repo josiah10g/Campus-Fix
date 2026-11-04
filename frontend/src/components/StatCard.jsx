@@ -1,7 +1,7 @@
 // frontend/src/components/StatCard.jsx
 import React, { useEffect, useRef, useState } from 'react';
 
-export default function StatCard({ label, value, colorClass = 'text-ink' }) {
+export default function StatCard({ label, value, colorClass = 'text-ink', interactive = true }) {
   const [displayValue, setDisplayValue] = useState(0);
   const hasAnimated = useRef(false);
 
@@ -34,7 +34,7 @@ export default function StatCard({ label, value, colorClass = 'text-ink' }) {
   }, [value]);
 
   return (
-    <div className="bg-white border border-line rounded-card p-4 card-interactive">
+    <div className={`bg-white border border-line rounded-card p-4 ${interactive ? 'card-interactive' : ''}`}>
       <div className="mb-1 text-base font-bold leading-tight text-ink">{label}</div>
       <div className={`text-3xl font-extrabold tracking-tight ${colorClass}`}>
         {displayValue}

@@ -9,6 +9,7 @@ export default function RegisterPage() {
     name: '',
     email: '',
     password: '',
+    confirm_password: '',
     role: 'student', // student or staff
     faculty: '',
     department: '',
@@ -16,6 +17,7 @@ export default function RegisterPage() {
     level: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
@@ -48,13 +50,30 @@ export default function RegisterPage() {
       setError('Password must be at least 8 characters.');
       return;
     }
-    if (formData.role === 'student' && ['faculty', 'department', 'student_id', 'level'].some((field) => !formData[field].trim())) {
-      setError('Enter your faculty, department, student ID and level.');
+    if (formData.password !== formData.confirm_password) {
+      setError('Passwords do not match. Please re-enter.');
       return;
     }
+
+    if (formData.role === 'student') {
+      if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !formData.level.trim()) {
+        setError('Faculty, Department, Student ID, and Level are all required for student accounts.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
-      await register(formData);
+      await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+        faculty: formData.faculty,
+        department: formData.department,
+        student_id: formData.student_id,
+        level: formData.level,
+      });
       const target = getSafeNext();
       if (target === '/issues') {
         navigate('/issues', { state: { welcome: true } });
@@ -86,16 +105,16 @@ export default function RegisterPage() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
         >
           <ArrowLeft size={13} aria-hidden="true" />
-          Go back to the home page
+          Back to Home
         </Link>
       </header>
 
-      {/* Main 2-Column Split Layout matching inspiration Image 02 */}
+      {/* Main 2-Column Split Layout */}
       <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-6">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* Left Column: Campus Statement & Stats */}
           <div className="lg:col-span-5 text-left py-4">
-            <div className="inline-flex items-center gap-2 text-sm font-bold tracking-wider uppercase text-teal mb-3">
+            <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-teal mb-3">
               <span className="w-1.5 h-3.5 bg-teal rounded-full" />
               Join CampusFix
             </div>
@@ -104,11 +123,11 @@ export default function RegisterPage() {
               Report campus issues in minutes.
             </h1>
 
-            <p className="text-base text-gray-700 leading-relaxed mb-8">
+            <p className="text-base text-gray-600 leading-relaxed mb-8">
               Create your account to submit facility problems, follow live repair progress, and keep campus infrastructure safe for everyone.
             </p>
 
-            {/* Micro Stats Row inspired by Image 02 */}
+            {/* Micro Stats Row */}
             <div className="grid grid-cols-2 gap-6 pt-6 border-t border-line">
               <div>
                 <div className="text-2xl sm:text-3xl font-extrabold text-ink font-serif sm:font-sans">
@@ -125,9 +144,9 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Right Column: Clean Registration Form Card */}
+          {/* Right Column: Clean Registration Form Card (WITHOUT hover effect per request) */}
           <div className="lg:col-span-7">
-            <div className="bg-white border border-line rounded-card p-6 sm:p-9 shadow-sm card-interactive">
+            <div className="bg-white border border-line rounded-card p-6 sm:p-9 shadow-sm">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-ink tracking-tight font-serif sm:font-sans">
                   Create your account
@@ -144,7 +163,7 @@ export default function RegisterPage() {
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Segmented Role Switcher styled after inspiration */}
+                {/* Segmented Role Switcher */}
                 <div>
                   <div className="grid grid-cols-2 gap-1 p-1 bg-[#FAFBFB] border border-line rounded-md mb-4">
                     <button
@@ -175,22 +194,26 @@ export default function RegisterPage() {
                 </div>
 
                 {formData.role === 'student' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-semibold text-ink mb-1.5">Faculty</label>
-                      <input type="text" value={formData.faculty} onChange={(e) => setFormData({ ...formData, faculty: e.target.value })} placeholder="Your faculty" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                  <div className="space-y-3 rounded-card border border-line bg-[#FAFBFB] p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-semibold text-ink mb-1.5">Faculty</label>
+                        <input type="text" value={formData.faculty} onChange={(e) => setFormData({ ...formData, faculty: e.target.value })} placeholder="e.g. Science" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-ink mb-1.5">Department</label>
+                        <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="e.g. Computer Science" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-ink mb-1.5">Department</label>
-                      <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="Your department" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-ink mb-1.5">Student ID</label>
-                      <input type="text" value={formData.student_id} onChange={(e) => setFormData({ ...formData, student_id: e.target.value })} placeholder="Your student ID" maxLength={60} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-ink mb-1.5">Level</label>
-                      <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-semibold text-ink mb-1.5">Student ID / Matric</label>
+                        <input type="text" value={formData.student_id} onChange={(e) => setFormData({ ...formData, student_id: e.target.value })} placeholder="e.g. MAT/2026/001" maxLength={60} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-ink mb-1.5">Level</label>
+                        <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -244,6 +267,32 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* Confirm Password Field Under Password */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-sm font-semibold text-ink">Confirm Password</label>
+                    <span className="text-sm text-gray-500">Re-enter your password</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={formData.confirm_password}
+                      onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink focus:outline-none"
+                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Trust / Security notice badge */}
                 <div className="p-3 bg-[#FAFBFB] border border-line rounded text-sm text-gray-700 flex items-center gap-2">
                   <ShieldCheck size={16} className="text-teal shrink-0" />
@@ -254,7 +303,7 @@ export default function RegisterPage() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
+                    className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-base font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
                   >
                     {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                     Create account
@@ -262,7 +311,7 @@ export default function RegisterPage() {
                 </div>
               </form>
 
-              <div className="mt-5 text-center text-base text-gray-700">
+              <div className="mt-5 text-center text-base text-gray-600">
                 Already have an account?{' '}
                 <Link to={`/login${nextParam}`} className="font-semibold text-teal hover:underline ml-1">
                   Log in

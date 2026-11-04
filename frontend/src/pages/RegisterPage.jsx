@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Eye, EyeOff, Loader2, ShieldCheck, UserCheck, Briefcase } from 'lucide-react';
+import { ACADEMIC_PROGRAMMES, STANDARD_LEVELS } from '../data/academicData';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -11,10 +12,12 @@ export default function RegisterPage() {
     password: '',
     confirm_password: '',
     role: 'student', // student or staff
+    programme: 'Undergraduate', // Undergraduate or Postgraduate
     faculty: '',
     department: '',
     student_id: '',
-    level: '',
+    levelOption: '100 Level',
+    customLevel: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -32,6 +35,26 @@ export default function RegisterPage() {
       return next;
     }
     return '/issues';
+  };
+
+  const currentFaculties = Object.keys(ACADEMIC_PROGRAMMES[formData.programme] || {});
+  const currentDepartments = formData.faculty ? (ACADEMIC_PROGRAMMES[formData.programme]?.[formData.faculty] || []) : [];
+
+  const handleProgrammeChange = (prog) => {
+    setFormData((prev) => ({
+      ...prev,
+      programme: prog,
+      faculty: '',
+      department: '',
+    }));
+  };
+
+  const handleFacultyChange = (fac) => {
+    setFormData((prev) => ({
+      ...prev,
+      faculty: fac,
+      department: '',
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -55,8 +78,10 @@ export default function RegisterPage() {
       return;
     }
 
+    let finalLevel = '';
     if (formData.role === 'student') {
-      if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !formData.level.trim()) {
+      finalLevel = formData.levelOption === 'Other' ? formData.customLevel.trim() : formData.levelOption;
+      if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !finalLevel) {
         setError('Faculty, Department, Student ID, and Level are all required for student accounts.');
         return;
       }
@@ -72,7 +97,7 @@ export default function RegisterPage() {
         faculty: formData.faculty,
         department: formData.department,
         student_id: formData.student_id,
-        level: formData.level,
+        level: finalLevel,
       });
       const target = getSafeNext();
       if (target === '/issues') {
@@ -99,73 +124,70 @@ export default function RegisterPage() {
           </div>
           <span className="font-bold text-xl tracking-tight text-ink">CampusFix</span>
         </Link>
-
         <Link
           to="/"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-line bg-white text-xs font-semibold text-ink hover:text-teal hover:border-teal/40 transition-colors btn-interactive shadow-sm"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
         >
-          <ArrowLeft size={13} aria-hidden="true" />
-          Back to Home
+          <ArrowLeft size={16} /> Back to Home
         </Link>
       </header>
 
-      {/* Main 2-Column Split Layout */}
-      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-6">
+      {/* Main Register Container */}
+      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-6 sm:py-10">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-          {/* Left Column: Campus Statement & Stats */}
-          <div className="lg:col-span-5 text-left py-4">
-            <div className="inline-flex items-center gap-2 text-xs font-bold tracking-wider uppercase text-teal mb-3">
-              <span className="w-1.5 h-3.5 bg-teal rounded-full" />
-              Join CampusFix
+          {/* Left Context Column */}
+          <div className="lg:col-span-5 text-left hidden lg:block">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-teal/10 border border-teal/20 rounded-full text-xs font-semibold text-teal mb-4">
+              <ShieldCheck size={14} /> Official Campus Issue Tracker
             </div>
-
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight leading-tight mb-4 font-serif sm:font-sans">
-              Report campus issues in minutes.
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-ink tracking-tight leading-tight mb-4">
+              Join the campus <br />
+              <span className="text-teal">repair network.</span>
             </h1>
-
-            <p className="text-base text-gray-600 leading-relaxed mb-8">
-              Create your account to submit facility problems, follow live repair progress, and keep campus infrastructure safe for everyone.
+            <p className="text-base text-gray-600 mb-6 leading-relaxed">
+              Create an account in under a minute to report facility faults, monitor work orders, and keep university spaces safe and functional.
             </p>
-
-            {/* Micro Stats Row */}
-            <div className="grid grid-cols-2 gap-6 pt-6 border-t border-line">
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-ink font-serif sm:font-sans">
-                  5 Roles
+            <div className="space-y-4 border-t border-line pt-6 text-sm text-gray-600">
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-teal/10 text-teal flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  ✓
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Role-based oversight</div>
+                <span>Direct line to campus facilities & maintenance teams.</span>
               </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-teal font-serif sm:font-sans">
-                  24/7
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-teal/10 text-teal flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  ✓
                 </div>
-                <div className="text-sm text-gray-600 mt-1">Open campus tracking</div>
+                <span>Live progress updates on everything reported across campus.</span>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-teal/10 text-teal flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">
+                  ✓
+                </div>
+                <span>Safe student data with faculty and department affiliation.</span>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Clean Registration Form Card (WITHOUT hover effect per request) */}
+          {/* Right Form Column */}
           <div className="lg:col-span-7">
-            <div className="bg-white border border-line rounded-card p-6 sm:p-9 shadow-sm">
+            <div className="w-full bg-white border border-line rounded-card p-6 sm:p-8 shadow-sm">
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-ink tracking-tight font-serif sm:font-sans">
-                  Create your account
-                </h2>
-                <p className="text-base text-gray-600 mt-1">
-                  Choose how you use CampusFix on campus.
-                </p>
+                <h2 className="text-2xl font-bold text-ink tracking-tight">Create your account</h2>
+                <p className="text-sm text-gray-500 mt-1">Choose your campus role to get started.</p>
               </div>
 
               {error && (
-                <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-xs sm:text-sm text-statusOpen font-medium">
-                  {error}
+                <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-statusOpen text-xs rounded font-medium flex items-center gap-2 animate-shake">
+                  <span className="font-bold">Error:</span> {error}
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Segmented Role Switcher */}
+                {/* Role Switcher */}
                 <div>
-                  <div className="grid grid-cols-2 gap-1 p-1 bg-[#FAFBFB] border border-line rounded-md mb-4">
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Campus Role</label>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-[#F1F4F3] rounded border border-line">
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, role: 'student' })}
@@ -193,26 +215,93 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
+                {/* Academic Profile Selection for Students */}
                 {formData.role === 'student' && (
                   <div className="space-y-3 rounded-card border border-line bg-[#FAFBFB] p-4">
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {/* Programme Selector */}
                       <div>
-                        <label className="block text-sm font-semibold text-ink mb-1.5">Faculty</label>
-                        <input type="text" value={formData.faculty} onChange={(e) => setFormData({ ...formData, faculty: e.target.value })} placeholder="e.g. Science" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                        <label className="block text-xs font-semibold text-ink mb-1">Programme</label>
+                        <select
+                          value={formData.programme}
+                          onChange={(e) => handleProgrammeChange(e.target.value)}
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-medium"
+                        >
+                          <option value="Undergraduate">Undergraduate</option>
+                          <option value="Postgraduate">Postgraduate</option>
+                        </select>
                       </div>
+
+                      {/* Faculty Selector */}
                       <div>
-                        <label className="block text-sm font-semibold text-ink mb-1.5">Department</label>
-                        <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} placeholder="e.g. Computer Science" maxLength={100} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                        <label className="block text-xs font-semibold text-ink mb-1">Faculty / College</label>
+                        <select
+                          value={formData.faculty}
+                          onChange={(e) => handleFacultyChange(e.target.value)}
+                          required
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-medium"
+                        >
+                          <option value="">Select Faculty...</option>
+                          {currentFaculties.map((fac) => (
+                            <option key={fac} value={fac}>{fac}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Department Selector */}
+                      <div>
+                        <label className="block text-xs font-semibold text-ink mb-1">Department</label>
+                        <select
+                          value={formData.department}
+                          onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                          disabled={!formData.faculty}
+                          required
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-medium disabled:opacity-50"
+                        >
+                          <option value="">Select Department...</option>
+                          {currentDepartments.map((dept) => (
+                            <option key={dept} value={dept}>{dept}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+
+                    <div className="grid gap-3 sm:grid-cols-2 pt-1">
                       <div>
-                        <label className="block text-sm font-semibold text-ink mb-1.5">Student ID / Matric</label>
-                        <input type="text" value={formData.student_id} onChange={(e) => setFormData({ ...formData, student_id: e.target.value })} placeholder="e.g. MAT/2026/001" maxLength={60} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                        <label className="block text-xs font-semibold text-ink mb-1">Student ID / Matric</label>
+                        <input
+                          type="text"
+                          value={formData.student_id}
+                          onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
+                          placeholder="e.g. CMP/2026/041"
+                          maxLength={60}
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
+                          required
+                        />
                       </div>
+
                       <div>
-                        <label className="block text-sm font-semibold text-ink mb-1.5">Level</label>
-                        <input type="text" value={formData.level} onChange={(e) => setFormData({ ...formData, level: e.target.value })} placeholder="e.g. 200 level" maxLength={40} className="w-full px-3.5 py-2.5 text-sm bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal" required />
+                        <label className="block text-xs font-semibold text-ink mb-1">Level</label>
+                        <select
+                          value={formData.levelOption}
+                          onChange={(e) => setFormData({ ...formData, levelOption: e.target.value })}
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-medium"
+                        >
+                          {STANDARD_LEVELS.map((lvl) => (
+                            <option key={lvl} value={lvl}>{lvl}</option>
+                          ))}
+                        </select>
+                        {formData.levelOption === 'Other' && (
+                          <input
+                            type="text"
+                            value={formData.customLevel}
+                            onChange={(e) => setFormData({ ...formData, customLevel: e.target.value })}
+                            placeholder="Specify your level (e.g. 600 Level / PhD Yr 2)"
+                            maxLength={40}
+                            required
+                            className="mt-2 w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -252,79 +341,75 @@ export default function RegisterPage() {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                      placeholder="Enter a secure password"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal pr-10 transition-all"
                       required
+                      minLength={8}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink focus:outline-none"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink"
                     >
                       {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Confirm Password Field Under Password */}
+                {/* Confirm Password Field */}
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-sm font-semibold text-ink">Confirm Password</label>
-                    <span className="text-sm text-gray-500">Re-enter your password</span>
-                  </div>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">Confirm Password</label>
                   <div className="relative">
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirm_password}
                       onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full pl-3.5 pr-10 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                      placeholder="Repeat your password"
+                      className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal pr-10 transition-all"
                       required
+                      minLength={8}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink focus:outline-none"
-                      aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink"
                     >
                       {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
 
-                {/* Trust / Security notice badge */}
-                <div className="p-3 bg-[#FAFBFB] border border-line rounded text-sm text-gray-700 flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-teal shrink-0" />
-                  <span>Account permissions are managed by CampusFix administrators.</span>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full py-3 px-4 bg-teal hover:bg-teal-dark text-white text-base font-semibold rounded shadow-none btn-interactive flex items-center justify-center disabled:opacity-50"
-                  >
-                    {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                    Create account
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-2 py-3 bg-teal hover:bg-teal-dark text-white font-bold text-sm rounded shadow-none btn-interactive flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="animate-spin" size={16} /> Creating account...
+                    </>
+                  ) : (
+                    'Create account'
+                  )}
+                </button>
               </form>
 
-              <div className="mt-5 text-center text-base text-gray-600">
-                Already have an account?{' '}
-                <Link to={`/login${nextParam}`} className="font-semibold text-teal hover:underline ml-1">
-                  Log in
-                </Link>
+              <div className="mt-6 pt-5 border-t border-line text-center">
+                <p className="text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <Link to={`/login${nextParam}`} className="text-teal font-bold hover:underline">
+                    Log in
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
         </div>
       </main>
 
-      {/* Subtle Footer */}
-      <footer className="py-4 text-center text-sm text-gray-500">
-        CampusFix &bull; Campus Issue Reporting and Tracking System
+      {/* Footer */}
+      <footer className="w-full border-t border-line py-5 text-center text-xs text-gray-500 bg-white">
+        © 2026 CampusFix. Facility Management & Issue Resolution Portal.
       </footer>
     </div>
   );

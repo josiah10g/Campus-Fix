@@ -18,6 +18,10 @@ export default function IssueCard({
   const canEdit = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDelete = isOwnerOpen || canDeleteAny;
 
+  const academicInfo = [issue.reporter_department || issue.reporter_faculty, issue.reporter_level]
+    .filter(Boolean)
+    .join(' • ');
+
   return (
     <div
       style={index < 8 ? { animationDelay: `${index * 40}ms` } : undefined}
@@ -37,20 +41,27 @@ export default function IssueCard({
 
       <p className="text-sm text-gray-700 line-clamp-2 mb-3">{issue.description}</p>
 
+      {/* Reporter info with academic affiliation */}
+      <div className="mb-3 px-2.5 py-1.5 bg-[#FAFBFB] rounded border border-line flex items-center justify-between text-xs">
+        <span className="text-gray-500 font-medium">Reported by:</span>
+        <div className="text-right">
+          <span className="font-semibold text-ink">
+            {isOwner ? 'You' : issue.reporter_name}
+          </span>
+          {academicInfo && (
+            <div className="text-[11px] text-gray-500 truncate max-w-[200px]">
+              {academicInfo}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between pt-3 border-t border-line text-xs">
         <div className="flex items-center space-x-2 text-gray-600">
           <span className="bg-gray-100 px-2 py-0.5 rounded text-gray-700 font-medium">
             {issue.category === 'Other' && issue.category_detail
               ? `Other: ${issue.category_detail}`
               : issue.category}
-          </span>
-          <span>•</span>
-          <span>
-            {isOwner ? (
-              <strong className="text-teal font-semibold">You</strong>
-            ) : (
-              issue.reporter_name
-            )}
           </span>
         </div>
 
@@ -76,4 +87,3 @@ export default function IssueCard({
     </div>
   );
 }
-

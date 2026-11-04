@@ -11,6 +11,7 @@ export default function IssueTable({
   deletingId,
 }) {
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
+  const isPrivileged = ['admin', 'super_admin', 'maintenance'].includes(currentUser.role);
 
   return (
     <div className="bg-white border border-line rounded-card overflow-hidden shadow-none card-interactive">
@@ -20,7 +21,7 @@ export default function IssueTable({
             <tr>
               <th scope="col" className="px-5 py-3.5">Title</th>
               <th scope="col" className="px-5 py-3.5">Category</th>
-              <th scope="col" className="px-5 py-3.5">Reporter</th>
+              <th scope="col" className="px-5 py-3.5">Reporter & Affiliation</th>
               <th scope="col" className="px-5 py-3.5">Status</th>
               <th scope="col" className="px-5 py-3.5 text-right">Actions</th>
             </tr>
@@ -32,6 +33,11 @@ export default function IssueTable({
               const canEdit = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
               const canDelete = isOwnerOpen || canDeleteAny;
               const isNewlyCreated = issue.id === newlyCreatedId;
+
+              // Academic details string
+              const academicInfo = [issue.reporter_department || issue.reporter_faculty, issue.reporter_level]
+                .filter(Boolean)
+                .join(' • ');
 
               return (
                 <tr
@@ -49,11 +55,22 @@ export default function IssueTable({
                       : issue.category}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap text-sm">
-                    {isOwner ? (
-                      <span className="font-semibold text-teal">You</span>
-                    ) : (
-                      <span className="text-gray-700">{issue.reporter_name}</span>
-                    )}
+                    <div>
+                      {isOwner ? (
+                        <span className="font-semibold text-teal">You</span>
+                      ) : (
+                        <span className="font-semibold text-gray-800">{issue.reporter_name}</span>
+                      )}
+                      {academicInfo ? (
+                        <div className="text-[11px] text-gray-500 mt-0.5 max-w-xs truncate" title={academicInfo}>
+                          {academicInfo}
+                        </div>
+                      ) : (
+                        <div className="text-[11px] text-gray-400 capitalize">
+                          {issue.reporter_role || 'Campus member'}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     <StatusPill status={issue.status} />
@@ -95,4 +112,3 @@ export default function IssueTable({
     </div>
   );
 }
-

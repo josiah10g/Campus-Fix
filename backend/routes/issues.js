@@ -59,6 +59,11 @@ router.get('/', requireAuth, async (req, res, next) => {
         i.status,
         i.reporter_id,
         u.name AS reporter_name,
+        u.role AS reporter_role,
+        u.faculty AS reporter_faculty,
+        u.department AS reporter_department,
+        u.level AS reporter_level,
+        u.student_id AS reporter_student_id,
         i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id
@@ -95,6 +100,11 @@ router.get('/:id', requireAuth, async (req, res, next) => {
         i.status,
         i.reporter_id,
         u.name AS reporter_name,
+        u.role AS reporter_role,
+        u.faculty AS reporter_faculty,
+        u.department AS reporter_department,
+        u.level AS reporter_level,
+        u.student_id AS reporter_student_id,
         i.created_at
       FROM issues i
       JOIN users u ON i.reporter_id = u.id

@@ -6,7 +6,7 @@ import { api } from '../api';
 import StatusPill from '../components/StatusPill';
 import ConfirmDeleteModal from '../components/ConfirmDeleteModal';
 import Toast from '../components/Toast';
-import { ChevronLeft, Loader2 } from 'lucide-react';
+import { ChevronLeft, Loader2, GraduationCap } from 'lucide-react';
 
 export default function IssueDetailPage() {
   const { id } = useParams();
@@ -89,7 +89,7 @@ export default function IssueDetailPage() {
         </Link>
       </div>
 
-      {/* Main 2-column Detail Layout matching Image 08 */}
+      {/* Main 2-column Detail Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Issue details card */}
         <div className="lg:col-span-8 bg-white border border-line rounded-card p-6 sm:p-8 card-interactive">
@@ -101,11 +101,11 @@ export default function IssueDetailPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 border-b border-line text-xs">
             <div>
               <span className="text-gray-400 block mb-1">Category</span>
-                <span className="font-semibold text-ink">
-                  {issue.category === 'Other' && issue.category_detail
-                    ? `Other: ${issue.category_detail}`
-                    : issue.category}
-                </span>
+              <span className="font-semibold text-ink">
+                {issue.category === 'Other' && issue.category_detail
+                  ? `Other: ${issue.category_detail}`
+                  : issue.category}
+              </span>
             </div>
             <div>
               <span className="text-gray-400 block mb-1">Location</span>
@@ -128,6 +128,33 @@ export default function IssueDetailPage() {
               </span>
             </div>
           </div>
+
+          {/* Academic Profile Details of Reporter */}
+          {(issue.reporter_department || issue.reporter_faculty || issue.reporter_level || issue.reporter_student_id) && (
+            <div className="py-4 border-b border-line bg-[#FAFBFB] rounded-lg p-3.5 my-4">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-teal mb-2">
+                <GraduationCap size={16} /> Reporter Academic Profile
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <span className="text-gray-400 block">Faculty:</span>
+                  <span className="font-semibold text-ink">{issue.reporter_faculty || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block">Department:</span>
+                  <span className="font-semibold text-ink">{issue.reporter_department || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block">Student/Staff ID:</span>
+                  <span className="font-semibold text-ink">{issue.reporter_student_id || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-400 block">Level:</span>
+                  <span className="font-semibold text-ink">{issue.reporter_level || '—'}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="pt-6">
             <h2 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">

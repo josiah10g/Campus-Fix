@@ -18,9 +18,8 @@ export default function IssueCard({
   const canEdit = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDelete = isOwnerOpen || canDeleteAny;
 
-  const academicInfo = [issue.reporter_department || issue.reporter_faculty, issue.reporter_level]
-    .filter(Boolean)
-    .join(' • ');
+  const levelText = issue.reporter_level || '';
+  const departmentText = issue.reporter_department || issue.reporter_faculty || '';
 
   return (
     <div
@@ -31,7 +30,14 @@ export default function IssueCard({
     >
       <div className="flex justify-between items-start mb-2">
         <div>
-          <h4 className="font-bold text-ink text-base">{issue.title}</h4>
+          <h4 className="font-bold text-ink text-base flex items-center gap-2">
+            {issue.title}
+            {issue.image_url && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-teal/10 text-teal border border-teal/20">
+                📷 Photo
+              </span>
+            )}
+          </h4>
           <p className="text-xs text-gray-500 mt-0.5">{issue.location}</p>
         </div>
         <div>
@@ -41,16 +47,21 @@ export default function IssueCard({
 
       <p className="text-sm text-gray-700 line-clamp-2 mb-3">{issue.description}</p>
 
-      {/* Reporter info with academic affiliation */}
-      <div className="mb-3 px-2.5 py-1.5 bg-[#FAFBFB] rounded border border-line flex items-center justify-between text-xs">
+      {/* Reporter info with academic affiliation stacked */}
+      <div className="mb-3 px-3 py-2 bg-[#FAFBFB] rounded border border-line flex items-center justify-between text-xs">
         <span className="text-gray-500 font-medium">Reported by:</span>
         <div className="text-right">
           <span className="font-semibold text-ink">
-            {isOwner ? 'You' : issue.reporter_name}
+            {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
           </span>
-          {academicInfo && (
-            <div className="text-[11px] text-gray-500 truncate max-w-[200px]">
-              {academicInfo}
+          {levelText && (
+            <div className="text-[11px] font-medium text-teal uppercase mt-0.5">
+              {levelText}
+            </div>
+          )}
+          {departmentText && (
+            <div className="text-[11px] text-gray-500 uppercase tracking-wide truncate max-w-[200px]" title={departmentText}>
+              {departmentText}
             </div>
           )}
         </div>

@@ -13,15 +13,14 @@ export default function IssueTable({
   const canDeleteAny = ['admin', 'super_admin'].includes(currentUser.role);
 
   return (
-    <div className="bg-white border border-line rounded-card overflow-hidden shadow-none card-interactive">
+    <div className="bg-white border border-line rounded-card overflow-hidden shadow-none">
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-line text-left text-sm">
           <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500 uppercase tracking-wider">
             <tr>
               <th scope="col" className="px-5 py-3.5">Title</th>
               <th scope="col" className="px-5 py-3.5">Category</th>
-              <th scope="col" className="px-4 py-3.5">Reporter</th>
-              <th scope="col" className="px-4 py-3.5">Department & Level</th>
+              <th scope="col" className="px-5 py-3.5">Reporter & Affiliation</th>
               <th scope="col" className="px-5 py-3.5">Status</th>
               <th scope="col" className="px-5 py-3.5 text-right">Actions</th>
             </tr>
@@ -34,10 +33,8 @@ export default function IssueTable({
               const canDelete = isOwnerOpen || canDeleteAny;
               const isNewlyCreated = issue.id === newlyCreatedId;
 
-              // Academic details: department • level
-              const deptLevel = [issue.reporter_department, issue.reporter_level]
-                .filter(Boolean)
-                .join(' • ');
+              const levelText = issue.reporter_level || '';
+              const departmentText = issue.reporter_department || issue.reporter_faculty || '';
 
               return (
                 <tr
@@ -61,16 +58,19 @@ export default function IssueTable({
                       ? `Other: ${issue.category_detail}`
                       : issue.category}
                   </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-ink">
-                    {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
-                  </td>
-                  <td className="px-4 py-4 whitespace-nowrap text-xs text-gray-600">
-                    {deptLevel ? (
-                      <span className="inline-block px-2 py-1 rounded bg-[#F1F4F3] text-ink font-medium max-w-[220px] truncate" title={deptLevel}>
-                        {deptLevel}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
+                  <td className="px-5 py-4 whitespace-nowrap text-sm">
+                    <div className="font-semibold text-ink">
+                      {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
+                    </div>
+                    {levelText && (
+                      <div className="text-[11px] font-medium text-teal uppercase mt-0.5">
+                        {levelText}
+                      </div>
+                    )}
+                    {departmentText && (
+                      <div className="text-[11px] text-gray-500 uppercase tracking-wide truncate max-w-[220px]" title={departmentText}>
+                        {departmentText}
+                      </div>
                     )}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">

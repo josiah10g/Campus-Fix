@@ -18,8 +18,17 @@ export default function IssueCard({
   const canEdit = isOwnerOpen || ['maintenance', 'admin', 'super_admin'].includes(currentUser.role);
   const canDelete = isOwnerOpen || canDeleteAny;
 
-  const levelText = issue.reporter_level || '';
-  const departmentText = issue.reporter_department || issue.reporter_faculty || '';
+  const formatLevel = (lvl) => {
+    if (!lvl) return '';
+    const clean = String(lvl).trim();
+    const match = clean.match(/^(\d+)/);
+    if (match) return `${match[1]}LVL`;
+    return clean.toUpperCase();
+  };
+
+  const lvl = formatLevel(issue.reporter_level);
+  const dept = (issue.reporter_department || issue.reporter_faculty || '').toUpperCase();
+  const formattedAffiliation = [lvl, dept].filter(Boolean).join(' ');
 
   return (
     <div
@@ -47,21 +56,16 @@ export default function IssueCard({
 
       <p className="text-sm text-gray-700 line-clamp-2 mb-3">{issue.description}</p>
 
-      {/* Reporter info with academic affiliation stacked */}
+      {/* Reporter info with academic affiliation formatted */}
       <div className="mb-3 px-3 py-2 bg-[#FAFBFB] rounded border border-line flex items-center justify-between text-xs">
-        <span className="text-gray-500 font-medium">Reported by:</span>
+        <span className="text-gray-500 font-medium">Reporter:</span>
         <div className="text-right">
           <span className="font-semibold text-ink">
             {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
           </span>
-          {levelText && (
-            <div className="text-[11px] font-medium text-teal uppercase mt-0.5">
-              {levelText}
-            </div>
-          )}
-          {departmentText && (
-            <div className="text-[11px] text-gray-500 uppercase tracking-wide truncate max-w-[200px]" title={departmentText}>
-              {departmentText}
+          {formattedAffiliation && (
+            <div className="text-[11px] font-semibold text-gray-700 tracking-wide mt-0.5">
+              {formattedAffiliation}
             </div>
           )}
         </div>
@@ -88,7 +92,7 @@ export default function IssueCard({
           {canDelete && (
             <button
               onClick={() => onDeleteClick(issue)}
-              className="inline-flex min-w-16 items-center justify-center rounded border border-statusOpen/30 bg-white px-2.5 py-1.5 text-xs text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
+              className="inline-flex min-w-16 items-center justify-center rounded border border-statusOpen/30 bg-white px-2.5 py-1.5 text-xs font-semibold text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
             >
               Delete
             </button>

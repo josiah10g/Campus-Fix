@@ -56,6 +56,7 @@ const initDb = async () => {
       category_detail VARCHAR(100),
       status VARCHAR(20) NOT NULL DEFAULT 'Open' CHECK (status IN ('Open', 'In Progress', 'Resolved')),
       reporter_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      image_url TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `;
@@ -76,6 +77,7 @@ const initDb = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_type VARCHAR(30)');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture_url TEXT');
     await pool.query('ALTER TABLE issues ADD COLUMN IF NOT EXISTS category_detail VARCHAR(100)');
+    await pool.query('ALTER TABLE issues ADD COLUMN IF NOT EXISTS image_url TEXT');
     await pool.query(createIndexes);
     console.log('[DB] Database tables initialized successfully.');
   } catch (error) {

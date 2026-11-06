@@ -76,7 +76,7 @@ export default function EditIssuePage() {
         </Link>
       </div>
 
-      <div className="bg-white border border-line rounded-card p-6 sm:p-8 card-interactive">
+      <div className="bg-white border border-line rounded-card p-6 sm:p-8">
         <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 pb-4 mb-2 border-b border-line">
           <h1 className="text-xl font-bold text-ink">Edit issue</h1>
           <span className="text-xs text-gray-400">

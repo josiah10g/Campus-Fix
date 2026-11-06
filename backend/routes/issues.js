@@ -58,6 +58,7 @@ router.get('/', requireAuth, async (req, res, next) => {
         i.location,
         i.status,
         i.reporter_id,
+        i.image_url,
         u.name AS reporter_name,
         u.role AS reporter_role,
         u.faculty AS reporter_faculty,
@@ -99,6 +100,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
         i.location,
         i.status,
         i.reporter_id,
+        i.image_url,
         u.name AS reporter_name,
         u.role AS reporter_role,
         u.faculty AS reporter_faculty,
@@ -129,7 +131,7 @@ router.get('/:id', requireAuth, async (req, res, next) => {
  */
 router.post('/', requireAuth, async (req, res, next) => {
   try {
-    let { title, description, category, category_detail, location } = req.body;
+    let { title, description, category, category_detail, location, image_url } = req.body;
 
     // Server-side validation
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -171,6 +173,14 @@ router.post('/', requireAuth, async (req, res, next) => {
       return res.status(400).json({ error: 'Location cannot exceed 100 characters.' });
     }
 
+    if (image_url && typeof image_url === 'string') {
+      if (image_url.length > 3 * 1024 * 1024) {
+        return res.status(400).json({ error: 'Image size cannot exceed 2 MB.' });
+      }
+    } else {
+      image_url = null;
+    }
+
     // Default status is always 'Open' on creation
     const insertSql = `
       INSERT INTO issues (title, description, category, category_detail, location, status, reporter_id)
@@ -185,6 +195,7 @@ router.post('/', requireAuth, async (req, res, next) => {
       category_detail,
       location,
       req.user.id,
+      image_url,
     ]);
 
     const createdIssue = result.rows[0];
@@ -225,7 +236,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     const isOwner = existing.reporter_id === user.id;
     const isPrivilegedStaff = ['maintenance', 'admin', 'super_admin'].includes(user.role);
 
-    let { title, description, category, category_detail, location, status } = req.body;
+    let { title, description, category, category_detail, location, status, image_url } = req.body;
 
     // Statuses are read-only; this remains enforced even when a request bypasses the UI.
     if (status !== undefined && status !== existing.status) {
@@ -284,6 +295,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
     }
 
     let newLocation = location !== undefined ? String(location).trim() : existing.location;
+    let newImageUrl = image_url !== undefined ? image_url : existing.image_url;
     if (!newLocation) {
       return res.status(400).json({ error: 'Location is required.' });
     }

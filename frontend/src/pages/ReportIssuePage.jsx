@@ -44,7 +44,7 @@ export default function ReportIssuePage() {
         </Link>
       </div>
 
-      <div className="bg-white border border-line rounded-card p-6 sm:p-8 card-interactive">
+      <div className="bg-white border border-line rounded-card p-6 sm:p-8">
         <h1 className="text-xl font-bold text-ink">Report an issue</h1>
         <p className="text-xs text-gray-500 mt-1 mb-6">
           Say what is broken and where. Your name is added automatically.

@@ -1,6 +1,6 @@
 // frontend/src/components/IssueForm.jsx
-import React, { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Loader2, Camera, Upload, X, Image as ImageIcon } from 'lucide-react';
 
 const CATEGORIES = ['Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
 
@@ -17,11 +17,16 @@ export default function IssueForm({
     category_detail: initialData.category_detail || '',
     location: initialData.location || '',
     description: initialData.description || '',
+    image_url: initialData.image_url || '',
   });
+
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const [errors, setErrors] = useState({});
   const [shakingFields, setShakingFields] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageError, setImageError] = useState('');
 
   const triggerShake = (fieldName) => {
     setShakingFields((prev) => ({ ...prev, [fieldName]: true }));
@@ -79,6 +84,35 @@ export default function IssueForm({
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
+  };
+
+  const handleImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImageError('');
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      setImageError('Please select a PNG, JPEG, or WebP photo.');
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      setImageError('Photo size must be 2 MB or less.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setFormData((prev) => ({ ...prev, image_url: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setFormData((prev) => ({ ...prev, image_url: '' }));
+    setImageError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
   };
 
   const handleSubmit = async (e) => {
@@ -215,6 +249,76 @@ export default function IssueForm({
         />
         {errors.description && (
           <p className="mt-1 text-xs text-statusOpen">{errors.description}</p>
+        )}
+      </div>
+
+      {/* Photo Attachment (Upload / Snap Photo) */}
+      <div className="border-t border-line pt-4">
+        <label className="block text-xs font-semibold text-ink mb-1.5">
+          Attach photo of broken item <span className="font-normal text-gray-500">(Optional, max 2 MB)</span>
+        </label>
+
+        {formData.image_url ? (
+          <div className="relative rounded border border-line bg-[#FAFBFB] p-3 flex items-center gap-4">
+            <div className="w-24 h-24 rounded border border-line overflow-hidden bg-white shrink-0">
+              <img
+                src={formData.image_url}
+                alt="Broken issue preview"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-ink">Photo attached</p>
+              <p className="text-[11px] text-gray-500 mt-0.5">Admins and maintenance staff will see this photo when reviewing the report.</p>
+              <button
+                type="button"
+                onClick={removeImage}
+                className="inline-flex items-center gap-1 text-xs font-semibold text-statusOpen hover:underline mt-2"
+              >
+                <X size={14} /> Remove photo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              onChange={handleImageFile}
+              className="sr-only"
+            />
+            {/* Camera input on mobile browsers */}
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageFile}
+              className="sr-only"
+            />
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-line bg-white text-ink text-xs font-semibold rounded hover:border-teal hover:text-teal btn-interactive"
+              >
+                <Upload size={14} /> Upload image
+              </button>
+
+              <button
+                type="button"
+                onClick={() => cameraInputRef.current?.click()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-line bg-white text-ink text-xs font-semibold rounded hover:border-teal hover:text-teal btn-interactive"
+              >
+                <Camera size={14} /> Snap photo
+              </button>
+            </div>
+            {imageError && (
+              <p className="text-xs text-statusOpen mt-1">{imageError}</p>
+            )}
+          </div>
         )}
       </div>
 

@@ -11,11 +11,6 @@
 
 ---
 
-## 🌟 Live Deployment Links
-
-- 🌐 **Frontend Application**: [https://campus-fix-ochre.vercel.app](https://campus-fix-ochre.vercel.app)
-- ⚙️ **Backend REST API**: [https://campus-fix-bic4.onrender.com](https://campus-fix-bic4.onrender.com)
-- 🗄️ **Database Service**: Supabase Cloud PostgreSQL (Transaction Pooler on Port 6543)
 
 ---
 

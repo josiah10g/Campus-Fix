@@ -164,6 +164,24 @@ export default function IssueDetailPage() {
               {issue.description}
             </p>
           </div>
+
+          {/* Photo attachment preview if uploaded */}
+          {issue.image_url && (
+            <div className="pt-6 border-t border-line mt-6">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-teal mb-3 flex items-center gap-1.5">
+                📷 Attached Photo of Broken Item
+              </h2>
+              <div className="rounded-lg border border-line overflow-hidden bg-[#FAFBFB] p-2 inline-block max-w-full">
+                <img
+                  src={issue.image_url}
+                  alt={issue.title}
+                  className="max-h-96 rounded object-contain cursor-pointer hover:opacity-95 transition-opacity"
+                  onClick={() => window.open(issue.image_url, '_blank')}
+                  title="Click to view full image in a new tab"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Right Column: Actions Card */}

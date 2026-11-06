@@ -4,11 +4,26 @@ import { ArrowLeft, Eye, EyeOff, Loader2, Upload, UserRound } from 'lucide-react
 import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
+import { ACADEMIC_PROGRAMMES, STANDARD_LEVELS } from '../data/academicData';
 
 export default function ProfileSettingsPage() {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const fileRef = useRef(null);
+
+  // Detect initial programme by matching current faculty
+  const detectProgramme = () => {
+    if (!user.faculty) return 'Undergraduate';
+    if (ACADEMIC_PROGRAMMES.Postgraduate[user.faculty]) return 'Postgraduate';
+    return 'Undergraduate';
+  };
+
+  // Detect if current level matches a standard option
+  const detectLevelOption = () => {
+    if (!user.level) return '100 Level';
+    if (STANDARD_LEVELS.includes(user.level)) return user.level;
+    return 'Other';
+  };
 
   const [form, setForm] = useState({
     name: user.name || '',
@@ -16,10 +31,12 @@ export default function ProfileSettingsPage() {
     current_password: '',
     password: '',
     confirm_password: '',
+    programme: detectProgramme(),
     faculty: user.faculty || '',
     department: user.department || '',
     student_id: user.student_id || '',
-    level: user.level || '',
+    levelOption: detectLevelOption(),
+    customLevel: detectLevelOption() === 'Other' ? (user.level || '') : '',
     profile_picture_url: user.profile_picture_url || '',
   });
 
@@ -31,6 +48,18 @@ export default function ProfileSettingsPage() {
   const [toast, setToast] = useState(null);
 
   const updateField = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+
+  // Dynamic faculty and department lists
+  const currentFaculties = Object.keys(ACADEMIC_PROGRAMMES[form.programme] || {});
+  const currentDepartments = form.faculty ? (ACADEMIC_PROGRAMMES[form.programme]?.[form.faculty] || []) : [];
+
+  const handleProgrammeChange = (prog) => {
+    setForm((prev) => ({ ...prev, programme: prog, faculty: '', department: '' }));
+  };
+
+  const handleFacultyChange = (fac) => {
+    setForm((prev) => ({ ...prev, faculty: fac, department: '' }));
+  };
 
   const choosePicture = (event) => {
     const file = event.target.files?.[0];
@@ -63,6 +92,8 @@ export default function ProfileSettingsPage() {
       }
     }
 
+    const finalLevel = form.levelOption === 'Other' ? form.customLevel.trim() : form.levelOption;
+
     setSaving(true);
     try {
       const payload = {
@@ -71,7 +102,7 @@ export default function ProfileSettingsPage() {
         faculty: form.faculty,
         department: form.department,
         student_id: form.student_id,
-        level: form.level,
+        level: finalLevel,
         profile_picture_url: form.profile_picture_url,
       };
 
@@ -84,7 +115,6 @@ export default function ProfileSettingsPage() {
       updateUser(updated);
 
       setToast({ type: 'success', message: 'Profile settings saved successfully.' });
-      // Redirect back to /issues with confirmation message
       setTimeout(() => {
         navigate('/issues', { state: { message: 'Profile settings saved successfully.' } });
       }, 700);
@@ -95,6 +125,7 @@ export default function ProfileSettingsPage() {
   };
 
   const inputClass = 'mt-1 w-full rounded border border-line bg-white px-3 py-2.5 text-base text-ink focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal';
+  const selectClass = 'mt-1 w-full rounded border border-line bg-white px-3 py-2.5 text-base text-ink focus:border-teal focus:outline-none focus:ring-1 focus:ring-teal';
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-7 sm:px-6 animate-page-enter">
@@ -135,27 +166,89 @@ export default function ProfileSettingsPage() {
             </label>
           </div>
 
-          {/* Academic Details for Everyone */}
+          {/* Academic Details with Dropdowns for Everyone */}
           <div className="border-t border-line pt-5">
-            <h2 className="text-lg font-bold text-ink">Academic details & affiliation</h2>
-            <p className="text-sm text-gray-500 mb-3">Keep your faculty, department, student or staff ID, and level up to date.</p>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-base font-semibold text-ink">
-                Faculty
-                <input name="faculty" placeholder="e.g. Science & Technology" value={form.faculty} onChange={updateField} maxLength={100} className={inputClass} />
-              </label>
-              <label className="text-base font-semibold text-ink">
-                Department
-                <input name="department" placeholder="e.g. Computer Science" value={form.department} onChange={updateField} maxLength={100} className={inputClass} />
-              </label>
-              <label className="text-base font-semibold text-ink">
-                Campus / Student / Staff ID
-                <input name="student_id" placeholder="e.g. CMP/2026/041" value={form.student_id} onChange={updateField} maxLength={60} className={inputClass} />
-              </label>
-              <label className="text-base font-semibold text-ink">
-                Level / Designation
-                <input name="level" placeholder="e.g. 400 Level or Facilities Lead" value={form.level} onChange={updateField} maxLength={40} className={inputClass} />
-              </label>
+            <h2 className="text-lg font-bold text-ink">Academic details</h2>
+            <p className="text-sm text-gray-500 mb-3">Keep your faculty, department, student ID, and level up to date.</p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="block text-base font-semibold text-ink">Programme</label>
+                <select
+                  value={form.programme}
+                  onChange={(e) => handleProgrammeChange(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="Undergraduate">Undergraduate</option>
+                  <option value="Postgraduate">Postgraduate</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-base font-semibold text-ink">Faculty / College</label>
+                <select
+                  value={form.faculty}
+                  onChange={(e) => handleFacultyChange(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">Select Faculty...</option>
+                  {currentFaculties.map((fac) => (
+                    <option key={fac} value={fac}>{fac}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-base font-semibold text-ink">Department</label>
+                <select
+                  value={form.department}
+                  onChange={(e) => setForm({ ...form, department: e.target.value })}
+                  disabled={!form.faculty}
+                  className={`${selectClass} disabled:opacity-50`}
+                >
+                  <option value="">Select Department...</option>
+                  {currentDepartments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 mt-4">
+              <div>
+                <label className="block text-base font-semibold text-ink">Student ID</label>
+                <input
+                  name="student_id"
+                  placeholder="e.g. CMP/2026/041"
+                  value={form.student_id}
+                  onChange={updateField}
+                  maxLength={60}
+                  className={inputClass}
+                />
+              </div>
+
+              <div>
+                <label className="block text-base font-semibold text-ink">Level</label>
+                <select
+                  value={form.levelOption}
+                  onChange={(e) => setForm({ ...form, levelOption: e.target.value })}
+                  className={selectClass}
+                >
+                  {STANDARD_LEVELS.map((lvl) => (
+                    <option key={lvl} value={lvl}>{lvl}</option>
+                  ))}
+                </select>
+                {form.levelOption === 'Other' && (
+                  <input
+                    type="text"
+                    value={form.customLevel}
+                    onChange={(e) => setForm({ ...form, customLevel: e.target.value })}
+                    placeholder="Specify your level (e.g. 600 Level / PhD Yr 2)"
+                    maxLength={40}
+                    required
+                    className={`${inputClass} mt-2`}
+                  />
+                )}
+              </div>
             </div>
           </div>
 

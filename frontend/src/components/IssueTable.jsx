@@ -15,7 +15,6 @@ export default function IssueTable({
   const formatLevel = (lvl) => {
     if (!lvl) return '';
     const clean = String(lvl).trim();
-    // Turn "400 Level" or "400" into "400LVL"
     const match = clean.match(/^(\d+)/);
     if (match) return `${match[1]}LVL`;
     return clean.toUpperCase();
@@ -29,8 +28,8 @@ export default function IssueTable({
             <tr>
               <th scope="col" className="px-5 py-3.5">Title</th>
               <th scope="col" className="px-5 py-3.5">Category</th>
-              <th scope="col" className="px-5 py-3.5">Reporter</th>
-              <th scope="col" className="px-5 py-3.5">Department & Level</th>
+              <th scope="col" className="px-4 py-3.5">Reporter</th>
+              <th scope="col" className="px-4 py-3.5">Department & Level</th>
               <th scope="col" className="px-5 py-3.5">Status</th>
               <th scope="col" className="px-5 py-3.5 text-right">Actions</th>
             </tr>
@@ -45,7 +44,6 @@ export default function IssueTable({
 
               const lvl = formatLevel(issue.reporter_level);
               const dept = (issue.reporter_department || issue.reporter_faculty || '').toUpperCase();
-              const formattedAffiliation = [lvl, dept].filter(Boolean).join(' ');
 
               return (
                 <tr
@@ -69,11 +67,26 @@ export default function IssueTable({
                       ? `Other: ${issue.category_detail}`
                       : issue.category}
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-sm font-semibold text-ink">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-ink">
                     {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
                   </td>
-                  <td className="px-5 py-4 whitespace-nowrap text-xs font-semibold text-gray-700 tracking-wide">
-                    {formattedAffiliation || <span className="text-gray-400 font-normal">—</span>}
+                  <td className="px-4 py-4 whitespace-nowrap text-xs font-semibold text-gray-700">
+                    {lvl || dept ? (
+                      <div className="flex flex-col">
+                        {lvl && (
+                          <span className="text-teal font-bold uppercase tracking-wide">
+                            {lvl}
+                          </span>
+                        )}
+                        {dept && (
+                          <span className="text-gray-600 font-semibold uppercase tracking-wide mt-0.5">
+                            {dept}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 font-normal">—</span>
+                    )}
                   </td>
                   <td className="px-5 py-4 whitespace-nowrap">
                     <StatusPill status={issue.status} />

@@ -28,7 +28,6 @@ export default function IssueCard({
 
   const lvl = formatLevel(issue.reporter_level);
   const dept = (issue.reporter_department || issue.reporter_faculty || '').toUpperCase();
-  const formattedAffiliation = [lvl, dept].filter(Boolean).join(' ');
 
   return (
     <div
@@ -56,16 +55,21 @@ export default function IssueCard({
 
       <p className="text-sm text-gray-700 line-clamp-2 mb-3">{issue.description}</p>
 
-      {/* Reporter info with academic affiliation formatted */}
+      {/* Reporter info with academic affiliation formatted on separate lines */}
       <div className="mb-3 px-3 py-2 bg-[#FAFBFB] rounded border border-line flex items-center justify-between text-xs">
         <span className="text-gray-500 font-medium">Reporter:</span>
         <div className="text-right">
           <span className="font-semibold text-ink">
             {isOwner ? <span className="text-teal font-bold">You</span> : issue.reporter_name}
           </span>
-          {formattedAffiliation && (
-            <div className="text-[11px] font-semibold text-gray-700 tracking-wide mt-0.5">
-              {formattedAffiliation}
+          {lvl && (
+            <div className="text-[11px] font-bold text-teal tracking-wide mt-0.5">
+              {lvl}
+            </div>
+          )}
+          {dept && (
+            <div className="text-[11px] font-semibold text-gray-600 uppercase tracking-wide truncate max-w-[200px]" title={dept}>
+              {dept}
             </div>
           )}
         </div>

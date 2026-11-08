@@ -10,13 +10,18 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileProfileRef = useRef(null);
 
-  // Close user dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (mobileProfileRef.current && !mobileProfileRef.current.contains(e.target)) {
+        setMobileProfileOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -122,10 +127,9 @@ export default function Navbar() {
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
                       )}
                     </Link>
-
                     <Link
                       to="/report"
-                      className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                      className={`relative py-5 text-sm font-semibold transition-colors ${
                         isActive('/report') ? 'text-ink' : 'text-gray-600 hover:text-ink'
                       }`}
                     >
@@ -134,11 +138,10 @@ export default function Navbar() {
                         <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
                       )}
                     </Link>
-
                     {['admin', 'super_admin'].includes(user.role) && (
                       <Link
                         to="/users"
-                        className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                        className={`relative py-5 text-sm font-semibold transition-colors ${
                           isActive('/users') ? 'text-ink' : 'text-gray-600 hover:text-ink'
                         }`}
                       >
@@ -158,7 +161,6 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <div className="relative" ref={dropdownRef}>
-                {/* Pill Profile Chip styled after inspiration Image 02 */}
                 <button
                   type="button"
                   onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -182,7 +184,7 @@ export default function Navbar() {
                   />
                 </button>
 
-                {/* Profile Dropdown Menu styled after inspiration Image 02 */}
+                {/* Profile Dropdown Menu */}
                 {dropdownOpen && (
                   <div className="absolute right-0 mt-2 w-64 rounded-card bg-white border border-line shadow-lg py-2 z-50 animate-page-enter">
                     {/* User header section */}
@@ -283,10 +285,115 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile Hamburger Button */}
-          <div className="flex md:hidden items-center">
+          {/* Mobile Right Side: Avatar Icon + Hamburger Menu */}
+          <div className="flex md:hidden items-center gap-2">
+            {user && (
+              <div className="relative" ref={mobileProfileRef}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileProfileOpen(!mobileProfileOpen);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-9 h-9 rounded-full bg-teal text-white flex items-center justify-center font-bold text-xs shadow-sm overflow-hidden border border-teal/40 focus:outline-none focus:ring-2 focus:ring-teal"
+                  aria-label="User Profile and Academic Settings"
+                >
+                  {user.profile_picture_url ? (
+                    <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    getInitials(user.name)
+                  )}
+                </button>
+
+                {/* Mobile Profile Dropdown Menu */}
+                {mobileProfileOpen && (
+                  <div className="absolute right-0 mt-2 w-72 rounded-card bg-white border border-line shadow-xl py-2 z-50 animate-page-enter">
+                    {/* User header section */}
+                    <div className="px-4 py-3 border-b border-line flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
+                        {user.profile_picture_url ? <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" /> : getInitials(user.name)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-bold text-ink truncate">{user.name}</div>
+                        <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                        <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F3F3] text-teal">
+                          {getRoleBadge(user.role)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {(user.faculty || user.department || user.student_id || user.level) ? (
+                      <div className="border-b border-line px-4 py-3 bg-[#FAFBFB]">
+                        <p className="mb-2 text-xs font-bold uppercase tracking-wide text-gray-500">Academic details</p>
+                        <dl className="space-y-1 text-xs text-gray-700">
+                          {user.faculty && <div><dt className="inline font-semibold text-gray-500">Faculty: </dt><dd className="inline font-bold text-ink">{user.faculty}</dd></div>}
+                          {user.department && <div><dt className="inline font-semibold text-gray-500">Department: </dt><dd className="inline font-bold text-ink">{user.department}</dd></div>}
+                          {user.student_id && <div><dt className="inline font-semibold text-gray-500">Student ID: </dt><dd className="inline font-bold text-ink">{user.student_id}</dd></div>}
+                          {user.level && <div><dt className="inline font-semibold text-gray-500">Level: </dt><dd className="inline font-bold text-teal">{user.level}</dd></div>}
+                        </dl>
+                      </div>
+                    ) : (
+                      <div className="border-b border-line px-4 py-2.5 bg-yellow-50 text-[11px] text-yellow-800">
+                        Academic details not set. Click <strong>Profile settings</strong> to update.
+                      </div>
+                    )}
+
+                    {/* Navigation items */}
+                    <div className="py-1">
+                      <Link
+                        to="/profile"
+                        onClick={() => setMobileProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                      >
+                        <Settings size={15} className="text-teal" />
+                        Profile settings
+                      </Link>
+
+                      <Link
+                        to="/issues"
+                        onClick={() => setMobileProfileOpen(false)}
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                      >
+                        <User size={15} className="text-teal" />
+                        Campus Dashboard
+                      </Link>
+
+                      {['admin', 'super_admin'].includes(user.role) && (
+                        <Link
+                          to="/users"
+                          onClick={() => setMobileProfileOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-ink hover:bg-gray-50 transition-colors"
+                        >
+                          <Shield size={15} className="text-teal" />
+                          User Management
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Sign out item */}
+                    <div className="border-t border-line pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMobileProfileOpen(false);
+                          logout();
+                        }}
+                        className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-statusOpen hover:bg-red-50 transition-colors text-left"
+                      >
+                        <LogOut size={15} />
+                        Sign out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              onClick={() => {
+                setMobileMenuOpen(!mobileMenuOpen);
+                setMobileProfileOpen(false);
+              }}
               className="p-2 rounded text-ink hover:bg-gray-100 focus:outline-none"
               aria-label="Toggle navigation menu"
             >
@@ -296,101 +403,94 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown (Clean page links only) */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-line bg-white px-4 pt-3 pb-4 space-y-2 animate-page-enter">
           {user ? (
-            <>
-              <div className="py-3 border-b border-line flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-teal text-white flex items-center justify-center font-bold text-sm shrink-0 overflow-hidden">
-                  {user.profile_picture_url ? <img src={user.profile_picture_url} alt="" className="h-full w-full object-cover" /> : getInitials(user.name)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-bold text-ink truncate">{user.name}</div>
-                  <div className="text-xs text-gray-500 truncate">{user.email}</div>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F3F3] text-teal">
-                    {getRoleBadge(user.role)}
-                  </span>
-                </div>
-              </div>
+            <div className="space-y-1">
+              <Link
+                to="/issues"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2.5 text-sm rounded ${
+                  isActive('/issues')
+                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                }`}
+              >
+                Issues
+              </Link>
 
-              {(user.faculty || user.department || user.student_id || user.level) && (
-                <div className="border-b border-line px-1 py-3 text-sm text-gray-700">
-                  <p className="mb-1 font-bold">Academic details</p>
-                  <p>{user.faculty || 'Faculty not set'} · {user.department || 'Department not set'} · ID {user.student_id || 'Not set'} · {user.level || 'Level not set'}</p>
-                </div>
+              <Link
+                to="/report"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2.5 text-sm rounded ${
+                  isActive('/report')
+                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                }`}
+              >
+                Report an issue
+              </Link>
+
+              {['admin', 'super_admin'].includes(user.role) && (
+                <Link
+                  to="/users"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block py-2.5 text-sm rounded ${
+                    isActive('/users')
+                      ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                      : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                  }`}
+                >
+                  User Management
+                </Link>
               )}
-
-              <div className="space-y-1 pt-1">
-                <Link
-                  to="/issues"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block py-2.5 text-sm rounded ${
-                    isActive('/issues')
-                      ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                      : 'text-gray-700 hover:text-ink pl-4 font-medium'
-                  }`}
-                >
-                  Issues
-                </Link>
-
-                <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="block rounded py-2.5 pl-4 text-sm font-medium text-gray-700 hover:text-ink">Profile settings</Link>
-
-                <Link
-                  to="/report"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`block py-2.5 text-sm rounded ${
-                    isActive('/report')
-                      ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                      : 'text-gray-700 hover:text-ink pl-4 font-medium'
-                  }`}
-                >
-                  Report an issue
-                </Link>
-
-                {['admin', 'super_admin'].includes(user.role) && (
-                  <Link
-                    to="/users"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`block py-2.5 text-sm rounded ${
-                      isActive('/users')
-                        ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
-                        : 'text-gray-700 hover:text-ink pl-4 font-medium'
-                    }`}
-                  >
-                    Users
-                  </Link>
-                )}
-              </div>
-
-              <div className="pt-2 border-t border-line">
-                <button
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    logout();
-                  }}
-                  className="w-full text-center py-2 text-sm text-statusOpen border border-line rounded font-medium hover:bg-red-50"
-                >
-                  Sign out
-                </button>
-              </div>
-            </>
+            </div>
           ) : (
-            <div className="space-y-2 pt-2">
+            <div className="space-y-1 pt-1">
               <Link
-                to="/login"
+                to="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2.5 text-sm font-semibold border border-line rounded text-ink"
+                className={`block py-2 text-sm rounded ${
+                  isActive('/') ? 'font-bold text-teal pl-2 border-l-2 border-teal' : 'text-gray-600 pl-2'
+                }`}
               >
-                Log in
+                Home
               </Link>
               <Link
-                to="/register"
+                to="/how-it-works"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block text-center py-2.5 text-sm font-semibold bg-teal text-white rounded"
+                className={`block py-2 text-sm rounded ${
+                  isActive('/how-it-works') ? 'font-bold text-teal pl-2 border-l-2 border-teal' : 'text-gray-600 pl-2'
+                }`}
               >
-                Create account
+                How it works
               </Link>
+              <Link
+                to="/latest-issues"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2 text-sm rounded ${
+                  isActive('/latest-issues') ? 'font-bold text-teal pl-2 border-l-2 border-teal' : 'text-gray-600 pl-2'
+                }`}
+              >
+                Latest issues
+              </Link>
+              <div className="pt-3 border-t border-line flex flex-col space-y-2">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2 text-sm font-semibold text-ink border border-line rounded"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center py-2 text-sm font-semibold text-white bg-teal rounded"
+                >
+                  Create account
+                </Link>
+              </div>
             </div>
           )}
         </div>

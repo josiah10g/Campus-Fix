@@ -122,8 +122,6 @@ router.post('/register', async (req, res, next) => {
       message: 'Account created! Please check your email inbox to verify your account before logging in.',
       requiresVerification: true,
       email: user.email,
-      verificationToken,
-      fallbackVerifyLink: `/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`,
     });
   } catch (error) {
     next(error);
@@ -213,8 +211,6 @@ router.post('/resend-verification', async (req, res, next) => {
     res.json({
       message: 'Verification email resent! Please check your inbox.',
       sent: true,
-      verificationToken,
-      fallbackVerifyLink: `/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`,
     });
   } catch (error) {
     next(error);
@@ -289,28 +285,22 @@ router.post('/login', async (req, res, next) => {
 /**
  * PUT /api/auth/profile
  * Update the signed-in user's own account.
+ * When password or email is changed, sends a verification email.
  */
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
-    let { name, email, password, current_password, faculty, department, student_id, level, profile_picture_url } = req.body;
+    let { name, email, password, faculty, department, student_id, level, profile_picture_url } = req.body;
     if (typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'Full name is required.' });
     if (name.trim().length > 60) return res.status(400).json({ error: 'Full name cannot exceed 60 characters.' });
     if (typeof email !== 'string' || !email.trim()) return res.status(400).json({ error: 'Email address is required.' });
     email = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
 
-    // Security: Require current password confirmation whenever password is being changed for ANY role
+    // Validate new password if changing
     if (password !== undefined && password !== '') {
       if (typeof password !== 'string' || password.length < 8) {
         return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
       }
-      if (!current_password) {
-        return res.status(400).json({ error: 'Current password is required to change your password.' });
-      }
-      const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-      if (!userRow.rows.length) return res.status(404).json({ error: 'User not found.' });
-      const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
-      if (!match) return res.status(400).json({ error: 'Current password does not match.' });
     }
 
     const picture = typeof profile_picture_url === 'string' ? profile_picture_url.trim() : '';
@@ -342,41 +332,43 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     const duplicate = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
     if (duplicate.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
 
-    // Check if user is changing their email address
+    // Check if user is changing their email address or password
     const currentUserRow = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
     const isChangingEmail = currentUserRow.rows.length > 0 && currentUserRow.rows[0].email !== email;
+    const isChangingPassword = Boolean(password && password.trim());
 
-    if (isChangingEmail) {
-      if (!current_password) {
-        return res.status(400).json({ error: 'Your current password is required to change your email address.' });
-      }
-      const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-      const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
-      if (!match) return res.status(400).json({ error: 'Current password does not match. Email cannot be changed.' });
-    }
+    // Generate new verification token if email or password is being changed
+    const verificationToken = (isChangingEmail || isChangingPassword) ? crypto.randomBytes(32).toString('hex') : null;
+    const verificationExpires = (isChangingEmail || isChangingPassword) ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null;
 
-    const passwordHash = password ? await bcrypt.hash(password, 10) : null;
+    const passwordHash = isChangingPassword ? await bcrypt.hash(password, 10) : null;
     const result = await query(
       `UPDATE users SET name = $1, email = $2,
         password_hash = COALESCE($3, password_hash),
         faculty = $4, department = $5, student_id = $6, level = $7,
         profile_picture_url = $8,
-        is_verified = CASE WHEN $10 = true THEN false ELSE is_verified END
+        is_verified = CASE WHEN ($10 = true OR $11 = true) THEN false ELSE is_verified END,
+        verification_token = COALESCE($12, verification_token),
+        verification_expires = COALESCE($13, verification_expires)
        WHERE id = $9
        RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, is_verified, created_at`,
       [name.trim(), email, passwordHash, faculty?.trim() || null, department?.trim() || null,
-        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id, isChangingEmail]
+        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id, isChangingEmail, isChangingPassword, verificationToken, verificationExpires]
     );
 
-    if (isChangingEmail) {
-      // Trigger verification to the new email
-      sendVerificationEmail(email).catch(e => console.error('[Auth] Verification send on email change failed:', e));
+    const requiresVerification = isChangingEmail || isChangingPassword;
+
+    if (requiresVerification) {
+      // Trigger Supabase email verification to the new/existing email address
+      sendVerificationEmail(email).catch(e => console.error('[Auth] Verification send on security update failed:', e));
     }
 
     res.json({
       user: result.rows[0],
-      requiresVerification: isChangingEmail,
-      message: isChangingEmail ? 'Email address updated! Please check your new inbox to re-verify your account.' : 'Profile updated successfully.'
+      requiresVerification,
+      message: requiresVerification
+        ? 'Account updated! We sent a verification email to your inbox to confirm these changes.'
+        : 'Profile updated successfully.'
     });
   } catch (error) {
     next(error);

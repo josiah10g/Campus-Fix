@@ -78,8 +78,9 @@ export default function ProfileSettingsPage() {
     event.preventDefault();
 
     const isChangingEmail = form.email && form.email.trim().toLowerCase() !== (user.email || '').toLowerCase();
+    const isChangingPassword = Boolean(form.password && form.password.trim());
 
-    if (form.password) {
+    if (isChangingPassword) {
       if (form.password.length < 8) {
         setToast({ type: 'error', message: 'New password must be at least 8 characters long.' });
         return;
@@ -88,15 +89,6 @@ export default function ProfileSettingsPage() {
         setToast({ type: 'error', message: 'New password and confirmation do not match.' });
         return;
       }
-      if (!form.current_password) {
-        setToast({ type: 'error', message: 'Current password is required to change your password.' });
-        return;
-      }
-    }
-
-    if (isChangingEmail && !form.current_password) {
-      setToast({ type: 'error', message: 'Current password is required to change your email address.' });
-      return;
     }
 
     const finalLevel = form.levelOption === 'Other' ? form.customLevel.trim() : form.levelOption;
@@ -113,11 +105,7 @@ export default function ProfileSettingsPage() {
         profile_picture_url: form.profile_picture_url,
       };
 
-      if (form.password || isChangingEmail) {
-        payload.current_password = form.current_password;
-      }
-
-      if (form.password) {
+      if (isChangingPassword) {
         payload.password = form.password;
       }
 
@@ -126,7 +114,7 @@ export default function ProfileSettingsPage() {
       updateUser(updated);
 
       if (res.requiresVerification) {
-        setToast({ type: 'success', message: 'Email address updated! Please verify your new email inbox.' });
+        setToast({ type: 'success', message: 'Security updates saved! Check your email to confirm the change.' });
         setTimeout(() => {
           navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
         }, 1200);
@@ -290,32 +278,6 @@ export default function ProfileSettingsPage() {
             <p className="text-sm text-gray-500 mb-4">Leave these fields blank if you do not wish to change your password.</p>
 
             <div className="space-y-4">
-              {['admin', 'super_admin', 'maintenance'].includes(user.role) && (
-                <div>
-                  <label className="block text-base font-semibold text-ink">
-                    Current password {form.password && <span className="text-statusOpen">*</span>}
-                  </label>
-                  <div className="relative mt-1">
-                    <input
-                      name="current_password"
-                      type={showCurrentPassword ? 'text' : 'password'}
-                      value={form.current_password}
-                      onChange={updateField}
-                      autoComplete="current-password"
-                      placeholder="Enter current password"
-                      className={`${inputClass} pr-10`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-ink"
-                    >
-                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-base font-semibold text-ink">New password</label>

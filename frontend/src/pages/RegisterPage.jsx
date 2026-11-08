@@ -112,8 +112,7 @@ export default function RegisterPage() {
           message: 'Account created! Please check your email inbox to verify your account.',
         });
         setTimeout(() => {
-          const tokenParam = res.verificationToken ? `&token=${encodeURIComponent(res.verificationToken)}` : '';
-          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}${tokenParam}`);
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
         }, 1200);
         return;
       }

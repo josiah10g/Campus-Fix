@@ -160,7 +160,7 @@ export default function VerifyEmailPage() {
 
               {/* Resend Action */}
               <div className="mt-6 pt-5 border-t border-line space-y-3">
-                <p className="text-xs text-gray-500">Didn't receive the email? Check your spam/junk folder or use the options below.</p>
+                <p className="text-xs text-gray-500">Didn't receive the email? Check your spam/junk folder or request a new email below.</p>
                 
                 {!emailParam && (
                   <input
@@ -176,7 +176,7 @@ export default function VerifyEmailPage() {
                   type="button"
                   onClick={handleResend}
                   disabled={resending}
-                  className="w-full py-2.5 px-4 bg-white border border-teal text-teal hover:bg-teal hover:text-white font-bold text-xs rounded shadow-none btn-interactive flex items-center justify-center gap-2 disabled:opacity-50"
+                  className="w-full py-2.5 px-4 bg-teal hover:bg-teal-dark text-white font-bold text-xs rounded shadow-none btn-interactive flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   {resending ? (
                     <>
@@ -188,28 +188,6 @@ export default function VerifyEmailPage() {
                     </>
                   )}
                 </button>
-
-                {/* Instant 1-Click Verification Fallback */}
-                {tokenParam && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setVerifying(true);
-                      try {
-                        const res = await api.verifyEmail({ email, token: tokenParam });
-                        setVerified(true);
-                        setMessage(res.message || 'Email verified successfully!');
-                      } catch (err) {
-                        setError(err.message || 'Verification link expired.');
-                      } finally {
-                        setVerifying(false);
-                      }
-                    }}
-                    className="w-full py-2 px-3 bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 font-semibold text-xs rounded transition-colors text-center"
-                  >
-                    Didn't receive the email? Click here to verify instantly
-                  </button>
-                )}
               </div>
 
               <div className="mt-4">

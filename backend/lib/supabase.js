@@ -104,14 +104,22 @@ async function sendVerificationEmail(email) {
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       console.error('[Supabase] Invite failed:', res.status, errData);
-      return { success: false, actionLink, emailOtp };
+      const isRateLimited = res.status === 429 || (errData.message && errData.message.toLowerCase().includes('rate'));
+      return {
+        success: false,
+        status: res.status,
+        rateLimited: isRateLimited,
+        error: isRateLimited
+          ? 'Too many email requests sent. Supabase email limit exceeded, please try again later.'
+          : (errData.message || 'Could not send verification email.')
+      };
     }
 
     console.log(`[Supabase] Verification email sent to ${email} ✓`);
-    return { success: true, actionLink, emailOtp };
+    return { success: true };
   } catch (err) {
     console.error('[Supabase] sendVerificationEmail error:', err.message);
-    return { success: false, actionLink: null, emailOtp: null };
+    return { success: false, error: err.message };
   }
 }
 

@@ -77,6 +77,8 @@ export default function ProfileSettingsPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const isChangingEmail = form.email && form.email.trim().toLowerCase() !== (user.email || '').toLowerCase();
+
     if (form.password) {
       if (form.password.length < 8) {
         setToast({ type: 'error', message: 'New password must be at least 8 characters long.' });
@@ -86,10 +88,15 @@ export default function ProfileSettingsPage() {
         setToast({ type: 'error', message: 'New password and confirmation do not match.' });
         return;
       }
-      if (['admin', 'super_admin', 'maintenance'].includes(user.role) && !form.current_password) {
-        setToast({ type: 'error', message: 'Current password is required to change password.' });
+      if (!form.current_password) {
+        setToast({ type: 'error', message: 'Current password is required to change your password.' });
         return;
       }
+    }
+
+    if (isChangingEmail && !form.current_password) {
+      setToast({ type: 'error', message: 'Current password is required to change your email address.' });
+      return;
     }
 
     const finalLevel = form.levelOption === 'Other' ? form.customLevel.trim() : form.levelOption;
@@ -106,13 +113,25 @@ export default function ProfileSettingsPage() {
         profile_picture_url: form.profile_picture_url,
       };
 
-      if (form.password) {
-        payload.password = form.password;
+      if (form.password || isChangingEmail) {
         payload.current_password = form.current_password;
       }
 
-      const { user: updated } = await api.updateProfile(payload);
+      if (form.password) {
+        payload.password = form.password;
+      }
+
+      const res = await api.updateProfile(payload);
+      const updated = res.user;
       updateUser(updated);
+
+      if (res.requiresVerification) {
+        setToast({ type: 'success', message: 'Email address updated! Please verify your new email inbox.' });
+        setTimeout(() => {
+          navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
+        }, 1200);
+        return;
+      }
 
       setToast({ type: 'success', message: 'Profile settings saved successfully.' });
       setTimeout(() => {

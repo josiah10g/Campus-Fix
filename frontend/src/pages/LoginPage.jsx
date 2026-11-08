@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [notRegistered, setNotRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -29,9 +30,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setUnverifiedEmail('');
+    setNotRegistered(false);
 
     if (!email || !password) {
-      setError('Invalid email or password.');
+      setError('Email and password are required.');
       return;
     }
 
@@ -43,6 +45,9 @@ export default function LoginPage() {
       setError(err.message || 'Invalid email or password.');
       if (err.data && err.data.unverified) {
         setUnverifiedEmail(err.data.email || email);
+      }
+      if (err.data && err.data.notRegistered) {
+        setNotRegistered(true);
       }
     } finally {
       setLoading(false);
@@ -97,6 +102,16 @@ export default function LoginPage() {
                       className="inline-flex items-center gap-1 font-bold text-teal hover:underline"
                     >
                       Click here to verify your email &rarr;
+                    </Link>
+                  </div>
+                )}
+                {notRegistered && (
+                  <div className="mt-2.5 pt-2 border-t border-[#F8B4B4]/50">
+                    <Link
+                      to={`/register?email=${encodeURIComponent(email)}`}
+                      className="inline-flex items-center gap-1 font-bold text-teal hover:underline"
+                    >
+                      Click here to create an account &rarr;
                     </Link>
                   </div>
                 )}

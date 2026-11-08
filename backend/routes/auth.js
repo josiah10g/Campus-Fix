@@ -243,15 +243,23 @@ router.post('/login', async (req, res, next) => {
       [email]
     );
 
+    // Specific and helpful error messages for login
     if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(404).json({
+        error: 'No account exists with this email address. Please sign up to create an account.',
+        notRegistered: true,
+        email,
+      });
     }
 
     const userRecord = result.rows[0];
     const passwordMatch = await bcrypt.compare(String(password), userRecord.password_hash);
 
     if (!passwordMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({
+        error: 'Incorrect password. Please re-check your password or reset it.',
+        wrongPassword: true,
+      });
     }
 
     // Option A: Block unverified users from logging in
@@ -291,20 +299,18 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     email = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
 
-    // If changing password, verify length and optionally require current password check
+    // Security: Require current password confirmation whenever password is being changed for ANY role
     if (password !== undefined && password !== '') {
       if (typeof password !== 'string' || password.length < 8) {
         return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
       }
-      if (['admin', 'maintenance', 'super_admin'].includes(req.user.role)) {
-        if (!current_password) {
-          return res.status(400).json({ error: 'Current password is required to change your password.' });
-        }
-        const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
-        if (!userRow.rows.length) return res.status(404).json({ error: 'User not found.' });
-        const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
-        if (!match) return res.status(400).json({ error: 'Current password does not match.' });
+      if (!current_password) {
+        return res.status(400).json({ error: 'Current password is required to change your password.' });
       }
+      const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+      if (!userRow.rows.length) return res.status(404).json({ error: 'User not found.' });
+      const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
+      if (!match) return res.status(400).json({ error: 'Current password does not match.' });
     }
 
     const picture = typeof profile_picture_url === 'string' ? profile_picture_url.trim() : '';
@@ -336,18 +342,42 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     const duplicate = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
     if (duplicate.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
 
+    // Check if user is changing their email address
+    const currentUserRow = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+    const isChangingEmail = currentUserRow.rows.length > 0 && currentUserRow.rows[0].email !== email;
+
+    if (isChangingEmail) {
+      if (!current_password) {
+        return res.status(400).json({ error: 'Your current password is required to change your email address.' });
+      }
+      const userRow = await query('SELECT password_hash FROM users WHERE id = $1', [req.user.id]);
+      const match = await bcrypt.compare(String(current_password), userRow.rows[0].password_hash);
+      if (!match) return res.status(400).json({ error: 'Current password does not match. Email cannot be changed.' });
+    }
+
     const passwordHash = password ? await bcrypt.hash(password, 10) : null;
     const result = await query(
       `UPDATE users SET name = $1, email = $2,
         password_hash = COALESCE($3, password_hash),
         faculty = $4, department = $5, student_id = $6, level = $7,
-        profile_picture_url = $8
+        profile_picture_url = $8,
+        is_verified = CASE WHEN $10 = true THEN false ELSE is_verified END
        WHERE id = $9
-       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
+       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, is_verified, created_at`,
       [name.trim(), email, passwordHash, faculty?.trim() || null, department?.trim() || null,
-        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id]
+        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id, isChangingEmail]
     );
-    res.json({ user: result.rows[0] });
+
+    if (isChangingEmail) {
+      // Trigger verification to the new email
+      sendVerificationEmail(email).catch(e => console.error('[Auth] Verification send on email change failed:', e));
+    }
+
+    res.json({
+      user: result.rows[0],
+      requiresVerification: isChangingEmail,
+      message: isChangingEmail ? 'Email address updated! Please check your new inbox to re-verify your account.' : 'Profile updated successfully.'
+    });
   } catch (error) {
     next(error);
   }

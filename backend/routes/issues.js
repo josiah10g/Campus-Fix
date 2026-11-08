@@ -183,9 +183,8 @@ router.post('/', requireAuth, async (req, res, next) => {
 
     // Default status is always 'Open' on creation
     const insertSql = `
-      INSERT INTO issues (title, description, category, category_detail, location, status, reporter_id)
-       VALUES ($1, $2, $3, $4, $5, 'Open', $6)
-       RETURNING *
+      INSERT INTO issues (title, description, category, category_detail, location, status, reporter_id, image_url)
+       VALUES ($1, $2, $3, $4, $5, 'Open', $6, $7)      RETURNING *
     `;
 
     const result = await query(insertSql, [
@@ -305,8 +304,8 @@ router.put('/:id', requireAuth, async (req, res, next) => {
 
     const updateSql = `
       UPDATE issues
-      SET title = $1, description = $2, category = $3, category_detail = $4, location = $5, status = $6
-      WHERE id = $7
+      SET title = $1, description = $2, category = $3, category_detail = $4, location = $5, status = $6, image_url = $7
+      WHERE id = $8
       RETURNING *
     `;
 
@@ -317,6 +316,7 @@ router.put('/:id', requireAuth, async (req, res, next) => {
       newCategoryDetail,
       newLocation,
       status,
+      newImageUrl,
       issueId,
     ]);
 

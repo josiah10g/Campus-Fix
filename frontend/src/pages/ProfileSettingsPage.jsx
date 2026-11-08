@@ -220,7 +220,7 @@ export default function ProfileSettingsPage() {
                     {user.role === 'student' ? 'Matric Number' : 'Staff / Member ID'}
                   </label>
                   {user.role === 'student' && (
-                    <span className="text-xs text-gray-500 font-mono">9 digits</span>
+                    <span className="text-xs text-gray-500 font-mono">Max 9 digits</span>
                   )}
                 </div>
                 <input

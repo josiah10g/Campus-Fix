@@ -69,8 +69,8 @@ router.post('/', async (req, res, next) => {
 
     if (student_id && role === 'student') {
       student_id = student_id.trim();
-      if (!/^\d{9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      if (!/^\d{1,9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
       }
       const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
       if (existingMatric.rows.length > 0) {

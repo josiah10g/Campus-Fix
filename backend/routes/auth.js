@@ -64,9 +64,9 @@ router.post('/register', async (req, res, next) => {
       level = level.trim();
       staff_type = null;
 
-      // Matric number validation: exactly 9 digits
-      if (!/^\d{9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      // Matric number validation: maximum 9 digits (1 to 9 digits, numeric)
+      if (!/^\d{1,9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
       }
 
       // Uniqueness check for matric number
@@ -323,8 +323,8 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       }
 
       student_id = student_id.trim();
-      if (!/^\d{9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      if (!/^\d{1,9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
       }
 
       const duplicateMatric = await query('SELECT id FROM users WHERE student_id = $1 AND id <> $2', [student_id, req.user.id]);

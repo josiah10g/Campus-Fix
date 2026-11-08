@@ -87,8 +87,8 @@ export default function RegisterPage() {
         setError('Faculty, Department, Matric Number, and Level are all required for student accounts.');
         return;
       }
-      if (!/^\d{9}$/.test(formData.student_id.trim())) {
-        setError('Matric number must be exactly 9 digits (numbers only).');
+      if (!/^\d{1,9}$/.test(formData.student_id.trim())) {
+        setError('Matric number must be up to 9 digits (numbers only).');
         return;
       }
     }
@@ -290,7 +290,7 @@ export default function RegisterPage() {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-xs font-semibold text-ink">Matric Number</label>
-                          <span className="text-[10px] text-gray-500 font-mono">9 digits</span>
+                          <span className="text-[10px] text-gray-500 font-mono">Max 9 digits</span>
                         </div>
                         <input
                           type="text"

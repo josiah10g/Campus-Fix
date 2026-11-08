@@ -72,18 +72,48 @@ async function sendVerificationEmail(email) {
       }),
     });
 
+    let actionLink = null;
+    let emailOtp = null;
+
+    // Also generate link fallback so if email is delayed/rate-limited, the user can verify via 1-click fallback
+    try {
+      const linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: SUPABASE_SERVICE_KEY,
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+        },
+        body: JSON.stringify({
+          type: 'invite',
+          email,
+          options: {
+            redirectTo: 'https://campus-fix-ochre.vercel.app/verify-email',
+          },
+        }),
+      });
+      if (linkRes.ok) {
+        const linkData = await linkRes.json();
+        actionLink = linkData.action_link || null;
+        emailOtp = linkData.email_otp || null;
+      }
+    } catch (e) {
+      // ignore fallback error
+    }
+
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
       console.error('[Supabase] Invite failed:', res.status, errData);
-      return false;
+      return { success: false, actionLink, emailOtp };
     }
 
     console.log(`[Supabase] Verification email sent to ${email} ✓`);
-    return true;
+    return { success: true, actionLink, emailOtp };
   } catch (err) {
     console.error('[Supabase] sendVerificationEmail error:', err.message);
-    return false;
+    return { success: false, actionLink: null, emailOtp: null };
   }
 }
 
 module.exports = { sendVerificationEmail, findSupabaseUser, deleteSupabaseUser };
+

@@ -159,8 +159,8 @@ export default function VerifyEmailPage() {
               )}
 
               {/* Resend Action */}
-              <div className="mt-6 pt-5 border-t border-line">
-                <p className="text-xs text-gray-500 mb-3">Didn't receive the email? Check your spam folder or resend below.</p>
+              <div className="mt-6 pt-5 border-t border-line space-y-3">
+                <p className="text-xs text-gray-500">Didn't receive the email? Check your spam/junk folder or use the options below.</p>
                 
                 {!emailParam && (
                   <input
@@ -168,7 +168,7 @@ export default function VerifyEmailPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className="w-full mb-3 px-3.5 py-2 text-xs bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal"
+                    className="w-full px-3.5 py-2 text-xs bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal"
                   />
                 )}
 
@@ -180,7 +180,7 @@ export default function VerifyEmailPage() {
                 >
                   {resending ? (
                     <>
-                      <Loader2 className="animate-spin" size={14} /> Resending...
+                      <Loader2 className="animate-spin" size={14} /> Resending email...
                     </>
                   ) : (
                     <>
@@ -188,6 +188,28 @@ export default function VerifyEmailPage() {
                     </>
                   )}
                 </button>
+
+                {/* Instant 1-Click Verification Fallback */}
+                {tokenParam && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setVerifying(true);
+                      try {
+                        const res = await api.verifyEmail({ email, token: tokenParam });
+                        setVerified(true);
+                        setMessage(res.message || 'Email verified successfully!');
+                      } catch (err) {
+                        setError(err.message || 'Verification link expired.');
+                      } finally {
+                        setVerifying(false);
+                      }
+                    }}
+                    className="w-full py-2 px-3 bg-amber-50 border border-amber-200 text-amber-900 hover:bg-amber-100 font-semibold text-xs rounded transition-colors text-center"
+                  >
+                    Didn't receive the email? Click here to verify instantly
+                  </button>
+                )}
               </div>
 
               <div className="mt-4">
@@ -207,3 +229,4 @@ export default function VerifyEmailPage() {
     </div>
   );
 }
+

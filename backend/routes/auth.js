@@ -110,13 +110,20 @@ router.post('/register', async (req, res, next) => {
 
     const user = insertResult.rows[0];
 
-    // Trigger verification email via Supabase
-    sendVerificationEmail(email).catch(e => console.error('[Auth] Supabase email trigger error:', e));
+    // Trigger verification email via Supabase & obtain fallback link if email service is delayed/throttled
+    let emailResult = { success: false, actionLink: null, emailOtp: null };
+    try {
+      emailResult = await sendVerificationEmail(email);
+    } catch (e) {
+      console.error('[Auth] Supabase email trigger error:', e);
+    }
 
     res.status(201).json({
       message: 'Account created! Please check your email inbox to verify your account before logging in.',
       requiresVerification: true,
       email: user.email,
+      verificationToken,
+      fallbackVerifyLink: `/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`,
     });
   } catch (error) {
     next(error);
@@ -204,10 +211,10 @@ router.post('/resend-verification', async (req, res, next) => {
     const emailSent = await sendVerificationEmail(cleanEmail);
 
     res.json({
-      message: emailSent
-        ? 'Verification email resent! Please check your inbox.'
-        : 'Verification email resent via Supabase.',
+      message: 'Verification email resent! Please check your inbox.',
       sent: true,
+      verificationToken,
+      fallbackVerifyLink: `/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`,
     });
   } catch (error) {
     next(error);

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Eye, EyeOff, Loader2, ShieldCheck, UserCheck, Briefcase } from 'lucide-react';
+import Toast from '../components/Toast';
 import { ACADEMIC_PROGRAMMES, STANDARD_LEVELS } from '../data/academicData';
 
 export default function RegisterPage() {
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -105,7 +107,14 @@ export default function RegisterPage() {
       });
 
       if (res && res.requiresVerification) {
-        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        setToast({
+          type: 'success',
+          message: 'Account created! Please check your email inbox to verify your account.',
+        });
+        setTimeout(() => {
+          const tokenParam = res.verificationToken ? `&token=${encodeURIComponent(res.verificationToken)}` : '';
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}${tokenParam}`);
+        }, 1200);
         return;
       }
 
@@ -126,6 +135,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-page flex flex-col justify-between animate-page-enter">
+      <Toast toast={toast} onClose={() => setToast(null)} />
       {/* Top Bar with Brand Logo and Back to Home */}
       <header className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2.5 focus:outline-none">

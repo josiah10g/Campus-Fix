@@ -82,7 +82,11 @@ export default function RegisterPage() {
     if (formData.role === 'student') {
       finalLevel = formData.levelOption === 'Other' ? formData.customLevel.trim() : formData.levelOption;
       if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !finalLevel) {
-        setError('Faculty, Department, Student ID, and Level are all required for student accounts.');
+        setError('Faculty, Department, Matric Number, and Level are all required for student accounts.');
+        return;
+      }
+      if (!/^\d{9}$/.test(formData.student_id.trim())) {
+        setError('Matric number must be exactly 9 digits (numbers only).');
         return;
       }
     }
@@ -274,14 +278,22 @@ export default function RegisterPage() {
 
                     <div className="grid gap-3 sm:grid-cols-2 pt-1">
                       <div>
-                        <label className="block text-xs font-semibold text-ink mb-1">Student ID / Matric</label>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-semibold text-ink">Matric Number</label>
+                          <span className="text-[10px] text-gray-500 font-mono">9 digits</span>
+                        </div>
                         <input
                           type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
                           value={formData.student_id}
-                          onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                          placeholder="e.g. CMP/2026/041"
-                          maxLength={60}
-                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/\D/g, '').slice(0, 9);
+                            setFormData({ ...formData, student_id: val });
+                          }}
+                          placeholder="e.g. 210902041"
+                          maxLength={9}
+                          className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-mono tracking-wider"
                           required
                         />
                       </div>

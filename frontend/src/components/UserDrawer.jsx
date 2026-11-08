@@ -303,13 +303,26 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-ink mb-1">Student / Staff ID</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-ink">
+                      {formData.role === 'student' ? 'Matric Number (9 digits)' : 'Staff ID / Identifier'}
+                    </label>
+                    {formData.role === 'student' && (
+                      <span className="text-[10px] text-gray-500 font-mono">9 digits</span>
+                    )}
+                  </div>
                   <input
                     type="text"
+                    inputMode={formData.role === 'student' ? 'numeric' : 'text'}
                     value={formData.student_id}
-                    onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                    placeholder="e.g. CMP/2026/041"
-                    maxLength={60}
+                    onChange={(e) => {
+                      const val = formData.role === 'student'
+                        ? e.target.value.replace(/\D/g, '').slice(0, 9)
+                        : e.target.value;
+                      setFormData({ ...formData, student_id: val });
+                    }}
+                    placeholder={formData.role === 'student' ? 'e.g. 210902041' : 'e.g. STF/2026/012'}
+                    maxLength={formData.role === 'student' ? 9 : 60}
                     className={inputClass}
                   />
                 </div>

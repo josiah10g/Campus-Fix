@@ -67,6 +67,17 @@ router.post('/', async (req, res, next) => {
       return res.status(409).json({ error: 'An account with this email already exists.' });
     }
 
+    if (student_id && role === 'student') {
+      student_id = student_id.trim();
+      if (!/^\d{9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      }
+      const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
+      if (existingMatric.rows.length > 0) {
+        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
+      }
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Mark administrator created users as pre-verified so they can log in directly with their assigned password

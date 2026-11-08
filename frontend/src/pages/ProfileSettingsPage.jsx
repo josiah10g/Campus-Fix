@@ -215,13 +215,26 @@ export default function ProfileSettingsPage() {
 
             <div className="grid gap-4 sm:grid-cols-2 mt-4">
               <div>
-                <label className="block text-base font-semibold text-ink">Student ID</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-base font-semibold text-ink">
+                    {user.role === 'student' ? 'Matric Number' : 'Staff / Member ID'}
+                  </label>
+                  {user.role === 'student' && (
+                    <span className="text-xs text-gray-500 font-mono">9 digits</span>
+                  )}
+                </div>
                 <input
                   name="student_id"
-                  placeholder="e.g. CMP/2026/041"
+                  inputMode={user.role === 'student' ? 'numeric' : 'text'}
+                  placeholder={user.role === 'student' ? 'e.g. 210902041' : 'e.g. STF/2026/012'}
                   value={form.student_id}
-                  onChange={updateField}
-                  maxLength={60}
+                  onChange={(e) => {
+                    const val = user.role === 'student'
+                      ? e.target.value.replace(/\D/g, '').slice(0, 9)
+                      : e.target.value;
+                    setForm({ ...form, student_id: val });
+                  }}
+                  maxLength={user.role === 'student' ? 9 : 60}
                   className={inputClass}
                 />
               </div>

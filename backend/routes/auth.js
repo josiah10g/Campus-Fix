@@ -63,6 +63,17 @@ router.post('/register', async (req, res, next) => {
       student_id = student_id.trim();
       level = level.trim();
       staff_type = null;
+
+      // Matric number validation: exactly 9 digits
+      if (!/^\d{9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      }
+
+      // Uniqueness check for matric number
+      const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
+      if (existingMatric.rows.length > 0) {
+        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
+      }
     } else {
       faculty = null;
       department = null;
@@ -302,6 +313,16 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       for (const [label, value, max] of studentDetails) {
         if (typeof value !== 'string' || !value.trim()) return res.status(400).json({ error: `${label} is required.` });
         if (value.trim().length > max) return res.status(400).json({ error: `${label} cannot exceed ${max} characters.` });
+      }
+
+      student_id = student_id.trim();
+      if (!/^\d{9}$/.test(student_id)) {
+        return res.status(400).json({ error: 'Matric number must be exactly 9 digits.' });
+      }
+
+      const duplicateMatric = await query('SELECT id FROM users WHERE student_id = $1 AND id <> $2', [student_id, req.user.id]);
+      if (duplicateMatric.rows.length) {
+        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
       }
     }
 

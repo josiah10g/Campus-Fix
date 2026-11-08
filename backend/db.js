@@ -78,6 +78,11 @@ const initDb = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture_url TEXT');
     await pool.query('ALTER TABLE issues ADD COLUMN IF NOT EXISTS category_detail VARCHAR(100)');
     await pool.query('ALTER TABLE issues ADD COLUMN IF NOT EXISTS image_url TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT false');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT');
+    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ');
+    // Ensure all existing accounts are marked verified immediately
+    await pool.query("UPDATE users SET is_verified = true WHERE is_verified IS NULL OR is_verified = false");
     await pool.query(createIndexes);
     console.log('[DB] Database tables initialized successfully.');
   } catch (error) {

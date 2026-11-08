@@ -69,9 +69,10 @@ router.post('/', async (req, res, next) => {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    // Mark administrator created users as pre-verified so they can log in directly with their assigned password
     const result = await query(
-      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, is_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true)
        RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
       [
         name,

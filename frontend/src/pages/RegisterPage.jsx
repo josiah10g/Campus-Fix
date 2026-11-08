@@ -89,7 +89,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      await register({
+      const res = await register({
         name: formData.name,
         email: formData.email,
         password: formData.password,
@@ -99,6 +99,12 @@ export default function RegisterPage() {
         student_id: formData.student_id,
         level: finalLevel,
       });
+
+      if (res && res.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+        return;
+      }
+
       const target = getSafeNext();
       if (target === '/issues') {
         navigate('/issues', { state: { welcome: true } });

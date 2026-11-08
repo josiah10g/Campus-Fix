@@ -1,16 +1,19 @@
 // backend/routes/auth.js
-// Authentication routes: register, login, me, profile
+// Authentication routes: register, login, verify-email, resend-verification, me, profile
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { query } = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const { sendVerificationEmail } = require('../lib/supabase');
 
 const router = express.Router();
 
 /**
  * POST /api/auth/register
  * Public registration for 'student' and 'staff' roles only.
+ * Creates an unverified account and sends a verification email via Supabase.
  */
 router.post('/register', async (req, res, next) => {
   try {
@@ -37,7 +40,6 @@ router.post('/register', async (req, res, next) => {
     }
 
     // Role validation: public registration allows only 'student' or 'staff'
-    // Default to 'student' if not specified or if an invalid role was sent
     const validRoles = ['student', 'staff'];
     const assignedRole = validRoles.includes(role) ? role : 'student';
 
@@ -70,33 +72,131 @@ router.post('/register', async (req, res, next) => {
     }
 
     // Check if email already exists
-    const existing = await query('SELECT id FROM users WHERE email = $1', [email]);
+    const existing = await query('SELECT id, is_verified FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      return res.status(409).json({ error: 'An account with this email already exists.' });
+      // If user exists but is not verified, allow them to re-register (replace unverified profile)
+      if (!existing.rows[0].is_verified) {
+        await query('DELETE FROM users WHERE id = $1', [existing.rows[0].id]);
+      } else {
+        return res.status(409).json({ error: 'An account with this email already exists.' });
+      }
     }
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Insert user
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Insert user as unverified (is_verified = false)
     const insertResult = await query(
-      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
-      [name, email, passwordHash, assignedRole, faculty, department, student_id, level, staff_type]
+      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type, is_verified, verification_token, verification_expires)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, $10, $11)
+       RETURNING id, name, email, role`,
+      [name, email, passwordHash, assignedRole, faculty, department, student_id, level, staff_type, verificationToken, verificationExpires]
     );
 
     const user = insertResult.rows[0];
 
-    // Generate JWT token
-    const secret = process.env.JWT_SECRET;
-    if (!secret) return res.status(500).json({ error: 'Server authentication is not configured.' });
-    const token = jwt.sign({ userId: user.id, role: user.role }, secret, { expiresIn: '1d' });
+    // Trigger verification email via Supabase
+    sendVerificationEmail(email).catch(e => console.error('[Auth] Supabase email trigger error:', e));
 
     res.status(201).json({
-      message: 'Account created successfully.',
-      token,
-      user,
+      message: 'Account created! Please check your email inbox to verify your account before logging in.',
+      requiresVerification: true,
+      email: user.email,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/verify-email
+ * Marks an account as verified using email and/or token.
+ */
+router.post('/verify-email', async (req, res, next) => {
+  try {
+    const { email, token } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required.' });
+    }
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const result = await query(
+      'SELECT id, is_verified, verification_token, verification_expires FROM users WHERE email = $1',
+      [cleanEmail]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'No account found with this email.' });
+    }
+
+    const user = result.rows[0];
+
+    if (user.is_verified) {
+      return res.json({ message: 'Email is already verified. You can log in now.', alreadyVerified: true });
+    }
+
+    // If token provided, validate token and expiration
+    if (token && user.verification_token) {
+      if (token !== user.verification_token) {
+        return res.status(400).json({ error: 'Invalid or expired verification link.' });
+      }
+      if (user.verification_expires && new Date(user.verification_expires) < new Date()) {
+        return res.status(400).json({ error: 'Verification link has expired. Please request a new one.' });
+      }
+    }
+
+    // Mark user verified
+    await query(
+      'UPDATE users SET is_verified = true, verification_token = NULL, verification_expires = NULL WHERE id = $1',
+      [user.id]
+    );
+
+    res.json({ message: 'Email verified successfully! You can now log in.', verified: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * POST /api/auth/resend-verification
+ * Resends the verification email for an unverified account.
+ */
+router.post('/resend-verification', async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    const result = await query('SELECT id, is_verified FROM users WHERE email = $1', [cleanEmail]);
+
+    if (!result.rows.length) {
+      return res.status(404).json({ error: 'No account found with this email.' });
+    }
+
+    if (result.rows[0].is_verified) {
+      return res.json({ message: 'This email is already verified. You can log in.' });
+    }
+
+    // Refresh verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await query(
+      'UPDATE users SET verification_token = $1, verification_expires = $2 WHERE id = $3',
+      [verificationToken, verificationExpires, result.rows[0].id]
+    );
+
+    const emailSent = await sendVerificationEmail(cleanEmail);
+
+    res.json({
+      message: emailSent
+        ? 'Verification email resent! Please check your inbox.'
+        : 'Verification email resent via Supabase.',
+      sent: true,
     });
   } catch (error) {
     next(error);
@@ -105,7 +205,8 @@ router.post('/register', async (req, res, next) => {
 
 /**
  * POST /api/auth/login
- * Authenticates user credentials and returns JWT token + user info.
+ * Authenticates user credentials and checks verification status.
+ * Blocks unverified accounts (Option A).
  */
 router.post('/login', async (req, res, next) => {
   try {
@@ -117,14 +218,13 @@ router.post('/login', async (req, res, next) => {
 
     email = String(email).trim().toLowerCase();
 
-    // Query user including password_hash
+    // Query user including password_hash and is_verified
     const result = await query(
-      `SELECT id, name, email, password_hash, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at
+      `SELECT id, name, email, password_hash, role, faculty, department, student_id, level, staff_type, profile_picture_url, is_verified, created_at
        FROM users WHERE email = $1`,
       [email]
     );
 
-    // Use generic error for wrong email or wrong password to avoid user enumeration
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
@@ -136,8 +236,16 @@ router.post('/login', async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
 
-    // Never return password_hash in response
-    const { password_hash, ...user } = userRecord;
+    // Option A: Block unverified users from logging in
+    if (!userRecord.is_verified) {
+      return res.status(403).json({
+        error: 'Please verify your email address before logging in. Check your inbox for the verification email.',
+        unverified: true,
+        email: userRecord.email,
+      });
+    }
+
+    const { password_hash, is_verified, verification_token, verification_expires, ...user } = userRecord;
 
     const secret = process.env.JWT_SECRET;
     if (!secret) return res.status(500).json({ error: 'Server authentication is not configured.' });
@@ -152,7 +260,10 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-/** Update the signed-in user's own account. All roles can edit academic status/details. Admins, maintenance and users must confirm password if updating password. */
+/**
+ * PUT /api/auth/profile
+ * Update the signed-in user's own account.
+ */
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
     let { name, email, password, current_password, faculty, department, student_id, level, profile_picture_url } = req.body;
@@ -186,7 +297,6 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     }
     if (isImageData && picture.length > 1400000) return res.status(400).json({ error: 'Profile picture must be 1 MB or smaller.' });
 
-    // Validate academic fields if provided or required
     if (req.user.role === 'student') {
       const studentDetails = [['faculty', faculty, 100], ['department', department, 100], ['student ID', student_id, 60], ['level', level, 40]];
       for (const [label, value, max] of studentDetails) {

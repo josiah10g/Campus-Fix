@@ -105,6 +105,8 @@ export const api = {
   // Auth
   login: (credentials) => request('/api/auth/login', { method: 'POST', body: JSON.stringify(credentials) }),
   register: (userData) => request('/api/auth/register', { method: 'POST', body: JSON.stringify(userData) }),
+  verifyEmail: (data) => request('/api/auth/verify-email', { method: 'POST', body: JSON.stringify(data) }),
+  resendVerification: (email) => request('/api/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) }),
   getMe: () => request('/api/auth/me'),
   updateProfile: (profile) => request('/api/auth/profile', { method: 'PUT', body: JSON.stringify(profile) }),
 

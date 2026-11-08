@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 import IssuesPage from './pages/IssuesPage';
 import ReportIssuePage from './pages/ReportIssuePage';
 import EditIssuePage from './pages/EditIssuePage';
@@ -87,6 +88,7 @@ export default function App() {
                   </PublicRoute>
                 }
               />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
 
               {/* Protected App Routes */}
               <Route

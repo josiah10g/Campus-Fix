@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setUnverifiedEmail('');
 
     if (!email || !password) {
       setError('Invalid email or password.');
@@ -39,6 +41,9 @@ export default function LoginPage() {
       navigate(getSafeNext());
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
+      if (err.data && err.data.unverified) {
+        setUnverifiedEmail(err.data.email || email);
+      }
     } finally {
       setLoading(false);
     }
@@ -84,7 +89,17 @@ export default function LoginPage() {
           <div className="bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm">
             {error && (
               <div className="mb-5 p-3.5 bg-[#FDEDEB] border border-[#F8B4B4] rounded text-xs sm:text-sm text-statusOpen font-medium">
-                {error}
+                <p>{error}</p>
+                {unverifiedEmail && (
+                  <div className="mt-2.5 pt-2 border-t border-[#F8B4B4]/50">
+                    <Link
+                      to={`/verify-email?email=${encodeURIComponent(unverifiedEmail)}`}
+                      className="inline-flex items-center gap-1 font-bold text-teal hover:underline"
+                    >
+                      Click here to verify your email &rarr;
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 

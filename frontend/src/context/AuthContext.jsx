@@ -50,9 +50,12 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const res = await api.register(userData);
-    setAuthSession(res.token, res.user);
-    setUser(res.user);
-    return res.user;
+    // If backend requires verification, do NOT log in yet
+    if (res.token && res.user) {
+      setAuthSession(res.token, res.user);
+      setUser(res.user);
+    }
+    return res;
   };
 
   const updateUser = (updatedUser) => {

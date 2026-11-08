@@ -290,7 +290,7 @@ export default function RegisterPage() {
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <label className="block text-xs font-semibold text-ink">Matric Number</label>
-                          <span className="text-[10px] text-gray-500 font-mono">Max 9 digits</span>
+    
                         </div>
                         <input
                           type="text"

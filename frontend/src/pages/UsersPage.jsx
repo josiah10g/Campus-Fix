@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import Toast from '../components/Toast';
 import ErrorBanner from '../components/ErrorBanner';
 import UserDrawer from '../components/UserDrawer';
-import { AlertTriangle, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Trash2, X, ChevronDown } from 'lucide-react';
 
 const ROLES = [
   { value: 'student', label: 'Student' },
@@ -80,6 +80,14 @@ export default function UsersPage() {
     setToast({ type: 'success', message: 'Account created successfully.' });
   };
 
+  const formatLevel = (lvl) => {
+    if (!lvl) return '';
+    const clean = String(lvl).trim();
+    const match = clean.match(/^(\d+)/);
+    if (match) return `${match[1]}LVL`;
+    return clean.toUpperCase();
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 animate-page-enter">
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -88,17 +96,17 @@ export default function UsersPage() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-ink">Users</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage campus accounts and roles.</p>
+          <p className="text-sm text-gray-500 mt-1">Manage campus accounts, academic affiliations, and roles.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="rounded-card border border-line bg-white px-5 py-3">
-            <p className="text-sm font-semibold text-gray-600">Accounts on CampusFix</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Accounts on CampusFix</p>
             <p className="text-2xl font-bold text-ink">{totalUsers}</p>
           </div>
           <button
             type="button"
             onClick={() => setCreateOpen(true)}
-            className="rounded bg-teal px-4 py-3 text-sm font-bold text-white hover:bg-teal-dark btn-interactive"
+            className="rounded bg-teal px-5 py-3 text-sm font-bold text-white hover:bg-teal-dark btn-interactive shadow-sm"
           >
             Create user
           </button>
@@ -111,52 +119,80 @@ export default function UsersPage() {
       <div className="bg-white border border-line rounded-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-line text-left text-sm">
-            <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500">
+            <thead className="bg-[#FAFBFB] text-xs font-semibold text-gray-500 uppercase tracking-wider">
               <tr>
                 <th className="px-5 py-3.5">Name</th>
                 <th className="px-5 py-3.5">Email</th>
+                <th className="px-4 py-3.5">Department & Level</th>
                 <th className="px-5 py-3.5">Role</th>
-                <th className="px-5 py-3.5">Account</th>
+                <th className="px-5 py-3.5 text-right">Account</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line bg-white">
               {users.map((u) => {
                 const isSelf = u.id === currentUser.id;
+                const lvl = formatLevel(u.level);
+                const dept = (u.department || u.faculty || '').toUpperCase();
+
                 return (
                   <tr key={u.id} className="table-row-hover">
                     <td className="px-5 py-4 whitespace-nowrap">
                       <span className="font-semibold text-ink text-sm">
-                        {u.name} {isSelf && '(you)'}
+                        {u.name} {isSelf && <span className="text-teal font-bold">(you)</span>}
                       </span>
                     </td>
                     <td className="px-5 py-4 whitespace-nowrap text-xs text-gray-600">
                       {u.email}
                     </td>
+                    <td className="px-4 py-4 whitespace-nowrap text-xs">
+                      {lvl || dept ? (
+                        <div className="flex flex-col">
+                          {lvl && (
+                            <span className="text-teal font-bold uppercase tracking-wide">
+                              {lvl}
+                            </span>
+                          )}
+                          {dept && (
+                            <span className="text-gray-600 font-semibold uppercase tracking-wide mt-0.5 truncate max-w-[200px]" title={dept}>
+                              {dept}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 font-normal">—</span>
+                      )}
+                    </td>
                     <td className="px-5 py-4 whitespace-nowrap">
                       {isSelf ? (
-                        <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 font-medium rounded border border-gray-200 inline-block min-w-36">
+                        <div className="px-3 py-1.5 text-xs bg-gray-100 text-gray-600 font-semibold rounded border border-gray-200 inline-block min-w-36">
                           {ROLES.find((role) => role.value === u.role)?.label} (you)
                         </div>
                       ) : (
-                        <select
-                          value={u.role}
-                          onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                          className="w-44 px-3 py-1.5 text-xs border border-line rounded bg-white text-ink focus:outline-none focus:border-teal font-medium"
-                        >
-                          {ROLES.filter((r) => currentUser.role === 'super_admin' || r.value !== 'super_admin').map((r) => (
-                            <option key={r.value} value={r.value}>
-                              {r.label}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative inline-block w-48">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                            className="w-full appearance-none px-3.5 py-1.5 pr-8 text-xs font-semibold border border-line rounded-lg bg-white text-ink focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal cursor-pointer transition-colors shadow-none"
+                          >
+                            {ROLES.filter((r) => currentUser.role === 'super_admin' || r.value !== 'super_admin').map((r) => (
+                              <option key={r.value} value={r.value}>
+                                {r.label}
+                              </option>
+                            ))}
+                          </select>
+                          <ChevronDown
+                            size={14}
+                            className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400"
+                          />
+                        </div>
                       )}
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-5 py-4 text-right">
                       {!isSelf && (currentUser.role === 'super_admin' || u.role !== 'super_admin') && (
                         <button
                           type="button"
                           onClick={() => setDeleteTarget(u)}
-                          className="rounded border border-statusOpen/30 px-3 py-1.5 text-sm font-semibold text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
+                          className="rounded border border-statusOpen/30 px-3 py-1.5 text-xs font-semibold text-statusOpen hover:bg-statusOpen hover:text-white btn-interactive"
                         >
                           Delete user
                         </button>

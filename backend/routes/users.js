@@ -19,7 +19,7 @@ const VALID_ROLES = ['student', 'staff', 'maintenance', 'admin', 'super_admin'];
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
-      `SELECT id, name, email, role, faculty, department, student_id, level, staff_type, created_at
+      `SELECT id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at
        FROM users ORDER BY created_at DESC`
     );
     res.json({ users: result.rows, total: result.rows.length });
@@ -30,11 +30,11 @@ router.get('/', async (req, res, next) => {
 
 /**
  * POST /api/users
- * Create a user with any valid role (e.g., maintenance, admin)
+ * Create a user with any valid role (e.g., student, staff, maintenance, admin)
  */
 router.post('/', async (req, res, next) => {
   try {
-    let { name, email, password, role } = req.body;
+    let { name, email, password, role, faculty, department, student_id, level } = req.body;
 
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ error: 'Full name is required.' });
@@ -70,10 +70,19 @@ router.post('/', async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const result = await query(
-      `INSERT INTO users (name, email, password_hash, role)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
-      [name, email, passwordHash, role]
+      [
+        name,
+        email,
+        passwordHash,
+        role,
+        faculty?.trim() || null,
+        department?.trim() || null,
+        student_id?.trim() || null,
+        level?.trim() || null,
+      ]
     );
 
     res.status(201).json({
@@ -88,88 +97,94 @@ router.post('/', async (req, res, next) => {
 /**
  * PUT /api/users/:id/role
  * Change a user's role.
- * Restrictions:
- * - Cannot change your own role.
- * - Cannot remove/demote the last remaining super_admin.
  */
 router.put('/:id/role', async (req, res, next) => {
   try {
     const targetUserId = parseInt(req.params.id, 10);
+    const { role: newRole } = req.body;
+
     if (isNaN(targetUserId)) {
-      return res.status(404).json({ error: 'User not found.' });
+      return res.status(400).json({ error: 'Invalid user ID.' });
     }
 
-    const { role } = req.body;
-    if (!role || !VALID_ROLES.includes(role)) {
+    if (!newRole || !VALID_ROLES.includes(newRole)) {
       return res.status(400).json({
         error: `Role must be one of: ${VALID_ROLES.join(', ')}.`,
       });
     }
 
-    // Prevent changing your own role
-    if (req.user.id === targetUserId) {
-      return res.status(400).json({ error: 'You cannot change your own role.' });
-    }
-
-    // Check target user
-    const targetResult = await query('SELECT * FROM users WHERE id = $1', [targetUserId]);
-    if (targetResult.rows.length === 0) {
+    const targetUser = await query('SELECT id, role FROM users WHERE id = $1', [targetUserId]);
+    if (targetUser.rows.length === 0) {
       return res.status(404).json({ error: 'User not found.' });
     }
-    const targetUser = targetResult.rows[0];
 
-    if (req.user.role === 'admin' && (targetUser.role === 'super_admin' || role === 'super_admin')) {
-      return res.status(403).json({ error: 'Admins cannot manage super admin accounts.' });
+    const currentRole = targetUser.rows[0].role;
+
+    if (currentRole === 'super_admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only a super admin can modify a super admin account.' });
+    }
+    if (newRole === 'super_admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Only a super admin can promote a user to super admin.' });
     }
 
-    // If target is currently super_admin and being changed to something else, check if another super_admin exists
-    if (targetUser.role === 'super_admin' && role !== 'super_admin') {
-      const superAdminCountResult = await query(
-        "SELECT COUNT(*)::int AS count FROM users WHERE role = 'super_admin'"
-      );
-      if (superAdminCountResult.rows[0].count <= 1) {
-        return res.status(400).json({
-          error: 'Cannot demote the last remaining super_admin account.',
-        });
+    if (currentRole === 'super_admin' && newRole !== 'super_admin') {
+      const superAdminCount = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'super_admin'");
+      if (superAdminCount.rows[0].count <= 1) {
+        return res.status(400).json({ error: 'Cannot demote the last super admin.' });
       }
     }
 
-    const updateResult = await query(
-      `UPDATE users
-       SET role = $1
+    const result = await query(
+      `UPDATE users SET role = $1
        WHERE id = $2
-      RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
-      [role, targetUserId]
+       RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, created_at`,
+      [newRole, targetUserId]
     );
 
     res.json({
-      message: 'User role updated successfully.',
-      user: updateResult.rows[0],
+      message: 'Role updated successfully.',
+      user: result.rows[0],
     });
   } catch (error) {
     next(error);
   }
 });
 
-// Removing an account also removes its reports through the users foreign key.
+/**
+ * DELETE /api/users/:id
+ * Remove a user account and their reports.
+ */
 router.delete('/:id', async (req, res, next) => {
   try {
-    const targetId = Number.parseInt(req.params.id, 10);
-    if (!Number.isInteger(targetId)) return res.status(404).json({ error: 'User not found.' });
-    if (targetId === req.user.id) return res.status(400).json({ error: 'You cannot delete your own account.' });
+    const targetUserId = parseInt(req.params.id, 10);
+    if (isNaN(targetUserId)) {
+      return res.status(400).json({ error: 'Invalid user ID.' });
+    }
 
-    const target = await query('SELECT id, role FROM users WHERE id = $1', [targetId]);
-    if (!target.rows.length) return res.status(404).json({ error: 'User not found.' });
-    if (target.rows[0].role === 'super_admin' && req.user.role !== 'super_admin') {
+    if (targetUserId === req.user.id) {
+      return res.status(400).json({ error: 'You cannot delete your own account.' });
+    }
+
+    const targetUser = await query('SELECT id, role, name FROM users WHERE id = $1', [targetUserId]);
+    if (targetUser.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    if (targetUser.rows[0].role === 'super_admin' && req.user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Only a super admin can delete a super admin account.' });
     }
-    if (target.rows[0].role === 'super_admin') {
-      const count = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'super_admin'");
-      if (count.rows[0].count <= 1) return res.status(400).json({ error: 'Cannot delete the last super admin account.' });
+
+    if (targetUser.rows[0].role === 'super_admin') {
+      const superAdminCount = await query("SELECT COUNT(*)::int AS count FROM users WHERE role = 'super_admin'");
+      if (superAdminCount.rows[0].count <= 1) {
+        return res.status(400).json({ error: 'Cannot delete the last super admin.' });
+      }
     }
 
-    await query('DELETE FROM users WHERE id = $1', [targetId]);
-    res.json({ message: 'User and their reports were deleted.', id: targetId });
+    await query('DELETE FROM issues WHERE reporter_id = $1', [targetUserId]);
+    await query('DELETE FROM users WHERE id = $1', [targetUserId]);
+
+    res.json({ message: `User ${targetUser.rows[0].name} deleted successfully.` });
   } catch (error) {
     next(error);
   }

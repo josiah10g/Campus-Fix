@@ -41,6 +41,24 @@ async function deleteSupabaseUser(userId) {
   }
 }
 
+/** Validate an access token issued by Supabase and return its verified email. */
+async function getVerifiedEmail(accessToken) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !accessToken) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        apikey: SUPABASE_SERVICE_KEY,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    if (!res.ok) return null;
+    const user = await res.json();
+    return user.email_confirmed_at ? user.email : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Send a verification/invite email via Supabase Auth.
  * Creates a shadow auth user and Supabase sends the invite email automatically.
@@ -52,6 +70,7 @@ async function sendVerificationEmail(email) {
   }
 
   try {
+    const redirectTo = `${(process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '')}/verify-email?email=${encodeURIComponent(email)}`;
     // Remove any existing shadow user for this email first
     const existing = await findSupabaseUser(email);
     if (existing) {
@@ -69,6 +88,7 @@ async function sendVerificationEmail(email) {
       body: JSON.stringify({
         email,
         data: { app: 'CampusFix' },
+        options: { redirectTo },
       }),
     });
 
@@ -88,7 +108,7 @@ async function sendVerificationEmail(email) {
           type: 'invite',
           email,
           options: {
-            redirectTo: 'https://campus-fix-ochre.vercel.app/verify-email',
+            redirectTo,
           },
         }),
       });
@@ -123,5 +143,5 @@ async function sendVerificationEmail(email) {
   }
 }
 
-module.exports = { sendVerificationEmail, findSupabaseUser, deleteSupabaseUser };
+module.exports = { sendVerificationEmail, findSupabaseUser, deleteSupabaseUser, getVerifiedEmail };
 

@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { query } = require('../db');
 const { requireAuth } = require('../middleware/auth');
-const { sendVerificationEmail } = require('../lib/supabase');
+const { sendVerificationEmail, getVerifiedEmail } = require('../lib/supabase');
 
 const router = express.Router();
 
@@ -134,7 +134,7 @@ router.post('/register', async (req, res, next) => {
  */
 router.post('/verify-email', async (req, res, next) => {
   try {
-    const { email, token } = req.body;
+    const { email, token, access_token: accessToken } = req.body;
 
     if (!email) {
       return res.status(400).json({ error: 'Email is required.' });
@@ -156,14 +156,24 @@ router.post('/verify-email', async (req, res, next) => {
       return res.json({ message: 'Email is already verified. You can log in now.', alreadyVerified: true });
     }
 
-    // If token provided, validate token and expiration
-    if (token && user.verification_token) {
+    // Require proof from either the server-issued token or a confirmed Supabase session.
+    // Merely knowing an account's email must never be enough to verify it.
+    let validToken = false;
+    if (token) {
       if (token !== user.verification_token) {
         return res.status(400).json({ error: 'Invalid or expired verification link.' });
       }
-      if (user.verification_expires && new Date(user.verification_expires) < new Date()) {
+      if (!user.verification_expires || new Date(user.verification_expires) < new Date()) {
         return res.status(400).json({ error: 'Verification link has expired. Please request a new one.' });
       }
+      validToken = true;
+    }
+    if (accessToken) {
+      const confirmedEmail = await getVerifiedEmail(accessToken);
+      if (confirmedEmail && confirmedEmail.toLowerCase() === cleanEmail) validToken = true;
+    }
+    if (!validToken) {
+      return res.status(400).json({ error: 'A valid verification link is required.' });
     }
 
     // Mark user verified

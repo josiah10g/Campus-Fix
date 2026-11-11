@@ -41,17 +41,15 @@ export default function VerifyEmailPage() {
       if (hash && (hash.includes('type=invite') || hash.includes('type=signup') || hash.includes('access_token'))) {
         setVerifying(true);
         try {
-          // If we have an email parameter in query or stored, verify
+          const hashParams = new URLSearchParams(hash.slice(1));
+          const accessToken = hashParams.get('access_token');
+          // Pass the Supabase session token to the API, which validates it server-side.
           const targetEmail = emailParam || localStorage.getItem('pending_verification_email') || '';
-          if (targetEmail) {
-            const res = await api.verifyEmail({ email: targetEmail });
-            setVerified(true);
-            setMessage(res.message || 'Email verified successfully! You can now log in.');
-          } else {
-            // Can't automatically verify without email, but Supabase confirmed the token
-            setVerified(true);
-            setMessage('Your email has been confirmed by Supabase! Please log in to continue.');
-          }
+          if (!targetEmail || !accessToken) throw new Error('The verification link is incomplete or expired. Request a new one.');
+          const res = await api.verifyEmail({ email: targetEmail, access_token: accessToken });
+          setVerified(true);
+          setMessage(res.message || 'Email verified successfully! You can now log in.');
+          window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
         } catch (err) {
           setError(err.message || 'Failed to complete verification.');
         } finally {

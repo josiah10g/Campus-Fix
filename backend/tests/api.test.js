@@ -4,8 +4,14 @@ const test = require('node:test');
 const assert = require('node:assert');
 const request = require('supertest');
 const bcrypt = require('bcryptjs');
+// Keep automated tests independent of the external email provider.
+const emailService = require('../lib/supabase');
+const sendEmail = test.mock.method(emailService, 'sendVerificationEmail', async () => ({ success: true }));
 const app = require('../index');
 const { pool } = require('../db');
+
+// Close the connection pool so npm test exits after all tests finish.
+test.after(async () => { await pool.end(); });
 
 // Test suite
 test('CampusFix API End-to-End Tests', async (t) => {
@@ -19,54 +25,78 @@ test('CampusFix API End-to-End Tests', async (t) => {
 
   t.before(async () => {
     const unique = Date.now();
-    await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture_url TEXT');
+    const studentEmail = `student_${unique}@example.com`;
+    testRoleEmails.push(studentEmail);
     const studentRes = await request(app)
       .post('/api/auth/register')
       .send({
         name: 'Test Student',
-        email: `student_${unique}@example.com`,
+        email: studentEmail,
         password: 'Password123!',
         role: 'student',
         faculty: 'Faculty of Testing',
         department: 'Test Studies',
-        student_id: `TEST-${unique}`,
+        student_id: String(unique).slice(-9),
         level: '100 level',
       });
     
-    if (studentRes.status === 201) {
-      studentToken = studentRes.body.token;
-      studentUser = studentRes.body.user;
-      for (const [title, location, status, category] of [
-        ['Public filter fixture one', 'Test Library', 'Open', 'Plumbing'],
-        ['Public filter fixture two', 'Test Hall', 'Resolved', 'Electrical'],
-      ]) {
-        const issue = await pool.query(
-          `INSERT INTO issues (title, description, category, location, status, reporter_id)
-           VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-          [title, 'Temporary automated test issue', category, location, status, studentUser.id]
-        );
-        publicFixtureIssueIds.push(issue.rows[0].id);
-      }
+    assert.strictEqual(studentRes.status, 201);
+    assert.strictEqual(studentRes.body.requiresVerification, true);
+    assert.strictEqual(studentRes.body.token, undefined);
+
+    const unverifiedLogin = await request(app).post('/api/auth/login')
+      .send({ email: studentEmail, password: 'Password123!' });
+    assert.strictEqual(unverifiedLogin.status, 403);
+
+    // Read the token from this test's database fixture; no real email is sent.
+    const pending = await pool.query('SELECT verification_token FROM users WHERE email = $1', [studentEmail]);
+    const verified = await request(app).post('/api/auth/verify-email')
+      .send({ email: studentEmail, token: pending.rows[0].verification_token });
+    assert.strictEqual(verified.status, 200);
+    assert.strictEqual(verified.body.verified, true);
+
+    const studentLogin = await request(app).post('/api/auth/login')
+      .send({ email: studentEmail, password: 'Password123!' });
+    assert.strictEqual(studentLogin.status, 200);
+    assert.ok(studentLogin.body.token);
+    studentToken = studentLogin.body.token;
+    studentUser = studentLogin.body.user;
+    for (const [title, location, status, category] of [
+      ['Public filter fixture one', 'Test Library', 'Open', 'Plumbing'],
+      ['Public filter fixture two', 'Test Hall', 'Resolved', 'Electrical'],
+    ]) {
+      const issue = await pool.query(
+        `INSERT INTO issues (title, description, category, location, status, reporter_id)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [title, 'Temporary automated test issue', category, location, status, studentUser.id]
+      );
+      publicFixtureIssueIds.push(issue.rows[0].id);
     }
 
     const passwordHash = await bcrypt.hash('Password123!', 10);
-    testRoleEmails = [`maintenance_${unique}@example.com`, `admin_${unique}@example.com`];
+    const maintenanceEmail = `maintenance_${unique}@example.com`;
+    const adminEmail = `admin_${unique}@example.com`;
+    testRoleEmails.push(maintenanceEmail, adminEmail);
 
     await pool.query(
-      'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
-      ['Test Maintenance', testRoleEmails[0], passwordHash, 'maintenance']
+      'INSERT INTO users (name,email,password_hash,role,is_verified) VALUES ($1,$2,$3,$4,true) RETURNING id',
+      ['Test Maintenance', maintenanceEmail, passwordHash, 'maintenance']
     );
 
     await pool.query(
-      'INSERT INTO users (name,email,password_hash,role) VALUES ($1,$2,$3,$4) RETURNING id',
-      ['Test Admin', testRoleEmails[1], passwordHash, 'admin']
+      'INSERT INTO users (name,email,password_hash,role,is_verified) VALUES ($1,$2,$3,$4,true) RETURNING id',
+      ['Test Admin', adminEmail, passwordHash, 'admin']
     );
 
     const [maintenanceLogin, adminLogin] = await Promise.all([
-      request(app).post('/api/auth/login').send({ email: testRoleEmails[0], password: 'Password123!' }),
-      request(app).post('/api/auth/login').send({ email: testRoleEmails[1], password: 'Password123!' }),
+      request(app).post('/api/auth/login').send({ email: maintenanceEmail, password: 'Password123!' }),
+      request(app).post('/api/auth/login').send({ email: adminEmail, password: 'Password123!' }),
     ]);
 
+    assert.strictEqual(maintenanceLogin.status, 200);
+    assert.strictEqual(adminLogin.status, 200);
+    assert.ok(maintenanceLogin.body.token);
+    assert.ok(adminLogin.body.token);
     maintenanceToken = maintenanceLogin.body.token;
     adminToken = adminLogin.body.token;
   });
@@ -194,8 +224,36 @@ test('CampusFix API End-to-End Tests', async (t) => {
       role: 'staff',
     });
     assert.strictEqual(staff.status, 201);
-    assert.strictEqual(staff.body.user.role, 'staff');
-    assert.strictEqual(staff.body.user.staff_type, null);
+    assert.strictEqual(staff.body.requiresVerification, true);
+    assert.strictEqual(staff.body.token, undefined);
+    const stored = await pool.query('SELECT role, staff_type, is_verified FROM users WHERE email = $1', [lecturerEmail]);
+    assert.strictEqual(stored.rows[0].role, 'staff');
+    assert.strictEqual(stored.rows[0].staff_type, null);
+    assert.strictEqual(stored.rows[0].is_verified, false);
+  });
+
+  await t.test('Resending verification reports email failures instead of claiming success', async () => {
+    const email = `resend_${Date.now()}@example.com`;
+    testRoleEmails.push(email);
+    const registered = await request(app).post('/api/auth/register')
+      .send({ name: 'Resend Test', email, password: 'Password123!', role: 'staff' });
+    assert.strictEqual(registered.status, 201);
+
+    for (const [result, expectedStatus] of [
+      [false, 503],
+      [{ success: false, error: 'Provider unavailable' }, 503],
+      [{ success: false, rateLimited: true }, 429],
+      [{ success: true }, 200],
+    ]) {
+      sendEmail.mock.mockImplementationOnce(async () => result);
+      const response = await request(app).post('/api/auth/resend-verification').send({ email });
+      assert.strictEqual(response.status, expectedStatus);
+      if (expectedStatus === 200) assert.strictEqual(response.body.sent, true);
+      else {
+        assert.ok(response.body.error);
+        assert.strictEqual(response.body.sent, undefined);
+      }
+    }
   });
 
   await t.test('PUT /api/auth/profile updates account, student details, and optional picture', async () => {
@@ -211,6 +269,13 @@ test('CampusFix API End-to-End Tests', async (t) => {
     assert.strictEqual(changed.body.user.level, '200 level');
     assert.strictEqual(changed.body.user.profile_picture_url, 'data:image/png;base64,aGVsbG8=');
     assert.strictEqual(changed.body.user.password_hash, undefined);
+    assert.strictEqual(changed.body.requiresVerification, true);
+    const blocked = await request(app).post('/api/auth/login').send({ email: studentUser.email, password: 'ChangedPass123!' });
+    assert.strictEqual(blocked.status, 403);
+    const pending = await pool.query('SELECT verification_token FROM users WHERE id = $1', [studentUser.id]);
+    const verified = await request(app).post('/api/auth/verify-email')
+      .send({ email: studentUser.email, token: pending.rows[0].verification_token });
+    assert.strictEqual(verified.status, 200);
     const login = await request(app).post('/api/auth/login').send({ email: studentUser.email, password: 'ChangedPass123!' });
     assert.strictEqual(login.status, 200);
     studentToken = login.body.token;
@@ -218,23 +283,26 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('POST /api/auth/register ignores or rejects roles other than student/staff', async () => {
+    const email = `hacker_${Date.now()}@example.com`;
+    testRoleEmails.push(email);
     const res = await request(app).post('/api/auth/register').send({
       name: 'Hacker Attempt',
-      email: `hacker_${Date.now()}@example.com`,
+      email,
       password: 'HackerPassword123!',
       role: 'super_admin',
       faculty: 'Faculty of Testing',
       department: 'Test Studies',
-      student_id: `TEST-${Date.now()}`,
+      student_id: String(Date.now() + 1).slice(-9),
       level: '100 level',
     });
     assert.strictEqual(res.status, 201);
-    assert.strictEqual(res.body.user.role, 'student');
-    await pool.query('DELETE FROM users WHERE id = $1', [res.body.user.id]);
+    assert.strictEqual(res.body.requiresVerification, true);
+    const stored = await pool.query('SELECT role FROM users WHERE email = $1', [email]);
+    assert.strictEqual(stored.rows[0].role, 'student');
   });
 
   await t.test('POST /api/issues requires details when category is Other', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app).post('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`)
       .send({ title: 'An unusual issue', description: 'Something needs attention', category: 'Other', location: 'Room 12' });
@@ -243,7 +311,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('POST /api/issues saves Other category detail', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const created = await request(app).post('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`)
       .send({ title: 'Unusual campus issue', description: 'Temporary test issue', category: 'Other', category_detail: 'Pest control', location: 'Test location' });
@@ -253,7 +321,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('POST /api/issues validates input and returns 400 on empty title', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .post('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`)
@@ -267,7 +335,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('POST /api/issues creates valid issue with status Open', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .post('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`)
@@ -284,7 +352,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('GET /api/issues lists issues including the created one', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .get('/api/issues')
       .set('Authorization', `Bearer ${studentToken}`);
@@ -295,7 +363,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('GET /api/issues/:id returns single issue or 404 for missing id', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .get(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`);
@@ -309,7 +377,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('PUT /api/issues/:id forbids student from changing status (403)', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .put(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`)
@@ -318,7 +386,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('PUT /api/issues/:id allows owner to edit details while Open', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .put(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`)
@@ -333,7 +401,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('DELETE /api/issues/:id deletes issue when called by owner while Open', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .delete(`/api/issues/${createdIssueId}`)
       .set('Authorization', `Bearer ${studentToken}`);
@@ -346,7 +414,7 @@ test('CampusFix API End-to-End Tests', async (t) => {
   });
 
   await t.test('DELETE /api/issues/:id returns 404 for non-existent issue', async () => {
-    if (!studentToken) return;
+    assert.ok(studentToken, 'student login must succeed before checking issue permissions');
     const res = await request(app)
       .delete('/api/issues/9999999')
       .set('Authorization', `Bearer ${studentToken}`);

@@ -208,10 +208,16 @@ router.post('/resend-verification', async (req, res, next) => {
 
     const emailSent = await sendVerificationEmail(cleanEmail);
 
-    if (!emailSent.success && emailSent.rateLimited) {
+    if (!emailSent?.success && emailSent?.rateLimited) {
       return res.status(429).json({
         error: 'Too many tries! Email limit exceeded, please wait a while and try again later.',
         rateLimited: true,
+      });
+    }
+
+    if (!emailSent?.success) {
+      return res.status(503).json({
+        error: 'Verification email could not be sent. Please try again later.',
       });
     }
 

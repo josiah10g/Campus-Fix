@@ -146,7 +146,6 @@ export default function IssueForm({
           maxLength={100}
           value={formData.title}
           onChange={handleChange}
-          placeholder="e.g. Broken desk"
           className={`w-full px-3 py-2 text-sm bg-white border rounded focus:outline-none focus:ring-1 focus:ring-teal transition-colors ${
             errors.title
               ? 'border-statusOpen focus:border-statusOpen ring-statusOpen'
@@ -197,7 +196,6 @@ export default function IssueForm({
                 maxLength={100}
                 value={formData.category_detail}
                 onChange={handleChange}
-                placeholder="What type of issue is it?"
                 className={`w-full px-3 py-2 text-sm bg-white border rounded focus:outline-none focus:ring-1 focus:ring-teal ${errors.category_detail ? 'border-statusOpen' : 'border-line focus:border-teal'} ${shakingFields.category_detail ? 'animate-field-shake' : ''}`}
               />
               {errors.category_detail && <p className="mt-1 text-xs text-statusOpen">{errors.category_detail}</p>}
@@ -216,7 +214,6 @@ export default function IssueForm({
             maxLength={100}
             value={formData.location}
             onChange={handleChange}
-            placeholder="e.g. Library, 2nd floor"
             className={`w-full px-3 py-2 text-sm bg-white border rounded focus:outline-none focus:ring-1 focus:ring-teal transition-colors ${
               errors.location
                 ? 'border-statusOpen focus:border-statusOpen'
@@ -240,7 +237,6 @@ export default function IssueForm({
           rows={4}
           value={formData.description}
           onChange={handleChange}
-          placeholder={isEdit ? "Describe the issue in detail..." : "Describe the problem so staff can find it."}
           className={`w-full px-3 py-2 text-sm bg-white border rounded focus:outline-none focus:ring-1 focus:ring-teal transition-colors ${
             errors.description
               ? 'border-statusOpen focus:border-statusOpen'

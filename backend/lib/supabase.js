@@ -1,45 +1,7 @@
-// backend/lib/supabase.js
-// Supabase Auth Admin helpers for sending verification emails
+// Supabase access-token validation and Brevo email delivery.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-/**
- * Find a Supabase Auth user by email.
- * Returns the user object or null.
- */
-async function findSupabaseUser(email) {
-  try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
-      headers: {
-        apikey: SUPABASE_SERVICE_KEY,
-        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-      },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.users?.find(u => u.email === email) || null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Delete a Supabase Auth user by ID.
- */
-async function deleteSupabaseUser(userId) {
-  try {
-    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${userId}`, {
-      method: 'DELETE',
-      headers: {
-        apikey: SUPABASE_SERVICE_KEY,
-        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-      },
-    });
-  } catch {
-    // Ignore deletion errors
-  }
-}
 
 /** Validate an access token issued by Supabase and return its verified email. */
 async function getVerifiedEmail(accessToken) {
@@ -59,89 +21,51 @@ async function getVerifiedEmail(accessToken) {
   }
 }
 
-/**
- * Send a verification/invite email via Supabase Auth.
- * Creates a shadow auth user and Supabase sends the invite email automatically.
- */
-async function sendVerificationEmail(email) {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    console.warn('[Supabase] Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Cannot send emails.');
-    return false;
+/** Send a CampusFix verification link via Brevo using the app's DB token. */
+async function sendVerificationEmail(email, token) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const senderEmail = process.env.BREVO_SENDER_EMAIL;
+  if (!apiKey || !senderEmail) {
+    console.warn('[Email] Missing BREVO_API_KEY or BREVO_SENDER_EMAIL.');
+    return { success: false, error: 'Email delivery is not configured on the server.' };
   }
+  if (!token) return { success: false, error: 'Verification token is missing.' };
 
   try {
-    const redirectTo = `${(process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '')}/verify-email?email=${encodeURIComponent(email)}`;
-    // Remove any existing shadow user for this email first
-    const existing = await findSupabaseUser(email);
-    if (existing) {
-      await deleteSupabaseUser(existing.id);
-    }
-
-    // Invite the user - Supabase sends the email
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
+    const frontendUrl = (process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '');
+    const verificationUrl = `${frontendUrl}/verify-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
+    const senderName = process.env.BREVO_SENDER_NAME || 'CampusFix';
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: SUPABASE_SERVICE_KEY,
-        Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
       body: JSON.stringify({
-        email,
-        data: { app: 'CampusFix' },
-        options: { redirectTo },
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email }],
+        subject: 'Verify your CampusFix email',
+        textContent: `Welcome to CampusFix. Verify your email address using this link: ${verificationUrl}\n\nThis link expires in 24 hours.`,
+        htmlContent: `<p>Welcome to CampusFix.</p><p><a href="${verificationUrl}">Verify your email address</a></p><p>This link expires in 24 hours.</p>`,
       }),
     });
 
-    let actionLink = null;
-    let emailOtp = null;
-
-    // Also generate link fallback so if email is delayed/rate-limited, the user can verify via 1-click fallback
-    try {
-      const linkRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/generate_link`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: SUPABASE_SERVICE_KEY,
-          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-        },
-        body: JSON.stringify({
-          type: 'invite',
-          email,
-          options: {
-            redirectTo,
-          },
-        }),
-      });
-      if (linkRes.ok) {
-        const linkData = await linkRes.json();
-        actionLink = linkData.action_link || null;
-        emailOtp = linkData.email_otp || null;
-      }
-    } catch (e) {
-      // ignore fallback error
-    }
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      console.error('[Supabase] Invite failed:', res.status, errData);
-      const isRateLimited = res.status === 429 || (errData.message && errData.message.toLowerCase().includes('rate'));
+    if (!response.ok) {
+      const details = await response.json().catch(() => ({}));
+      console.error('[Email] Brevo send failed:', response.status, details);
       return {
         success: false,
-        status: res.status,
-        rateLimited: isRateLimited,
-        error: isRateLimited
-          ? 'Too many email requests sent. Supabase email limit exceeded, please try again later.'
-          : (errData.message || 'Could not send verification email.')
+        status: response.status,
+        rateLimited: response.status === 429,
+        error: response.status === 429
+          ? 'Email provider rate limit reached. Please try again later.'
+          : `Could not send verification email: ${details.message || details.code || 'Brevo rejected the request.'}`,
       };
     }
 
-    console.log(`[Supabase] Verification email sent to ${email} ✓`);
+    console.log(`[Email] Verification email accepted by Brevo for ${email}`);
     return { success: true };
-  } catch (err) {
-    console.error('[Supabase] sendVerificationEmail error:', err.message);
-    return { success: false, error: err.message };
+  } catch (error) {
+    console.error('[Email] Brevo send error:', error.message);
+    return { success: false, error: 'Could not connect to the email provider.' };
   }
 }
 
-module.exports = { sendVerificationEmail, findSupabaseUser, deleteSupabaseUser, getVerifiedEmail };
-
+module.exports = { sendVerificationEmail, getVerifiedEmail };

@@ -191,8 +191,12 @@ JWT_SECRET=your_jwt_secret_key_here
 SUPER_ADMIN_EMAIL=admin@campusfix.internal
 SUPER_ADMIN_PASSWORD=SecureAdminPass123!
 FRONTEND_URL=http://localhost:5173
+BREVO_API_KEY=your_brevo_api_key_here
+BREVO_SENDER_EMAIL=verified_sender_email_here
+BREVO_SENDER_NAME=CampusFix
 NODE_ENV=development
 ```
+Create a Brevo API key and verify the sender email in Brevo, then set these three variables in the deployed backend environment as well. Verification email links use `FRONTEND_URL`.
 Install dependencies and run:
 ```bash
 npm install

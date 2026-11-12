@@ -167,7 +167,6 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="e.g. John Doe"
                   className={inputClass}
                 />
                 {errors.name && <p className="mt-1 text-xs text-statusOpen">{errors.name}</p>}
@@ -179,7 +178,6 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="e.g. john@example.com"
                   className={inputClass}
                 />
                 {errors.email && <p className="mt-1 text-xs text-statusOpen">{errors.email}</p>}
@@ -195,7 +193,6 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                     type={showPassword ? 'text' : 'password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter password (at least 8 characters)"
                     className={`${inputClass} pr-10`}
                   />
                   <button
@@ -265,7 +262,6 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                       type="text"
                       value={formData.customLevel}
                       onChange={(e) => setFormData({ ...formData, customLevel: e.target.value })}
-                      placeholder="e.g. 600 Level / PhD Yr 2"
                       className={inputClass}
                     />
                   </div>
@@ -321,7 +317,6 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                         : e.target.value;
                       setFormData({ ...formData, student_id: val });
                     }}
-                    placeholder={formData.role === 'student' ? 'e.g. 210902041' : 'e.g. STF/2026/012'}
                     maxLength={formData.role === 'student' ? 9 : 60}
                     className={inputClass}
                   />

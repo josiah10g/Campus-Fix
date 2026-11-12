@@ -10,6 +10,7 @@ export default function VerifyEmailPage() {
 
   const emailParam = searchParams.get('email') || '';
   const tokenParam = searchParams.get('token') || '';
+  const emailWasSent = searchParams.get('sent') !== 'false';
 
   const [email, setEmail] = useState(emailParam);
   const [verifying, setVerifying] = useState(false);
@@ -131,16 +132,18 @@ export default function VerifyEmailPage() {
                 <Mail size={32} />
               </div>
 
-              <h1 className="text-2xl font-bold text-ink tracking-tight">Check your inbox</h1>
+              <h1 className="text-2xl font-bold text-ink tracking-tight">
+                {emailWasSent ? 'Check your inbox' : 'Verification email not sent'}
+              </h1>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                We sent a verification link to{' '}
+                {emailWasSent ? <>We sent a verification link to{' '}</> : <>We could not send the verification email to{' '}</>}
                 <strong className="text-ink font-semibold">{email || 'your email'}</strong>.
               </p>
 
               <div className="mt-4 p-3.5 bg-[#F1F4F3] border border-line rounded text-xs text-gray-700 text-left space-y-1.5">
                 <div className="font-bold text-ink">Next step:</div>
-                <div>1. Open your email inbox (and check Spam/Junk folder if not seen).</div>
-                <div>2. Click the confirmation link from Supabase / CampusFix.</div>
+                <div>1. {emailWasSent ? 'Open your email inbox (and check Spam/Junk folder if not seen).' : 'Check that the Supabase Auth email provider and SMTP settings are configured.'}</div>
+                <div>2. {emailWasSent ? 'Click the confirmation link from Supabase / CampusFix.' : 'Then use the button below to resend the verification email.'}</div>
                 <div>3. Come back here and sign into your account.</div>
               </div>
 
@@ -165,7 +168,6 @@ export default function VerifyEmailPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter your email"
                     className="w-full px-3.5 py-2 text-xs bg-[#FAFBFB] border border-line rounded focus:outline-none focus:border-teal"
                   />
                 )}

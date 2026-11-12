@@ -114,9 +114,15 @@ export default function ProfileSettingsPage() {
       updateUser(updated);
 
       if (res.requiresVerification) {
-        setToast({ type: 'success', message: 'Security updates saved! Check your email to confirm the change.' });
+        const emailSent = res.emailSent !== false;
+        setToast({
+          type: emailSent ? 'success' : 'error',
+          message: emailSent
+            ? 'Security updates saved! Check your email to confirm the change.'
+            : 'Security updates saved, but the verification email could not be sent. Try resending it.',
+        });
         setTimeout(() => {
-          navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
+          navigate(`/verify-email?email=${encodeURIComponent(form.email)}${emailSent ? '' : '&sent=false'}`);
         }, 1200);
         return;
       }
@@ -227,13 +233,12 @@ export default function ProfileSettingsPage() {
                     {user.role === 'student' ? 'Matric Number' : 'Staff / Member ID'}
                   </label>
                   {user.role === 'student' && (
-                    <span className="text-xs text-gray-500 font-mono">Max 9 digits</span>
+                    
                   )}
                 </div>
                 <input
                   name="student_id"
                   inputMode={user.role === 'student' ? 'numeric' : 'text'}
-                  placeholder={user.role === 'student' ? 'e.g. 210902041' : 'e.g. STF/2026/012'}
                   value={form.student_id}
                   onChange={(e) => {
                     const val = user.role === 'student'
@@ -262,7 +267,6 @@ export default function ProfileSettingsPage() {
                     type="text"
                     value={form.customLevel}
                     onChange={(e) => setForm({ ...form, customLevel: e.target.value })}
-                    placeholder="Specify your level (e.g. 600 Level / PhD Yr 2)"
                     maxLength={40}
                     required
                     className={`${inputClass} mt-2`}
@@ -289,7 +293,6 @@ export default function ProfileSettingsPage() {
                       onChange={updateField}
                       minLength={8}
                       autoComplete="new-password"
-                      placeholder="At least 8 characters"
                       className={`${inputClass} pr-10`}
                     />
                     <button
@@ -312,7 +315,6 @@ export default function ProfileSettingsPage() {
                       onChange={updateField}
                       minLength={8}
                       autoComplete="new-password"
-                      placeholder="Repeat new password"
                       className={`${inputClass} pr-10`}
                     />
                     <button

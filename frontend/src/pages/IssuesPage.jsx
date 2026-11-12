@@ -215,7 +215,6 @@ export default function IssuesPage() {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title or description"
             className="w-full sm:w-64 px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
           />
 

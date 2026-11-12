@@ -110,7 +110,7 @@ export default function LatestIssuesPage() {
       <section aria-label="Filter public issues">
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center">
           <label className="sr-only" htmlFor="public-search">Search title or location</label>
-          <input id="public-search" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="Search by title or place" className="min-w-0 flex-1 rounded border border-line bg-white px-3 py-2.5 text-sm focus:border-teal" />
+          <input id="public-search" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} className="min-w-0 flex-1 rounded border border-line bg-white px-3 py-2.5 text-sm focus:border-teal" />
           <label className="sr-only" htmlFor="public-status">Filter by status</label>
           <select id="public-status" value={status} onChange={(e) => updateFilters({ status: e.target.value })} className="rounded border border-line bg-white px-3 py-2.5 text-sm focus:border-teal"><option value="">All statuses</option>{STATUSES.map((item) => <option key={item}>{item}</option>)}</select>
           <label className="sr-only" htmlFor="public-category">Filter by category</label>

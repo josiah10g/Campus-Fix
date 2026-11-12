@@ -107,12 +107,15 @@ export default function RegisterPage() {
       });
 
       if (res && res.requiresVerification) {
+        const emailSent = res.emailSent !== false;
         setToast({
-          type: 'success',
-          message: 'Account created! Please check your email inbox to verify your account.',
+          type: emailSent ? 'success' : 'error',
+          message: res.message || (emailSent
+            ? 'Account created! Please check your email inbox to verify your account.'
+            : 'Account created, but the verification email could not be sent. You can try resending it.'),
         });
         setTimeout(() => {
-          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}${emailSent ? '' : '&sent=false'}`);
         }, 1200);
         return;
       }
@@ -300,7 +303,6 @@ export default function RegisterPage() {
                             const val = e.target.value.replace(/\D/g, '').slice(0, 9);
                             setFormData({ ...formData, student_id: val });
                           }}
-                          placeholder="e.g. 210902041"
                           maxLength={9}
                           className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-mono tracking-wider"
                           required
@@ -323,7 +325,6 @@ export default function RegisterPage() {
                             type="text"
                             value={formData.customLevel}
                             onChange={(e) => setFormData({ ...formData, customLevel: e.target.value })}
-                            placeholder="Specify your level (e.g. 600 Level / PhD Yr 2)"
                             maxLength={40}
                             required
                             className="mt-2 w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
@@ -340,7 +341,6 @@ export default function RegisterPage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="e.g. Amina Yusuf"
                     className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
                     required
                   />
@@ -352,7 +352,6 @@ export default function RegisterPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="you@example.com"
                     className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
                     required
                   />
@@ -368,7 +367,6 @@ export default function RegisterPage() {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      placeholder="Enter a secure password"
                       className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal pr-10 transition-all"
                       required
                       minLength={8}
@@ -391,7 +389,6 @@ export default function RegisterPage() {
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirm_password}
                       onChange={(e) => setFormData({ ...formData, confirm_password: e.target.value })}
-                      placeholder="Repeat your password"
                       className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal pr-10 transition-all"
                       required
                       minLength={8}

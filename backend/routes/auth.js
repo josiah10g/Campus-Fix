@@ -113,14 +113,17 @@ router.post('/register', async (req, res, next) => {
     // Trigger verification email via Supabase & obtain fallback link if email service is delayed/throttled
     let emailResult = { success: false, actionLink: null, emailOtp: null };
     try {
-      emailResult = await sendVerificationEmail(email);
+      emailResult = await sendVerificationEmail(email, verificationToken);
     } catch (e) {
       console.error('[Auth] Supabase email trigger error:', e);
     }
 
     res.status(201).json({
-      message: 'Account created! Please check your email inbox to verify your account before logging in.',
+      message: emailResult.success
+        ? 'Account created! Please check your email inbox to verify your account before logging in.'
+        : 'Account created, but we could not send the verification email. Please try resending it.',
       requiresVerification: true,
+      emailSent: Boolean(emailResult.success),
       email: user.email,
     });
   } catch (error) {
@@ -216,12 +219,12 @@ router.post('/resend-verification', async (req, res, next) => {
       [verificationToken, verificationExpires, result.rows[0].id]
     );
 
-    const emailSent = await sendVerificationEmail(cleanEmail);
+    const emailSent = await sendVerificationEmail(cleanEmail, verificationToken);
 
-    if (!emailSent.success && emailSent.rateLimited) {
-      return res.status(429).json({
-        error: 'Too many tries! Email limit exceeded, please wait a while and try again later.',
-        rateLimited: true,
+    if (!emailSent.success) {
+      return res.status(emailSent.rateLimited ? 429 : 502).json({
+        error: emailSent.error || 'Could not send the verification email. Check the Supabase Auth email settings and try again.',
+        rateLimited: Boolean(emailSent.rateLimited),
       });
     }
 
@@ -375,16 +378,21 @@ router.put('/profile', requireAuth, async (req, res, next) => {
 
     const requiresVerification = isChangingEmail || isChangingPassword;
 
+    let emailSent = true;
     if (requiresVerification) {
       // Trigger Supabase email verification to the new/existing email address
-      sendVerificationEmail(email).catch(e => console.error('[Auth] Verification send on security update failed:', e));
+      const emailResult = await sendVerificationEmail(email, verificationToken);
+      emailSent = Boolean(emailResult.success);
     }
 
     res.json({
       user: result.rows[0],
       requiresVerification,
-      message: requiresVerification
+      emailSent,
+      message: requiresVerification && emailSent
         ? 'Account updated! We sent a verification email to your inbox to confirm these changes.'
+        : requiresVerification
+          ? 'Account updated, but we could not send the verification email. Please try resending it.'
         : 'Profile updated successfully.'
     });
   } catch (error) {

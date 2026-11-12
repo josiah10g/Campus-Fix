@@ -82,8 +82,8 @@ const initDb = async () => {
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token TEXT');
     await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires TIMESTAMPTZ');
     await pool.query('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_student_id_unique ON users(student_id) WHERE student_id IS NOT NULL');
-    // Ensure all existing accounts are marked verified immediately
-    await pool.query("UPDATE users SET is_verified = true WHERE is_verified IS NULL OR is_verified = false");
+    // Preserve unverified accounts across restarts.
+    await pool.query('UPDATE users SET is_verified = true WHERE is_verified IS NULL');
     await pool.query(createIndexes);
     console.log('[DB] Database tables initialized successfully.');
   } catch (error) {

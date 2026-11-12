@@ -232,9 +232,6 @@ export default function ProfileSettingsPage() {
                   <label className="block text-base font-semibold text-ink">
                     {user.role === 'student' ? 'Matric Number' : 'Staff / Member ID'}
                   </label>
-                  {user.role === 'student' && (
-                    
-                  )}
                 </div>
                 <input
                   name="student_id"

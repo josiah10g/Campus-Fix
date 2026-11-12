@@ -127,6 +127,10 @@ export default function RegisterPage() {
         navigate(target);
       }
     } catch (err) {
+      if (err.data?.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(err.data.email || formData.email)}&sent=false`);
+        return;
+      }
       setError(err.message || 'Registration failed.');
     } finally {
       setLoading(false);

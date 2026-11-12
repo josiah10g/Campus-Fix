@@ -10,7 +10,7 @@ export default function VerifyEmailPage() {
 
   const emailParam = searchParams.get('email') || '';
   const tokenParam = searchParams.get('token') || '';
-  const emailWasSent = searchParams.get('sent') !== 'false';
+  const [emailWasSent, setEmailWasSent] = useState(searchParams.get('sent') !== 'false');
 
   const [email, setEmail] = useState(emailParam);
   const [verifying, setVerifying] = useState(false);
@@ -22,6 +22,13 @@ export default function VerifyEmailPage() {
   // 1. Check if user arrived via Supabase redirect hash (#access_token=...&type=invite) or query token
   useEffect(() => {
     const handleUrlVerification = async () => {
+      const callback = new URLSearchParams(window.location.hash.slice(1));
+      const callbackError = callback.get('error_description') || callback.get('error');
+      if (callbackError) {
+        setError(callbackError);
+        window.history.replaceState(null, '', `${window.location.pathname}?email=${encodeURIComponent(emailParam)}`);
+        return;
+      }
       // Check query param token
       if (tokenParam && emailParam) {
         setVerifying(true);
@@ -29,6 +36,7 @@ export default function VerifyEmailPage() {
           const res = await api.verifyEmail({ email: emailParam, token: tokenParam });
           setVerified(true);
           setMessage(res.message || 'Email verified successfully! You can now log in.');
+          window.history.replaceState(null, '', window.location.pathname);
         } catch (err) {
           setError(err.message || 'Verification link expired or invalid.');
         } finally {
@@ -75,6 +83,7 @@ export default function VerifyEmailPage() {
 
     try {
       const res = await api.resendVerification(email);
+      setEmailWasSent(Boolean(res.sent));
       setMessage(res.message || 'Verification email resent! Please check your inbox.');
     } catch (err) {
       setError(err.message || 'Failed to resend verification email.');
@@ -142,7 +151,7 @@ export default function VerifyEmailPage() {
 
               <div className="mt-4 p-3.5 bg-[#F1F4F3] border border-line rounded text-xs text-gray-700 text-left space-y-1.5">
                 <div className="font-bold text-ink">Next step:</div>
-                <div>1. {emailWasSent ? 'Open your email inbox (and check Spam/Junk folder if not seen).' : 'Check that the Supabase Auth email provider and SMTP settings are configured.'}</div>
+                <div>1. {emailWasSent ? 'Open your email inbox (and check Spam/Junk folder if not seen).' : 'Check your email address and try resending the email below.'}</div>
                 <div>2. {emailWasSent ? 'Click the confirmation link from Supabase / CampusFix.' : 'Then use the button below to resend the verification email.'}</div>
                 <div>3. Come back here and sign into your account.</div>
               </div>

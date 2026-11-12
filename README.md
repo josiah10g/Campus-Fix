@@ -191,12 +191,12 @@ JWT_SECRET=your_jwt_secret_key_here
 SUPER_ADMIN_EMAIL=admin@campusfix.internal
 SUPER_ADMIN_PASSWORD=SecureAdminPass123!
 FRONTEND_URL=http://localhost:5173
-BREVO_API_KEY=your_brevo_api_key_here
-BREVO_SENDER_EMAIL=verified_sender_email_here
-BREVO_SENDER_NAME=CampusFix
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
 NODE_ENV=development
 ```
-Create a Brevo API key and verify the sender email in Brevo, then set these three variables in the deployed backend environment as well. Verification email links use `FRONTEND_URL`.
+Enable email in Supabase Auth and keep `{{ .ConfirmationURL }}` in the Confirm Signup and Magic Link email templates. Allow `https://your-frontend-domain/verify-email**` (and `http://localhost:5173/verify-email**` for development) in Auth's redirect URL allow list so the email and verification token query parameters are preserved. Set `FRONTEND_URL` to the matching frontend origin. The backend uses Supabase's email OTP endpoint to send verification links for signup, resend, and profile security changes. CampusFix keeps its own password login; existing accounts do not need to be recreated or have matching Supabase passwords. Use `SUPABASE_ANON_KEY`, or the configured server-side service role key as a fallback. Never expose the service role key to the frontend. Supabase's default email service restricts recipients and sending rates; configure SMTP in Supabase for delivery to public signup addresses.
 Install dependencies and run:
 ```bash
 npm install

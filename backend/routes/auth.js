@@ -13,7 +13,7 @@ const router = express.Router();
 /**
  * POST /api/auth/register
  * Public registration for 'student' and 'staff' roles only.
- * Creates an unverified account and sends a verification email via Supabase.
+ * Creates an unverified account and sends a verification email via Supabase Auth.
  */
 router.post('/register', async (req, res, next) => {
   try {
@@ -32,6 +32,17 @@ router.post('/register', async (req, res, next) => {
 
     name = name.trim();
     email = email.trim().toLowerCase();
+
+    const existing = await query('SELECT id, is_verified FROM users WHERE email = $1', [email]);
+    if (existing.rows.length) {
+      return res.status(409).json({
+        error: existing.rows[0].is_verified
+          ? 'An account with this email already exists.'
+          : 'Your account already exists. Please resend the verification email.',
+        requiresVerification: !existing.rows[0].is_verified,
+        email,
+      });
+    }
 
     // Email format check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -82,25 +93,12 @@ router.post('/register', async (req, res, next) => {
       staff_type = null;
     }
 
-    // Check if email already exists
-    const existing = await query('SELECT id, is_verified FROM users WHERE email = $1', [email]);
-    if (existing.rows.length > 0) {
-      // If user exists but is not verified, allow them to re-register (replace unverified profile)
-      if (!existing.rows[0].is_verified) {
-        await query('DELETE FROM users WHERE id = $1', [existing.rows[0].id]);
-      } else {
-        return res.status(409).json({ error: 'An account with this email already exists.' });
-      }
-    }
-
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
-
-    // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Insert user as unverified (is_verified = false)
+    // Store a per-request challenge; Supabase delivers it in the email redirect.
     const insertResult = await query(
       `INSERT INTO users (name, email, password_hash, role, faculty, department, student_id, level, staff_type, is_verified, verification_token, verification_expires)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, false, $10, $11)
@@ -109,21 +107,14 @@ router.post('/register', async (req, res, next) => {
     );
 
     const user = insertResult.rows[0];
-
-    // Trigger verification email via Supabase & obtain fallback link if email service is delayed/throttled
-    let emailResult = { success: false, actionLink: null, emailOtp: null };
-    try {
-      emailResult = await sendVerificationEmail(email, verificationToken);
-    } catch (e) {
-      console.error('[Auth] Supabase email trigger error:', e);
-    }
+    const emailResult = await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
       message: emailResult.success
-        ? 'Account created! Please check your email inbox to verify your account before logging in.'
-        : 'Account created, but we could not send the verification email. Please try resending it.',
+        ? 'Account created! Please check your inbox to verify your email.'
+        : `Account created, but the verification email could not be sent. ${emailResult.error}`,
       requiresVerification: true,
-      emailSent: Boolean(emailResult.success),
+      emailSent: emailResult.success,
       email: user.email,
     });
   } catch (error) {
@@ -173,7 +164,9 @@ router.post('/verify-email', async (req, res, next) => {
     }
     if (accessToken) {
       const confirmedEmail = await getVerifiedEmail(accessToken);
-      if (confirmedEmail && confirmedEmail.toLowerCase() === cleanEmail) validToken = true;
+      // For new email challenges, require the token from this specific email.
+      // A previously confirmed Supabase session must not bypass a new challenge.
+      if (!user.verification_token && confirmedEmail && confirmedEmail.toLowerCase() === cleanEmail) validToken = true;
     }
     if (!validToken) {
       return res.status(400).json({ error: 'A valid verification link is required.' });
@@ -211,14 +204,9 @@ router.post('/resend-verification', async (req, res, next) => {
       return res.json({ message: 'This email is already verified. You can log in.' });
     }
 
-    // Refresh verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await query(
-      'UPDATE users SET verification_token = $1, verification_expires = $2 WHERE id = $3',
-      [verificationToken, verificationExpires, result.rows[0].id]
-    );
-
+    await query('UPDATE users SET verification_token = $1, verification_expires = $2 WHERE id = $3',
+      [verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000), result.rows[0].id]);
     const emailSent = await sendVerificationEmail(cleanEmail, verificationToken);
 
     if (!emailSent.success) {
@@ -378,12 +366,8 @@ router.put('/profile', requireAuth, async (req, res, next) => {
 
     const requiresVerification = isChangingEmail || isChangingPassword;
 
-    let emailSent = true;
-    if (requiresVerification) {
-      // Trigger Supabase email verification to the new/existing email address
-      const emailResult = await sendVerificationEmail(email, verificationToken);
-      emailSent = Boolean(emailResult.success);
-    }
+    const emailResult = requiresVerification ? await sendVerificationEmail(email, verificationToken) : null;
+    const emailSent = emailResult ? emailResult.success : false;
 
     res.json({
       user: result.rows[0],

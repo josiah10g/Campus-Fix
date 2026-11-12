@@ -1,17 +1,21 @@
-// Supabase access-token validation and Brevo email delivery.
+// Supabase Auth email verification and access-token validation.
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-/** Validate an access token issued by Supabase and return its verified email. */
+function authConfig() {
+  const key = SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY;
+  if (!SUPABASE_URL || !key) return null;
+  return { url: SUPABASE_URL.replace(/\/$/, ''), key };
+}
+
 async function getVerifiedEmail(accessToken) {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !accessToken) return null;
+  const config = authConfig();
+  if (!config || !accessToken) return null;
   try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        apikey: SUPABASE_SERVICE_KEY,
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const res = await fetch(`${config.url}/auth/v1/user`, {
+      headers: { apikey: config.key, Authorization: `Bearer ${accessToken}` },
     });
     if (!res.ok) return null;
     const user = await res.json();
@@ -21,51 +25,39 @@ async function getVerifiedEmail(accessToken) {
   }
 }
 
-/** Send a CampusFix verification link via Brevo using the app's DB token. */
-async function sendVerificationEmail(email, token) {
-  const apiKey = process.env.BREVO_API_KEY;
-  const senderEmail = process.env.BREVO_SENDER_EMAIL;
-  if (!apiKey || !senderEmail) {
-    console.warn('[Email] Missing BREVO_API_KEY or BREVO_SENDER_EMAIL.');
-    return { success: false, error: 'Email delivery is not configured on the server.' };
-  }
-  if (!token) return { success: false, error: 'Verification token is missing.' };
-
+async function supabaseAuthRequest(path, body, redirectTo) {
+  const config = authConfig();
+  if (!config) return { success: false, error: 'Supabase Auth is not configured on the server.' };
   try {
-    const frontendUrl = (process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '');
-    const verificationUrl = `${frontendUrl}/verify-email?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
-    const senderName = process.env.BREVO_SENDER_NAME || 'CampusFix';
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const url = new URL(`${config.url}/auth/v1/${path}`);
+    if (redirectTo) url.searchParams.set('redirect_to', redirectTo);
+    const response = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'api-key': apiKey },
-      body: JSON.stringify({
-        sender: { name: senderName, email: senderEmail },
-        to: [{ email }],
-        subject: 'Verify your CampusFix email',
-        textContent: `Welcome to CampusFix. Verify your email address using this link: ${verificationUrl}\n\nThis link expires in 24 hours.`,
-        htmlContent: `<p>Welcome to CampusFix.</p><p><a href="${verificationUrl}">Verify your email address</a></p><p>This link expires in 24 hours.</p>`,
-      }),
+      headers: { 'Content-Type': 'application/json', apikey: config.key },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(15000),
     });
-
+    const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const details = await response.json().catch(() => ({}));
-      console.error('[Email] Brevo send failed:', response.status, details);
-      return {
-        success: false,
-        status: response.status,
-        rateLimited: response.status === 429,
-        error: response.status === 429
-          ? 'Email provider rate limit reached. Please try again later.'
-          : `Could not send verification email: ${details.message || details.code || 'Brevo rejected the request.'}`,
-      };
+      console.error('[Supabase Auth] Request failed:', response.status, data.msg || data.message || data.error_description || data.error);
+      return { success: false, status: response.status, rateLimited: response.status === 429, error: data.msg || data.message || data.error_description || data.error || 'Supabase Auth rejected the request.' };
     }
-
-    console.log(`[Email] Verification email accepted by Brevo for ${email}`);
-    return { success: true };
+    return { success: true, data };
   } catch (error) {
-    console.error('[Email] Brevo send error:', error.message);
-    return { success: false, error: 'Could not connect to the email provider.' };
+    console.error('[Supabase Auth] Request error:', error.message);
+    return { success: false, error: 'Could not connect to Supabase Auth.' };
   }
+}
+
+async function sendVerificationEmail(email, token) {
+  if (!token) return { success: false, error: 'Verification token is missing.' };
+  const frontendUrl = (process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '');
+  const redirect = new URL(`${frontendUrl}/verify-email`);
+  redirect.searchParams.set('email', email);
+  redirect.searchParams.set('token', token);
+  // Supabase proves email ownership; CampusFix keeps its existing password login.
+  // OTP also sends a fresh link to existing Auth users and legacy app accounts.
+  return supabaseAuthRequest('otp', { email, create_user: true }, redirect.toString());
 }
 
 module.exports = { sendVerificationEmail, getVerifiedEmail };

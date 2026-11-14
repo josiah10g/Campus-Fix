@@ -45,6 +45,20 @@ export default function VerifyEmailPage() {
         return;
       }
 
+      // Check if user visited /verify-email with an email already verified
+      if (emailParam && !tokenParam && !window.location.hash) {
+        try {
+          const checkRes = await api.verifyEmail({ email: emailParam });
+          if (checkRes.alreadyVerified) {
+            setVerified(true);
+            setMessage(checkRes.message || 'Email is already verified. You can log in now.');
+            return;
+          }
+        } catch {
+          // If unverified, proceed with the normal check your inbox screen
+        }
+      }
+
       // Check hash fragment from Supabase auth redirect
       const hash = window.location.hash;
       if (hash && (hash.includes('type=invite') || hash.includes('type=signup') || hash.includes('access_token'))) {
@@ -86,6 +100,11 @@ export default function VerifyEmailPage() {
       setEmailWasSent(Boolean(res.sent));
       setMessage(res.message || 'Verification email resent! Please check your inbox.');
     } catch (err) {
+      if (err.data?.alreadyVerified) {
+        setVerified(true);
+        setMessage('This email is already verified. You can log in.');
+        return;
+      }
       setError(err.message || 'Failed to resend verification email.');
     } finally {
       setResending(false);

@@ -350,7 +350,9 @@ export default function RegisterPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-ink mb-1.5">Email address</label>
+                  <label className="block text-sm font-semibold text-ink mb-1.5">
+                    {formData.role === 'student' ? 'Student Email' : 'Email address'}
+                  </label>
                   <input
                     type="email"
                     value={formData.email}

@@ -173,7 +173,9 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink mb-1">Email address</label>
+                <label className="block text-xs font-semibold text-ink mb-1">
+                  {formData.role === 'student' ? 'Student Email' : 'Email address'}
+                </label>
                 <input
                   type="email"
                   value={formData.email}

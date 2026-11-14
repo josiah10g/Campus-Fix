@@ -35,11 +35,16 @@ router.post('/register', async (req, res, next) => {
 
     const existing = await query('SELECT id, is_verified FROM users WHERE email = $1', [email]);
     if (existing.rows.length) {
+      if (existing.rows[0].is_verified) {
+        return res.status(409).json({
+          error: 'An account with this email already exists and is already verified. Please log in.',
+          alreadyVerified: true,
+          email,
+        });
+      }
       return res.status(409).json({
-        error: existing.rows[0].is_verified
-          ? 'An account with this email already exists.'
-          : 'Your account already exists. Please resend the verification email.',
-        requiresVerification: !existing.rows[0].is_verified,
+        error: 'Your account already exists. Please resend the verification email.',
+        requiresVerification: true,
         email,
       });
     }
@@ -147,7 +152,7 @@ router.post('/verify-email', async (req, res, next) => {
     const user = result.rows[0];
 
     if (user.is_verified) {
-      return res.json({ message: 'Email is already verified. You can log in now.', alreadyVerified: true });
+      return res.json({ message: 'Email is already verified. You can log in now.', alreadyVerified: true, verified: true });
     }
 
     // Require proof from either the server-issued token or a confirmed Supabase session.
@@ -201,7 +206,7 @@ router.post('/resend-verification', async (req, res, next) => {
     }
 
     if (result.rows[0].is_verified) {
-      return res.json({ message: 'This email is already verified. You can log in.' });
+      return res.status(400).json({ error: 'This email is already verified. You can log in.', alreadyVerified: true });
     }
 
     const verificationToken = crypto.randomBytes(32).toString('hex');

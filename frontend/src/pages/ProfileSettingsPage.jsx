@@ -174,7 +174,7 @@ export default function ProfileSettingsPage() {
               <input name="name" value={form.name} onChange={updateField} maxLength={60} required className={inputClass} />
             </label>
             <label className="text-base font-semibold text-ink">
-              Email address
+              {user.role === 'student' ? 'Student Email' : 'Email address'}
               <input name="email" type="email" value={form.email} onChange={updateField} maxLength={120} required className={inputClass} />
             </label>
           </div>

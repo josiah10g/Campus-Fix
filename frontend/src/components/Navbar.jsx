@@ -28,8 +28,8 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Hidden only on standalone login and register pages per mockup
-  if (location.pathname === '/login' || location.pathname === '/register') {
+  // Hidden on standalone auth / verification pages per mockup
+  if (location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/verify-email') {
     return null;
   }
 

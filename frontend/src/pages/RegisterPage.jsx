@@ -84,11 +84,11 @@ export default function RegisterPage() {
     if (formData.role === 'student') {
       finalLevel = formData.levelOption === 'Other' ? formData.customLevel.trim() : formData.levelOption;
       if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !finalLevel) {
-        setError('Faculty, Department, Matric Number, and Level are all required for student accounts.');
+        setError('Faculty, Department, ID Number, and Level are all required for student accounts.');
         return;
       }
       if (!/^\d{1,9}$/.test(formData.student_id.trim())) {
-        setError('Matric number must be up to 9 digits (numbers only).');
+        setError('ID number must be up to 9 digits (numbers only).');
         return;
       }
     }
@@ -295,8 +295,7 @@ export default function RegisterPage() {
                     <div className="grid gap-3 sm:grid-cols-2 pt-1">
                       <div>
                         <div className="flex items-center justify-between mb-1">
-                          <label className="block text-xs font-semibold text-ink">Matric Number</label>
-    
+                          <label className="block text-xs font-semibold text-ink">ID Number</label>
                         </div>
                         <input
                           type="text"

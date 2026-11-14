@@ -70,11 +70,11 @@ router.post('/', async (req, res, next) => {
     if (student_id && role === 'student') {
       student_id = student_id.trim();
       if (!/^\d{1,9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
+        return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
       }
       const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
       if (existingMatric.rows.length > 0) {
-        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
+        return res.status(409).json({ error: 'A student account with this ID number already exists.' });
       }
     }
 

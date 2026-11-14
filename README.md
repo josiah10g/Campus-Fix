@@ -50,7 +50,7 @@ On college campuses, maintenance issues (such as broken laboratory sockets, fail
    - Choose your **Programme**: `Undergraduate` or `Postgraduate`.
    - Select your **Faculty / College** from the dynamic dropdown (e.g., *Faculty of Computing Studies*, *College of Health Sciences*, *Faculty of Engineering*).
    - Select your specific **Department** (e.g., *Software Engineering*, *Computer Science*, *Cyber Security*).
-   - Enter your **Student ID / Matric** number.
+   - Enter your **Student ID Number**.
    - Choose your **Level** (`100 Level` through `500 Level`, or choose `Other` to specify your custom level).
    - Enter your full name, email, password, and confirm password. Click **Create account**.
 3. **First-Time Welcome**:

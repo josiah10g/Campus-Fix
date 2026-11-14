@@ -301,11 +301,8 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <label className="block text-xs font-semibold text-ink">
-                      {formData.role === 'student' ? 'Matric Number' : 'Staff ID / Identifier'}
+                      {formData.role === 'student' ? 'ID Number' : 'Staff ID / Identifier'}
                     </label>
-                    {formData.role === 'student' && (
-                      <span className="text-[10px] text-gray-500 font-mono">Max 9 digits</span>
-                    )}
                   </div>
                   <input
                     type="text"

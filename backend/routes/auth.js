@@ -75,15 +75,15 @@ router.post('/register', async (req, res, next) => {
       level = level.trim();
       staff_type = null;
 
-      // Matric number validation: maximum 9 digits (1 to 9 digits, numeric)
+      // ID number validation: maximum 9 digits (1 to 9 digits, numeric)
       if (!/^\d{1,9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
+        return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
       }
 
-      // Uniqueness check for matric number
+      // Uniqueness check for ID number
       const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
       if (existingMatric.rows.length > 0) {
-        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
+        return res.status(409).json({ error: 'A student account with this ID number already exists.' });
       }
     } else {
       faculty = null;
@@ -328,12 +328,12 @@ router.put('/profile', requireAuth, async (req, res, next) => {
 
       student_id = student_id.trim();
       if (!/^\d{1,9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'Matric number must be at most 9 digits (numbers only).' });
+        return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
       }
 
       const duplicateMatric = await query('SELECT id FROM users WHERE student_id = $1 AND id <> $2', [student_id, req.user.id]);
       if (duplicateMatric.rows.length) {
-        return res.status(409).json({ error: 'A student account with this matric number already exists.' });
+        return res.status(409).json({ error: 'A student account with this ID number already exists.' });
       }
     }
 

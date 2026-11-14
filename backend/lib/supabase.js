@@ -1,13 +1,10 @@
 // Supabase Auth email verification and access-token validation.
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-
 function authConfig() {
-  const key = SUPABASE_ANON_KEY || SUPABASE_SERVICE_KEY;
-  if (!SUPABASE_URL || !key) return null;
-  return { url: SUPABASE_URL.replace(/\/$/, ''), key };
+  const rawUrl = process.env.SUPABASE_URL || (process.env.SUPABASE_PROJECT_ID ? `https://${process.env.SUPABASE_PROJECT_ID}.supabase.co` : null);
+  const key = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!rawUrl || !key) return null;
+  return { url: rawUrl.replace(/\/$/, ''), key };
 }
 
 async function getVerifiedEmail(accessToken) {

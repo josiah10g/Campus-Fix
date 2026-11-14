@@ -230,7 +230,7 @@ export default function ProfileSettingsPage() {
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-base font-semibold text-ink">
-                    {user.role === 'student' ? 'Matric Number' : 'Staff / Member ID'}
+                    {user.role === 'student' ? 'ID Number' : 'Staff / Member ID'}
                   </label>
                 </div>
                 <input

@@ -112,7 +112,7 @@ router.post('/register', async (req, res, next) => {
     );
 
     const user = insertResult.rows[0];
-    const emailResult = await sendVerificationEmail(email, verificationToken);
+    const emailResult = await sendVerificationEmail(email, verificationToken, 'signup');
 
     res.status(201).json({
       message: emailResult.success
@@ -195,7 +195,7 @@ router.post('/verify-email', async (req, res, next) => {
  */
 router.post('/resend-verification', async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, reason } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required.' });
 
     const cleanEmail = String(email).trim().toLowerCase();
@@ -212,7 +212,7 @@ router.post('/resend-verification', async (req, res, next) => {
     const verificationToken = crypto.randomBytes(32).toString('hex');
     await query('UPDATE users SET verification_token = $1, verification_expires = $2 WHERE id = $3',
       [verificationToken, new Date(Date.now() + 24 * 60 * 60 * 1000), result.rows[0].id]);
-    const emailSent = await sendVerificationEmail(cleanEmail, verificationToken);
+    const emailSent = await sendVerificationEmail(cleanEmail, verificationToken, reason || 'resend');
 
     if (!emailSent.success) {
       return res.status(emailSent.rateLimited ? 429 : 502).json({
@@ -370,13 +370,15 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     );
 
     const requiresVerification = isChangingEmail || isChangingPassword;
+    const reason = (isChangingEmail && isChangingPassword) ? 'email_and_password' : isChangingEmail ? 'email_change' : isChangingPassword ? 'password_change' : 'security_update';
 
-    const emailResult = requiresVerification ? await sendVerificationEmail(email, verificationToken) : null;
+    const emailResult = requiresVerification ? await sendVerificationEmail(email, verificationToken, reason) : null;
     const emailSent = emailResult ? emailResult.success : false;
 
     res.json({
       user: result.rows[0],
       requiresVerification,
+      reason,
       emailSent,
       message: requiresVerification && emailSent
         ? 'Account updated! We sent a verification email to your inbox to confirm these changes.'

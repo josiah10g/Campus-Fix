@@ -10,9 +10,11 @@ export default function VerifyEmailPage() {
 
   const emailParam = searchParams.get('email') || '';
   const tokenParam = searchParams.get('token') || '';
+  const reasonParam = searchParams.get('reason') || 'signup';
   const [emailWasSent, setEmailWasSent] = useState(searchParams.get('sent') !== 'false');
 
   const [email, setEmail] = useState(emailParam);
+  const [reason, setReason] = useState(reasonParam);
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [resending, setResending] = useState(false);
@@ -35,7 +37,12 @@ export default function VerifyEmailPage() {
         try {
           const res = await api.verifyEmail({ email: emailParam, token: tokenParam });
           setVerified(true);
-          setMessage(res.message || 'Email verified successfully! You can now log in.');
+          const successMsg = reasonParam === 'password_change'
+            ? 'Password verified and updated successfully! You can now log in with your new password.'
+            : reasonParam === 'email_change'
+            ? 'New email address verified successfully! You can now log in.'
+            : (res.message || 'Email verified successfully! You can now log in.');
+          setMessage(successMsg);
           window.history.replaceState(null, '', window.location.pathname);
         } catch (err) {
           setError(err.message || 'Verification link expired or invalid.');
@@ -96,7 +103,7 @@ export default function VerifyEmailPage() {
     setMessage('');
 
     try {
-      const res = await api.resendVerification(email);
+      const res = await api.resendVerification(email, reason);
       setEmailWasSent(Boolean(res.sent));
       setMessage(res.message || 'Verification email resent! Please check your inbox.');
     } catch (err) {
@@ -111,31 +118,62 @@ export default function VerifyEmailPage() {
     }
   };
 
+  const getReasonDetails = () => {
+    switch (reason) {
+      case 'password_change':
+        return {
+          title: 'Confirm password change',
+          subtitle: 'We sent a confirmation link to verify your new password to',
+          nextSteps: [
+            'Open your email inbox (and check Spam/Junk folder if not seen).',
+            'Click the confirmation link to authorize your new password.',
+            'Once confirmed, return here to log in with your new password.',
+          ],
+        };
+      case 'email_change':
+        return {
+          title: 'Verify new email address',
+          subtitle: 'We sent a verification link to confirm your new email address to',
+          nextSteps: [
+            'Open your new email inbox (and check Spam/Junk folder if not seen).',
+            'Click the confirmation link to confirm ownership of this email.',
+            'Once confirmed, return here to log in with your updated email.',
+          ],
+        };
+      case 'email_and_password':
+        return {
+          title: 'Confirm security updates',
+          subtitle: 'We sent a confirmation link to verify your updated email and password to',
+          nextSteps: [
+            'Open your email inbox (and check Spam/Junk folder if not seen).',
+            'Click the confirmation link to verify your updated security credentials.',
+            'Once confirmed, return here to log in with your new credentials.',
+          ],
+        };
+      default:
+        return {
+          title: 'Check your inbox',
+          subtitle: 'We sent a verification link to activate your account to',
+          nextSteps: [
+            'Open your email inbox (and check Spam/Junk folder if not seen).',
+            'Click the confirmation link from Supabase / CampusFix.',
+            'Come back here and sign into your account.',
+          ],
+        };
+    }
+  };
+
+  const reasonDetails = getReasonDetails();
+
   return (
     <div className="min-h-screen bg-page flex flex-col justify-between animate-page-enter">
-      {/* Header */}
-      <header className="w-full max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2.5 focus:outline-none">
-          <div className="w-8 h-8 rounded bg-safetyYellow flex items-center justify-center font-bold text-ink text-base shadow-none">
-            C
-          </div>
-          <span className="font-bold text-xl tracking-tight text-ink">CampusFix</span>
-        </Link>
-        <Link
-          to="/login"
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-600 hover:text-ink transition-colors"
-        >
-          <ArrowLeft size={16} /> Back to Login
-        </Link>
-      </header>
-
       {/* Main Container */}
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-md bg-white border border-line rounded-card p-7 sm:p-9 shadow-sm text-center">
           {verifying ? (
             <div className="py-8">
               <Loader2 className="w-12 h-12 text-teal animate-spin mx-auto mb-4" />
-              <h1 className="text-xl font-bold text-ink">Verifying your email...</h1>
+              <h1 className="text-xl font-bold text-ink">Verifying...</h1>
               <p className="text-sm text-gray-600 mt-2">Connecting to Supabase verification services.</p>
             </div>
           ) : verified ? (
@@ -143,7 +181,9 @@ export default function VerifyEmailPage() {
               <div className="w-14 h-14 bg-teal/10 text-teal rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 size={36} />
               </div>
-              <h1 className="text-2xl font-bold text-ink">Email Verified!</h1>
+              <h1 className="text-2xl font-bold text-ink">
+                {reason === 'password_change' ? 'Password Confirmed!' : reason === 'email_change' ? 'Email Verified!' : 'Email Verified!'}
+              </h1>
               <p className="text-sm text-gray-600 mt-2 mb-6">
                 {message || 'Your account is now fully verified. You can log in and start using CampusFix.'}
               </p>
@@ -161,18 +201,18 @@ export default function VerifyEmailPage() {
               </div>
 
               <h1 className="text-2xl font-bold text-ink tracking-tight">
-                {emailWasSent ? 'Check your inbox' : 'Verification email not sent'}
+                {emailWasSent ? reasonDetails.title : 'Verification email not sent'}
               </h1>
               <p className="text-sm text-gray-600 mt-2 leading-relaxed">
-                {emailWasSent ? <>We sent a verification link to{' '}</> : <>We could not send the verification email to{' '}</>}
+                {emailWasSent ? <>{reasonDetails.subtitle}{' '}</> : <>We could not send the verification email to{' '}</>}
                 <strong className="text-ink font-semibold">{email || 'your email'}</strong>.
               </p>
 
               <div className="mt-4 p-3.5 bg-[#F1F4F3] border border-line rounded text-xs text-gray-700 text-left space-y-1.5">
                 <div className="font-bold text-ink">Next step:</div>
-                <div>1. {emailWasSent ? 'Open your email inbox (and check Spam/Junk folder if not seen).' : 'Check your email address and try resending the email below.'}</div>
-                <div>2. {emailWasSent ? 'Click the confirmation link from Supabase / CampusFix.' : 'Then use the button below to resend the verification email.'}</div>
-                <div>3. Come back here and sign into your account.</div>
+                <div>1. {emailWasSent ? reasonDetails.nextSteps[0] : 'Check your email address and try resending the email below.'}</div>
+                <div>2. {emailWasSent ? reasonDetails.nextSteps[1] : 'Then use the button below to resend the verification email.'}</div>
+                <div>3. {emailWasSent ? reasonDetails.nextSteps[2] : 'Come back here and sign into your account.'}</div>
               </div>
 
               {message && (

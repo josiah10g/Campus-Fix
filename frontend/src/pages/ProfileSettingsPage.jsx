@@ -115,6 +115,7 @@ export default function ProfileSettingsPage() {
 
       if (res.requiresVerification) {
         const emailSent = res.emailSent !== false;
+        const reason = res.reason || (isChangingEmail && isChangingPassword ? 'email_and_password' : isChangingEmail ? 'email_change' : 'password_change');
         // Clear active session since account now requires re-verification
         logout();
         setToast({
@@ -124,7 +125,7 @@ export default function ProfileSettingsPage() {
             : 'Security updates saved, but the verification email could not be sent. Try resending it.',
         });
         setTimeout(() => {
-          navigate(`/verify-email?email=${encodeURIComponent(form.email)}${emailSent ? '' : '&sent=false'}`);
+          navigate(`/verify-email?email=${encodeURIComponent(form.email)}&reason=${encodeURIComponent(reason)}${emailSent ? '' : '&sent=false'}`);
         }, 1200);
         return;
       }

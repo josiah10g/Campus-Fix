@@ -115,7 +115,7 @@ export default function RegisterPage() {
             : 'Account created, but the verification email could not be sent. You can try resending it.'),
         });
         setTimeout(() => {
-          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}${emailSent ? '' : '&sent=false'}`);
+          navigate(`/verify-email?email=${encodeURIComponent(formData.email)}&reason=signup${emailSent ? '' : '&sent=false'}`);
         }, 1200);
         return;
       }

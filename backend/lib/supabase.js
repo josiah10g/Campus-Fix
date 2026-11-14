@@ -46,12 +46,13 @@ async function supabaseAuthRequest(path, body, redirectTo) {
   }
 }
 
-async function sendVerificationEmail(email, token) {
+async function sendVerificationEmail(email, token, reason = 'signup') {
   if (!token) return { success: false, error: 'Verification token is missing.' };
   const frontendUrl = (process.env.FRONTEND_URL || 'https://campus-fix-ochre.vercel.app').replace(/\/$/, '');
   const redirect = new URL(`${frontendUrl}/verify-email`);
   redirect.searchParams.set('email', email);
   redirect.searchParams.set('token', token);
+  if (reason) redirect.searchParams.set('reason', reason);
   // Supabase proves email ownership; CampusFix keeps its existing password login.
   // OTP also sends a fresh link to existing Auth users and legacy app accounts.
   return supabaseAuthRequest('otp', { email, create_user: true }, redirect.toString());

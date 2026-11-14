@@ -314,7 +314,11 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                       const val = formData.role === 'student'
                         ? e.target.value.replace(/\D/g, '').slice(0, 9)
                         : e.target.value;
-                      setFormData({ ...formData, student_id: val });
+                      setFormData((prev) => ({
+                        ...prev,
+                        student_id: val,
+                        ...(formData.role === 'student' ? { email: val ? `${val}@nileuniversity.edu.ng` : prev.email } : {}),
+                      }));
                     }}
                     maxLength={formData.role === 'student' ? 9 : 60}
                     className={inputClass}

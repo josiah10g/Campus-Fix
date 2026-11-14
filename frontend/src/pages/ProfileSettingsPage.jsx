@@ -91,6 +91,19 @@ export default function ProfileSettingsPage() {
       }
     }
 
+    if (user.role === 'student') {
+      const studentId = (form.student_id || '').trim();
+      if (!/^\d{1,9}$/.test(studentId)) {
+        setToast({ type: 'error', message: 'ID number must be up to 9 digits (numbers only).' });
+        return;
+      }
+      const expectedEmail = `${studentId}@nileuniversity.edu.ng`.toLowerCase();
+      if (form.email.trim().toLowerCase() !== expectedEmail) {
+        setToast({ type: 'error', message: `Student email must match your ID number (${expectedEmail}).` });
+        return;
+      }
+    }
+
     const finalLevel = form.levelOption === 'Other' ? form.customLevel.trim() : form.levelOption;
 
     setSaving(true);
@@ -178,7 +191,21 @@ export default function ProfileSettingsPage() {
             </label>
             <label className="text-base font-semibold text-ink">
               {user.role === 'student' ? 'Student Email' : 'Email address'}
-              <input name="email" type="email" value={form.email} onChange={updateField} maxLength={120} required className={inputClass} />
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={updateField}
+                readOnly={user.role === 'student'}
+                maxLength={120}
+                required
+                className={`${inputClass} ${user.role === 'student' ? 'bg-[#F1F4F3] text-gray-700 cursor-not-allowed font-mono' : ''}`}
+              />
+              {user.role === 'student' && (
+                <span className="text-xs text-gray-500 font-normal mt-1 block">
+                  Automatically tied to ID number as <span className="font-mono text-teal">[ID]@nileuniversity.edu.ng</span>
+                </span>
+              )}
             </label>
           </div>
 
@@ -244,7 +271,11 @@ export default function ProfileSettingsPage() {
                     const val = user.role === 'student'
                       ? e.target.value.replace(/\D/g, '').slice(0, 9)
                       : e.target.value;
-                    setForm({ ...form, student_id: val });
+                    setForm((prev) => ({
+                      ...prev,
+                      student_id: val,
+                      ...(user.role === 'student' ? { email: val ? `${val}@nileuniversity.edu.ng` : prev.email } : {}),
+                    }));
                   }}
                   maxLength={user.role === 'student' ? 9 : 60}
                   className={inputClass}

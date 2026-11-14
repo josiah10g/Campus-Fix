@@ -91,6 +91,11 @@ export default function RegisterPage() {
         setError('ID number must be up to 9 digits (numbers only).');
         return;
       }
+      const expectedEmail = `${formData.student_id.trim()}@nileuniversity.edu.ng`.toLowerCase();
+      if (formData.email.trim().toLowerCase() !== expectedEmail) {
+        setError(`Student email must be in the format: ${expectedEmail}`);
+        return;
+      }
     }
 
     setLoading(true);
@@ -304,9 +309,14 @@ export default function RegisterPage() {
                           value={formData.student_id}
                           onChange={(e) => {
                             const val = e.target.value.replace(/\D/g, '').slice(0, 9);
-                            setFormData({ ...formData, student_id: val });
+                            setFormData((prev) => ({
+                              ...prev,
+                              student_id: val,
+                              email: val ? `${val}@nileuniversity.edu.ng` : '',
+                            }));
                           }}
                           maxLength={9}
+                          placeholder="e.g. 262727897"
                           className="w-full px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal font-mono tracking-wider"
                           required
                         />
@@ -357,9 +367,18 @@ export default function RegisterPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3.5 py-2.5 text-sm bg-[#FAFBFB] focus:bg-white border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all"
+                    readOnly={formData.role === 'student'}
+                    placeholder={formData.role === 'student' ? 'e.g. 262727897@nileuniversity.edu.ng' : 'you@example.com'}
+                    className={`w-full px-3.5 py-2.5 text-sm border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all ${
+                      formData.role === 'student' ? 'bg-[#F1F4F3] text-gray-700 cursor-not-allowed font-mono' : 'bg-[#FAFBFB] focus:bg-white text-ink'
+                    }`}
                     required
                   />
+                  {formData.role === 'student' && (
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Automatically generated as <span className="font-mono font-semibold text-teal">[ID]@nileuniversity.edu.ng</span>
+                    </p>
+                  )}
                 </div>
 
                 <div>

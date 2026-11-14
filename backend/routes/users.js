@@ -72,6 +72,12 @@ router.post('/', async (req, res, next) => {
       if (!/^\d{1,9}$/.test(student_id)) {
         return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
       }
+      const expectedStudentEmail = `${student_id}@nileuniversity.edu.ng`.toLowerCase();
+      if (email !== expectedStudentEmail) {
+        return res.status(400).json({
+          error: `Student email must match their ID number (${expectedStudentEmail}).`,
+        });
+      }
       const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
       if (existingMatric.rows.length > 0) {
         return res.status(409).json({ error: 'A student account with this ID number already exists.' });

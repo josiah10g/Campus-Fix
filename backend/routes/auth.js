@@ -85,6 +85,14 @@ router.post('/register', async (req, res, next) => {
         return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
       }
 
+      // Student email validation: must be <student_id>@nileuniversity.edu.ng
+      const expectedStudentEmail = `${student_id}@nileuniversity.edu.ng`.toLowerCase();
+      if (email !== expectedStudentEmail) {
+        return res.status(400).json({
+          error: `Student email must match your ID number (${expectedStudentEmail}).`,
+        });
+      }
+
       // Uniqueness check for ID number
       const existingMatric = await query('SELECT id FROM users WHERE student_id = $1', [student_id]);
       if (existingMatric.rows.length > 0) {
@@ -334,6 +342,14 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       student_id = student_id.trim();
       if (!/^\d{1,9}$/.test(student_id)) {
         return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
+      }
+
+      // Student email validation: must be <student_id>@nileuniversity.edu.ng
+      const expectedStudentEmail = `${student_id}@nileuniversity.edu.ng`.toLowerCase();
+      if (email !== expectedStudentEmail) {
+        return res.status(400).json({
+          error: `Student email must match your ID number (${expectedStudentEmail}).`,
+        });
       }
 
       const duplicateMatric = await query('SELECT id FROM users WHERE student_id = $1 AND id <> $2', [student_id, req.user.id]);

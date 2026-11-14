@@ -115,10 +115,12 @@ export default function ProfileSettingsPage() {
 
       if (res.requiresVerification) {
         const emailSent = res.emailSent !== false;
+        // Clear active session since account now requires re-verification
+        logout();
         setToast({
           type: emailSent ? 'success' : 'error',
           message: emailSent
-            ? 'Security updates saved! Check your email to confirm the change.'
+            ? 'Security updates saved! Check your email to confirm the change before logging back in.'
             : 'Security updates saved, but the verification email could not be sent. Try resending it.',
         });
         setTimeout(() => {

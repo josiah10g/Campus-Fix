@@ -64,19 +64,27 @@ export default function RegisterPage() {
     setError('');
 
     if (!formData.name.trim()) {
-      setError('Full name is required.');
+      const msg = 'Full name is required.';
+      setError(msg);
+      setToast({ type: 'error', message: msg });
       return;
     }
     if (!formData.email.trim()) {
-      setError('Email address is required.');
+      const msg = 'Email address is required.';
+      setError(msg);
+      setToast({ type: 'error', message: msg });
       return;
     }
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      const msg = 'Password must be at least 8 characters.';
+      setError(msg);
+      setToast({ type: 'error', message: msg });
       return;
     }
     if (formData.password !== formData.confirm_password) {
-      setError('Passwords do not match. Please re-enter.');
+      const msg = 'Passwords do not match. Please re-enter.';
+      setError(msg);
+      setToast({ type: 'error', message: msg });
       return;
     }
 
@@ -84,16 +92,22 @@ export default function RegisterPage() {
     if (formData.role === 'student') {
       finalLevel = formData.levelOption === 'Other' ? formData.customLevel.trim() : formData.levelOption;
       if (!formData.faculty.trim() || !formData.department.trim() || !formData.student_id.trim() || !finalLevel) {
-        setError('Faculty, Department, ID Number, and Level are all required for student accounts.');
+        const msg = 'Faculty, Department, ID Number, and Level are all required for student accounts.';
+        setError(msg);
+        setToast({ type: 'error', message: msg });
         return;
       }
       if (!/^\d{1,9}$/.test(formData.student_id.trim())) {
-        setError('ID number must be up to 9 digits (numbers only).');
+        const msg = 'ID number must be up to 9 digits (numbers only).';
+        setError(msg);
+        setToast({ type: 'error', message: msg });
         return;
       }
       const expectedEmail = `${formData.student_id.trim()}@nileuniversity.edu.ng`.toLowerCase();
       if (formData.email.trim().toLowerCase() !== expectedEmail) {
-        setError(`Student email must be in the format: ${expectedEmail}`);
+        const msg = `Student email must be in the format: ${expectedEmail}`;
+        setError(msg);
+        setToast({ type: 'error', message: msg });
         return;
       }
     }
@@ -136,7 +150,9 @@ export default function RegisterPage() {
         navigate(`/verify-email?email=${encodeURIComponent(err.data.email || formData.email)}&sent=false`);
         return;
       }
-      setError(err.message || 'Registration failed.');
+      const msg = err.message || 'Registration failed.';
+      setError(msg);
+      setToast({ type: 'error', message: msg });
     } finally {
       setLoading(false);
     }
@@ -366,12 +382,23 @@ export default function RegisterPage() {
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    readOnly={formData.role === 'student'}
+                    onChange={(e) => {
+                      const inputEmail = e.target.value;
+                      if (formData.role === 'student') {
+                        // Extract numeric ID if typed or pasted in email form (e.g. 262727897@...)
+                        const match = inputEmail.match(/^(\d{1,9})/);
+                        const extractedId = match ? match[1] : '';
+                        setFormData((prev) => ({
+                          ...prev,
+                          email: inputEmail,
+                          student_id: extractedId || prev.student_id,
+                        }));
+                      } else {
+                        setFormData((prev) => ({ ...prev, email: inputEmail }));
+                      }
+                    }}
                     placeholder={formData.role === 'student' ? 'e.g. 262727897@nileuniversity.edu.ng' : 'you@example.com'}
-                    className={`w-full px-3.5 py-2.5 text-sm border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all ${
-                      formData.role === 'student' ? 'bg-[#F1F4F3] text-gray-700 cursor-not-allowed font-mono' : 'bg-[#FAFBFB] focus:bg-white text-ink'
-                    }`}
+                    className="w-full px-3.5 py-2.5 text-sm border border-line rounded focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal transition-all bg-[#FAFBFB] focus:bg-white text-ink"
                     required
                   />
                 </div>

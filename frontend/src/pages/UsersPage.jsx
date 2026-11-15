@@ -74,10 +74,16 @@ export default function UsersPage() {
   };
 
   const handleCreateUser = async (formData) => {
-    const res = await api.createUser(formData);
-    setUsers((prev) => [res.user, ...prev]);
-    setTotalUsers((count) => count + 1);
-    setToast({ type: 'success', message: 'Account created successfully.' });
+    try {
+      const res = await api.createUser(formData);
+      setUsers((prev) => [res.user, ...prev]);
+      setTotalUsers((count) => count + 1);
+      setToast({ type: 'success', message: 'Account created successfully.' });
+      return res;
+    } catch (err) {
+      setToast({ type: 'error', message: err.message || 'Could not create user account.' });
+      throw err;
+    }
   };
 
   const formatLevel = (lvl) => {

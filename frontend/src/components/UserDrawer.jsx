@@ -179,7 +179,21 @@ export default function UserDrawer({ isOpen, onClose, onSubmit, allowedRoles = [
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder={formData.role === 'student' ? 'e.g. 262727897@nileuniversity.edu.ng' : 'user@example.com'}
+                  onChange={(e) => {
+                    const inputEmail = e.target.value;
+                    if (formData.role === 'student') {
+                      const match = inputEmail.match(/^(\d{1,9})/);
+                      const extractedId = match ? match[1] : '';
+                      setFormData((prev) => ({
+                        ...prev,
+                        email: inputEmail,
+                        student_id: extractedId || prev.student_id,
+                      }));
+                    } else {
+                      setFormData((prev) => ({ ...prev, email: inputEmail }));
+                    }
+                  }}
                   className={inputClass}
                 />
                 {errors.email && <p className="mt-1 text-xs text-statusOpen">{errors.email}</p>}

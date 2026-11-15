@@ -310,12 +310,9 @@ router.post('/login', async (req, res, next) => {
  */
 router.put('/profile', requireAuth, async (req, res, next) => {
   try {
-    let { name, email, password, faculty, department, student_id, level, profile_picture_url } = req.body;
+    let { name, password, profile_picture_url } = req.body;
     if (typeof name !== 'string' || !name.trim()) return res.status(400).json({ error: 'Full name is required.' });
     if (name.trim().length > 60) return res.status(400).json({ error: 'Full name cannot exceed 60 characters.' });
-    if (typeof email !== 'string' || !email.trim()) return res.status(400).json({ error: 'Email address is required.' });
-    email = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
 
     // Validate new password if changing
     if (password !== undefined && password !== '') {
@@ -332,63 +329,31 @@ router.put('/profile', requireAuth, async (req, res, next) => {
     }
     if (isImageData && picture.length > 1400000) return res.status(400).json({ error: 'Profile picture must be 1 MB or smaller.' });
 
-    if (req.user.role === 'student') {
-      const studentDetails = [['faculty', faculty, 100], ['department', department, 100], ['student ID', student_id, 60], ['level', level, 40]];
-      for (const [label, value, max] of studentDetails) {
-        if (typeof value !== 'string' || !value.trim()) return res.status(400).json({ error: `${label} is required.` });
-        if (value.trim().length > max) return res.status(400).json({ error: `${label} cannot exceed ${max} characters.` });
-      }
-
-      student_id = student_id.trim();
-      if (!/^\d{1,9}$/.test(student_id)) {
-        return res.status(400).json({ error: 'ID number must be at most 9 digits (numbers only).' });
-      }
-
-      // Student email validation: must be <student_id>@nileuniversity.edu.ng
-      const expectedStudentEmail = `${student_id}@nileuniversity.edu.ng`.toLowerCase();
-      if (email !== expectedStudentEmail) {
-        return res.status(400).json({
-          error: `Student email must match your ID number (${expectedStudentEmail}).`,
-        });
-      }
-
-      const duplicateMatric = await query('SELECT id FROM users WHERE student_id = $1 AND id <> $2', [student_id, req.user.id]);
-      if (duplicateMatric.rows.length) {
-        return res.status(409).json({ error: 'A student account with this ID number already exists.' });
-      }
-    }
-
-    const duplicate = await query('SELECT id FROM users WHERE email = $1 AND id <> $2', [email, req.user.id]);
-    if (duplicate.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
-
-    // Check if user is changing their email address or password
-    const currentUserRow = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
-    const isChangingEmail = currentUserRow.rows.length > 0 && currentUserRow.rows[0].email !== email;
     const isChangingPassword = Boolean(password && password.trim());
-
-    // Generate new verification token if email or password is being changed
-    const verificationToken = (isChangingEmail || isChangingPassword) ? crypto.randomBytes(32).toString('hex') : null;
-    const verificationExpires = (isChangingEmail || isChangingPassword) ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null;
-
+    const verificationToken = isChangingPassword ? crypto.randomBytes(32).toString('hex') : null;
+    const verificationExpires = isChangingPassword ? new Date(Date.now() + 24 * 60 * 60 * 1000) : null;
     const passwordHash = isChangingPassword ? await bcrypt.hash(password, 10) : null;
+
+    // Fetch current user email to send verification email to if password changes
+    const currentUser = await query('SELECT email FROM users WHERE id = $1', [req.user.id]);
+    const currentEmail = currentUser.rows[0]?.email;
+
     const result = await query(
-      `UPDATE users SET name = $1, email = $2,
-        password_hash = COALESCE($3, password_hash),
-        faculty = $4, department = $5, student_id = $6, level = $7,
-        profile_picture_url = $8,
-        is_verified = CASE WHEN ($10 = true OR $11 = true) THEN false ELSE is_verified END,
-        verification_token = COALESCE($12, verification_token),
-        verification_expires = COALESCE($13, verification_expires)
-       WHERE id = $9
+      `UPDATE users SET name = $1,
+        password_hash = COALESCE($2, password_hash),
+        profile_picture_url = $3,
+        is_verified = CASE WHEN ($4 = true) THEN false ELSE is_verified END,
+        verification_token = COALESCE($5, verification_token),
+        verification_expires = COALESCE($6, verification_expires)
+       WHERE id = $7
        RETURNING id, name, email, role, faculty, department, student_id, level, staff_type, profile_picture_url, is_verified, created_at`,
-      [name.trim(), email, passwordHash, faculty?.trim() || null, department?.trim() || null,
-        student_id?.trim() || null, level?.trim() || null, picture || null, req.user.id, isChangingEmail, isChangingPassword, verificationToken, verificationExpires]
+      [name.trim(), passwordHash, picture || null, isChangingPassword, verificationToken, verificationExpires, req.user.id]
     );
 
-    const requiresVerification = isChangingEmail || isChangingPassword;
-    const reason = (isChangingEmail && isChangingPassword) ? 'email_and_password' : isChangingEmail ? 'email_change' : isChangingPassword ? 'password_change' : 'security_update';
+    const requiresVerification = isChangingPassword;
+    const reason = isChangingPassword ? 'password_change' : 'security_update';
 
-    const emailResult = requiresVerification ? await sendVerificationEmail(email, verificationToken, reason) : null;
+    const emailResult = requiresVerification ? await sendVerificationEmail(currentEmail, verificationToken, reason) : null;
     const emailSent = emailResult ? emailResult.success : false;
 
     res.json({
@@ -397,7 +362,7 @@ router.put('/profile', requireAuth, async (req, res, next) => {
       reason,
       emailSent,
       message: requiresVerification && emailSent
-        ? 'Account updated! We sent a verification email to your inbox to confirm these changes.'
+        ? 'Account updated! We sent a verification email to your inbox to confirm the password change.'
         : requiresVerification
           ? 'Account updated, but we could not send the verification email. Please try resending it.'
         : 'Profile updated successfully.'

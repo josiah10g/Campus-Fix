@@ -77,19 +77,19 @@ export default function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-6">
+              <Link
+                to="/"
+                className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
+                  isActive('/') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                }`}
+              >
+                Home
+                {isActive('/') && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                )}
+              </Link>
               {isPublicPage ? (
                 <>
-                  <Link
-                    to="/"
-                    className={`relative py-5 text-sm font-semibold transition-colors duration-150 ${
-                      isActive('/') ? 'text-ink' : 'text-gray-600 hover:text-ink'
-                    }`}
-                  >
-                    Home
-                    {isActive('/') && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
-                    )}
-                  </Link>
                   <Link
                     to="/how-it-works"
                     className={`relative py-5 text-sm font-semibold transition-colors ${
@@ -154,6 +154,17 @@ export default function Navbar() {
                   </>
                 )
               )}
+              <Link
+                to="/feedback"
+                className={`relative py-5 text-sm font-semibold transition-colors ${
+                  isActive('/feedback') ? 'text-ink' : 'text-gray-600 hover:text-ink'
+                }`}
+              >
+                Feedback & Support
+                {isActive('/feedback') && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-safetyYellow" />
+                )}
+              </Link>
             </div>
           </div>
 
@@ -409,6 +420,18 @@ export default function Navbar() {
           {user ? (
             <div className="space-y-1">
               <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2.5 text-sm rounded ${
+                  isActive('/')
+                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                }`}
+              >
+                Home
+              </Link>
+
+              <Link
                 to="/issues"
                 onClick={() => setMobileMenuOpen(false)}
                 className={`block py-2.5 text-sm rounded ${
@@ -445,6 +468,18 @@ export default function Navbar() {
                   User Management
                 </Link>
               )}
+
+              <Link
+                to="/feedback"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2.5 text-sm rounded ${
+                  isActive('/feedback')
+                    ? 'border-l-4 border-safetyYellow bg-[#F1F4F3] pl-3 font-bold text-ink'
+                    : 'text-gray-700 hover:text-ink pl-4 font-medium'
+                }`}
+              >
+                Feedback & Support
+              </Link>
             </div>
           ) : (
             <div className="space-y-1 pt-1">
@@ -474,6 +509,15 @@ export default function Navbar() {
                 }`}
               >
                 Latest issues
+              </Link>
+              <Link
+                to="/feedback"
+                onClick={() => setMobileMenuOpen(false)}
+                className={`block py-2 text-sm rounded ${
+                  isActive('/feedback') ? 'font-bold text-teal pl-2 border-l-2 border-teal' : 'text-gray-600 pl-2'
+                }`}
+              >
+                Feedback & Support
               </Link>
               <div className="pt-3 border-t border-line flex flex-col space-y-2">
                 <Link

@@ -11,7 +11,7 @@ import Toast from '../components/Toast';
 import ErrorBanner from '../components/ErrorBanner';
 import EmptyState from '../components/EmptyState';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search } from 'lucide-react';
 
 const CATEGORIES = ['All categories', 'Electrical', 'Plumbing', 'Furniture', 'Network', 'Other'];
 const STATUSES = ['All statuses', 'Open', 'In Progress', 'Resolved'];
@@ -203,7 +203,7 @@ export default function IssuesPage() {
       {/* Summary Cards (interactive={false} to not hover/bounce the hero stats container) */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <StatCard label="Total issues" value={stats.total} colorClass="text-ink" interactive={false} />
-        <StatCard label="Open" value={stats.open} colorClass="text-statusOpen" interactive={false} />
+        <StatCard label="Broken / Open" value={stats.open} colorClass="text-statusOpen" interactive={false} />
         <StatCard label="In progress" value={stats.inProgress} colorClass="text-statusProgress" interactive={false} />
         <StatCard label="Resolved" value={stats.resolved} colorClass="text-statusResolved" interactive={false} />
       </div>
@@ -211,21 +211,26 @@ export default function IssuesPage() {
       {/* Search, Filters, and Tab Toggle Bar */}
       <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between mb-4">
         <div className="flex flex-1 flex-col sm:flex-row gap-3">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-64 px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal"
-          />
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={17} />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search issues by title or details..."
+              aria-label="Search issues"
+              className="w-full pl-10 pr-3.5 py-2.5 sm:py-2 text-sm sm:text-xs bg-white border border-line rounded shadow-sm focus:outline-none focus:border-teal focus:ring-1 focus:ring-teal text-ink placeholder:text-gray-400"
+            />
+          </div>
 
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal text-gray-700"
+            className="px-3 py-2.5 sm:py-2 text-sm sm:text-xs bg-white border border-line rounded shadow-sm focus:outline-none focus:border-teal text-gray-700"
           >
             {STATUSES.map((st) => (
               <option key={st} value={st}>
-                {st}
+                {st === 'Open' ? 'Broken / Needs Repair (Open)' : st}
               </option>
             ))}
           </select>
@@ -233,7 +238,7 @@ export default function IssuesPage() {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 text-xs bg-white border border-line rounded focus:outline-none focus:border-teal text-gray-700"
+            className="px-3 py-2.5 sm:py-2 text-sm sm:text-xs bg-white border border-line rounded shadow-sm focus:outline-none focus:border-teal text-gray-700"
           >
             {CATEGORIES.map((cat) => (
               <option key={cat} value={cat}>
@@ -340,15 +345,17 @@ export default function IssuesPage() {
             </div>
           )}
 
-          {/* Mobile full-width report button */}
-          <div className="md:hidden mt-4">
-            <Link
-              to="/report"
-              className="w-full block text-center py-3 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
-            >
-              Report an issue
-            </Link>
-          </div>
+          {/* Mobile full-width report button - only show when there are enough issues to scroll past */}
+          {issues.length > 3 && (
+            <div className="md:hidden mt-4">
+              <Link
+                to="/report"
+                className="w-full block text-center py-3 bg-teal hover:bg-teal-dark text-white text-sm font-semibold rounded shadow-none btn-interactive"
+              >
+                Report an issue
+              </Link>
+            </div>
+          )}
         </>
       )}
 

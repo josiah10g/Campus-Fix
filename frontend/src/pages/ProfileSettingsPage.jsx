@@ -77,7 +77,6 @@ export default function ProfileSettingsPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const isChangingEmail = form.email && form.email.trim().toLowerCase() !== (user.email || '').toLowerCase();
     const isChangingPassword = Boolean(form.password && form.password.trim());
 
     if (isChangingPassword) {
@@ -91,30 +90,10 @@ export default function ProfileSettingsPage() {
       }
     }
 
-    if (user.role === 'student') {
-      const studentId = (form.student_id || '').trim();
-      if (!/^\d{1,9}$/.test(studentId)) {
-        setToast({ type: 'error', message: 'ID number must be up to 9 digits (numbers only).' });
-        return;
-      }
-      const expectedEmail = `${studentId}@nileuniversity.edu.ng`.toLowerCase();
-      if (form.email.trim().toLowerCase() !== expectedEmail) {
-        setToast({ type: 'error', message: `Student email must match your ID number (${expectedEmail}).` });
-        return;
-      }
-    }
-
-    const finalLevel = form.levelOption === 'Other' ? form.customLevel.trim() : form.levelOption;
-
     setSaving(true);
     try {
       const payload = {
         name: form.name,
-        email: form.email,
-        faculty: form.faculty,
-        department: form.department,
-        student_id: form.student_id,
-        level: finalLevel,
         profile_picture_url: form.profile_picture_url,
       };
 
@@ -128,17 +107,17 @@ export default function ProfileSettingsPage() {
 
       if (res.requiresVerification) {
         const emailSent = res.emailSent !== false;
-        const reason = res.reason || (isChangingEmail && isChangingPassword ? 'email_and_password' : isChangingEmail ? 'email_change' : 'password_change');
+        const reason = res.reason || 'password_change';
         // Clear active session since account now requires re-verification
         logout();
         setToast({
           type: emailSent ? 'success' : 'error',
           message: emailSent
-            ? 'Security updates saved! Check your email to confirm the change before logging back in.'
-            : 'Security updates saved, but the verification email could not be sent. Try resending it.',
+            ? 'Password change saved! Check your email to confirm the change before logging back in.'
+            : 'Password change saved, but the verification email could not be sent. Try resending it.',
         });
         setTimeout(() => {
-          navigate(`/verify-email?email=${encodeURIComponent(form.email)}&reason=${encodeURIComponent(reason)}${emailSent ? '' : '&sent=false'}`);
+          navigate(`/verify-email?email=${encodeURIComponent(user.email)}&reason=${encodeURIComponent(reason)}${emailSent ? '' : '&sent=false'}`);
         }, 1200);
         return;
       }
@@ -185,124 +164,70 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="text-base font-semibold text-ink">
-              Full name
-              <input name="name" value={form.name} onChange={updateField} maxLength={60} required className={inputClass} />
-            </label>
-            <label className="text-base font-semibold text-ink">
-              {user.role === 'student' ? 'Student Email' : 'Email address'}
-              <input
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={updateField}
-                readOnly={user.role === 'student'}
-                maxLength={120}
-                required
-                className={`${inputClass} ${user.role === 'student' ? 'bg-[#F1F4F3] text-gray-700 cursor-not-allowed font-mono' : ''}`}
-              />
-              {user.role === 'student' && (
-                <span className="text-xs text-gray-500 font-normal mt-1 block">
-                  Automatically tied to ID number as <span className="font-mono text-teal">[ID]@nileuniversity.edu.ng</span>
-                </span>
-              )}
-            </label>
+            <div>
+              <label className="text-base font-semibold text-ink">
+                Full name
+                <input name="name" value={form.name} onChange={updateField} maxLength={60} required className={inputClass} />
+              </label>
+            </div>
+            <div>
+              <label className="text-base font-semibold text-ink">
+                {user.role === 'student' ? 'Student Email' : 'Email address'}
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  readOnly
+                  disabled
+                  className={`${inputClass} bg-[#F1F4F3] text-gray-600 cursor-not-allowed`}
+                />
+              </label>
+              <p className="text-xs text-gray-500 mt-1">
+                To change your email address, please{' '}
+                <Link to="/feedback" className="text-teal font-semibold hover:underline">
+                  contact the administrator
+                </Link>.
+              </p>
+            </div>
           </div>
 
-          {/* Academic Details with Dropdowns for Everyone */}
+          {/* Academic Details - Read Only with contact admin notice */}
           <div className="border-t border-line pt-5">
-            <h2 className="text-lg font-bold text-ink">Academic details</h2>
-            <p className="text-sm text-gray-500 mb-3">Keep your faculty, department, student ID, and level up to date.</p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <label className="block text-base font-semibold text-ink">Programme</label>
-                <select
-                  value={form.programme}
-                  onChange={(e) => handleProgrammeChange(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="Undergraduate">Undergraduate</option>
-                  <option value="Postgraduate">Postgraduate</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-base font-semibold text-ink">Faculty / College</label>
-                <select
-                  value={form.faculty}
-                  onChange={(e) => handleFacultyChange(e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">Select Faculty...</option>
-                  {currentFaculties.map((fac) => (
-                    <option key={fac} value={fac}>{fac}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-base font-semibold text-ink">Department</label>
-                <select
-                  value={form.department}
-                  onChange={(e) => setForm({ ...form, department: e.target.value })}
-                  disabled={!form.faculty}
-                  className={`${selectClass} disabled:opacity-50`}
-                >
-                  <option value="">Select Department...</option>
-                  {currentDepartments.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-bold text-ink">Academic details</h2>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium">
+                Locked
+              </span>
             </div>
+            <p className="text-sm text-gray-500 mb-4">
+              Academic details and student ID are verified and cannot be edited directly. To request an update, please{' '}
+              <Link to="/feedback" className="text-teal font-semibold hover:underline">
+                contact the administrator
+              </Link>.
+            </p>
 
-            <div className="grid gap-4 sm:grid-cols-2 mt-4">
+            <div className="grid gap-4 sm:grid-cols-3 bg-[#FAFBFB] p-4 rounded-card border border-line">
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-base font-semibold text-ink">
-                    {user.role === 'student' ? 'ID Number' : 'Staff / Member ID'}
-                  </label>
-                </div>
-                <input
-                  name="student_id"
-                  inputMode={user.role === 'student' ? 'numeric' : 'text'}
-                  value={form.student_id}
-                  onChange={(e) => {
-                    const val = user.role === 'student'
-                      ? e.target.value.replace(/\D/g, '').slice(0, 9)
-                      : e.target.value;
-                    setForm((prev) => ({
-                      ...prev,
-                      student_id: val,
-                      ...(user.role === 'student' ? { email: val ? `${val}@nileuniversity.edu.ng` : prev.email } : {}),
-                    }));
-                  }}
-                  maxLength={user.role === 'student' ? 9 : 60}
-                  className={inputClass}
-                />
+                <span className="block text-xs font-semibold text-gray-500 uppercase">Programme</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">{form.programme || 'Undergraduate'}</span>
               </div>
-
               <div>
-                <label className="block text-base font-semibold text-ink">Level</label>
-                <select
-                  value={form.levelOption}
-                  onChange={(e) => setForm({ ...form, levelOption: e.target.value })}
-                  className={selectClass}
-                >
-                  {STANDARD_LEVELS.map((lvl) => (
-                    <option key={lvl} value={lvl}>{lvl}</option>
-                  ))}
-                </select>
-                {form.levelOption === 'Other' && (
-                  <input
-                    type="text"
-                    value={form.customLevel}
-                    onChange={(e) => setForm({ ...form, customLevel: e.target.value })}
-                    maxLength={40}
-                    required
-                    className={`${inputClass} mt-2`}
-                  />
-                )}
+                <span className="block text-xs font-semibold text-gray-500 uppercase">Faculty / College</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">{form.faculty || 'Not set'}</span>
+              </div>
+              <div>
+                <span className="block text-xs font-semibold text-gray-500 uppercase">Department</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">{form.department || 'Not set'}</span>
+              </div>
+              <div className="mt-2 sm:mt-0">
+                <span className="block text-xs font-semibold text-gray-500 uppercase">
+                  {user.role === 'student' ? 'Student ID' : 'Staff / Member ID'}
+                </span>
+                <span className="text-sm font-bold text-ink font-mono mt-0.5 block">{form.student_id || 'Not set'}</span>
+              </div>
+              <div className="mt-2 sm:mt-0">
+                <span className="block text-xs font-semibold text-gray-500 uppercase">Level</span>
+                <span className="text-sm font-bold text-ink mt-0.5 block">{form.levelOption === 'Other' ? form.customLevel : (form.levelOption || 'Not set')}</span>
               </div>
             </div>
           </div>

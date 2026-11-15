@@ -374,11 +374,6 @@ export default function RegisterPage() {
                     }`}
                     required
                   />
-                  {formData.role === 'student' && (
-                    <p className="text-[11px] text-gray-500 mt-1">
-                      Automatically generated as <span className="font-mono font-semibold text-teal">[ID]@nileuniversity.edu.ng</span>
-                    </p>
-                  )}
                 </div>
 
                 <div>
